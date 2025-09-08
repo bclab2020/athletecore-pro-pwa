@@ -952,22 +952,29 @@
             document.body.classList.add('installed');
         }
 
+        // Test function availability
+        console.log('Function check:', {
+            showScreen: typeof showScreen,
+            showWelcome: typeof showWelcome,
+            showRegistration: typeof showRegistration,
+            showDashboard: typeof showDashboard
+        });
+        
         // Initialize app
         setTimeout(async () => {
             loadLocalUser();
             showWelcome();
             
-            // Initialize MediaPipe Pose detection
-            try {
-                const initialized = await initMediaPipe();
+            // Initialize MediaPipe Pose detection (in background)
+            initMediaPipe().then(initialized => {
                 if (initialized) {
                     console.log('✅ MediaPipe Pose initialized successfully in main app');
                 } else {
                     console.error('❌ Failed to initialize MediaPipe Pose in main app');
                 }
-            } catch (error) {
+            }).catch(error => {
                 console.error('Failed to initialize MediaPipe Pose:', error);
-            }
+            });
         }, 2000);
         
         // Camera functions
@@ -2015,23 +2022,7 @@
             }
         }
         
-        function showScreen(screenId) {
-            document.querySelectorAll('.app-screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            document.getElementById(screenId).classList.add('active');
-            currentScreen = screenId;
-        }
-        
-        function showWelcome() {
-            showScreen('welcome');
-            document.getElementById('welcome').classList.add('fade-in');
-        }
-        
-        function showRegistration() {
-            showScreen('registration');
-            document.getElementById('registration').classList.add('slide-up');
-        }
+        // Core navigation functions moved to top
         
         async function handleRegistration() {
             const form = document.getElementById('profileForm');
@@ -2083,16 +2074,7 @@
             }
         }
 
-        function showDashboard() {
-            // Stop camera and pose detection if running
-            stopCamera();
-            stopPoseDetection();
-            isAnalyzing = false;
-            
-            showScreen('dashboard');
-            document.getElementById('dashboard').classList.add('fade-in');
-            updateDashboardContent();
-        }
+        // showDashboard function moved to top
         
         async function updateDashboardContent() {
             if (currentUser) {
