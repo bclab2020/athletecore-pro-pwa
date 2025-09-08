@@ -416,6 +416,27 @@
                 backdrop-filter: blur(5px);
                 border: 1px solid rgba(255, 255, 255, 0.2);
             }
+            
+            /* カメラ切り替えボタン */
+            #staticCameraSwitch, #dynamicCameraSwitch {
+                transition: transform 0.3s ease-in-out, background-color 0.2s;
+                backdrop-filter: blur(10px);
+            }
+            
+            #staticCameraSwitch:hover, #dynamicCameraSwitch:hover {
+                background-color: rgba(0, 0, 0, 0.9);
+                transform: scale(1.1);
+            }
+            
+            #staticCameraSwitch:active, #dynamicCameraSwitch:active {
+                transform: scale(0.95);
+            }
+            
+            /* カメララベル */
+            #staticCameraLabel, #dynamicCameraLabel {
+                backdrop-filter: blur(5px);
+                transition: background-color 0.3s ease;
+            }
         }
     </style>
 </head>
@@ -644,12 +665,12 @@
                     </div>
                     
                     <!-- Camera View - Full Screen -->
-                    <div class="flex-1 bg-gray-900 relative overflow-hidden">
+                    <div class="flex-1 bg-gray-900 relative" style="height: calc(100vh - 140px); min-height: calc(100vh - 140px);">
                         <!-- Full Screen Camera Container -->
-                        <div class="w-full h-full relative">
-                            <video id="staticCameraFeed" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
-                            <canvas id="staticPoseCanvas" class="w-full h-full absolute top-0 left-0 hidden"></canvas>
-                            <div id="staticCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800">
+                        <div class="w-full h-full relative absolute inset-0">
+                            <video id="staticCameraFeed" class="w-full h-full object-cover" autoplay muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></video>
+                            <canvas id="staticPoseCanvas" class="w-full h-full absolute top-0 left-0 z-10" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                            <div id="staticCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
                                 <div class="text-center text-white">
                                     <div class="text-6xl mb-4">📷</div>
                                     <p class="text-xl mb-2">Position yourself in the frame</p>
@@ -658,16 +679,29 @@
                             </div>
                             
                             <!-- Pose Detection Status - Top Overlay -->
-                            <div id="staticPoseStatus" class="absolute top-4 left-4 bg-black bg-opacity-70 text-white text-sm px-3 py-2 rounded-lg hidden">
-                                <span id="staticPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2"></span>
-                                <span id="staticPoseText">Detecting...</span>
+                            <div id="staticPoseStatus" class="absolute top-4 left-4 bg-green-600 bg-opacity-80 text-white text-sm px-3 py-2 rounded-lg z-20">
+                                <span id="staticPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2 animate-pulse"></span>
+                                <span id="staticPoseText">Starting Camera...</span>
+                            </div>
+                            
+                            <!-- Camera Switch Button - Top Right -->
+                            <div class="absolute top-4 right-4 z-20">
+                                <button id="staticCameraSwitch" onclick="switchCamera('static')" class="bg-black bg-opacity-70 text-white p-3 rounded-full hover:bg-opacity-90 transition-all">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                    </svg>
+                                </button>
+                                <div class="text-center mt-1">
+                                    <span id="staticCameraLabel" class="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">インカメラ</span>
+                                </div>
                             </div>
                             
                             <!-- Instruction Overlay - Bottom -->
-                            <div class="absolute bottom-24 left-0 right-0 text-center text-white">
+                            <div class="absolute bottom-24 left-0 right-0 text-center text-white z-20">
                                 <div class="bg-black bg-opacity-50 mx-4 py-3 px-4 rounded-lg">
                                     <p class="text-sm mb-1">Stand naturally with arms at your sides</p>
-                                    <p class="text-xs opacity-75">腕を体の横に自然に立ってください</p>
+                                    <p class="text-xs opacity-75 mb-2">腕を体の横に自然に立ってください</p>
+                                    <p class="text-xs opacity-60">📷 Tap top-right to switch camera / カメラ切り替えは右上をタップ</p>
                                 </div>
                             </div>
                         </div>
@@ -698,12 +732,12 @@
                     </div>
                     
                     <!-- Camera View - Full Screen -->
-                    <div class="flex-1 bg-gray-900 relative overflow-hidden">
+                    <div class="flex-1 bg-gray-900 relative" style="height: calc(100vh - 140px); min-height: calc(100vh - 140px);">
                         <!-- Full Screen Camera Container -->
-                        <div class="w-full h-full relative">
-                            <video id="dynamicCameraFeed" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
-                            <canvas id="dynamicPoseCanvas" class="w-full h-full absolute top-0 left-0 hidden"></canvas>
-                            <div id="dynamicCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800">
+                        <div class="w-full h-full relative absolute inset-0">
+                            <video id="dynamicCameraFeed" class="w-full h-full object-cover" autoplay muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></video>
+                            <canvas id="dynamicPoseCanvas" class="w-full h-full absolute top-0 left-0 z-10" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                            <div id="dynamicCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
                                 <div class="text-center text-white">
                                     <div class="text-6xl mb-4">🎥</div>
                                     <p class="text-xl mb-2">Perform the movement</p>
@@ -712,22 +746,35 @@
                             </div>
                             
                             <!-- Pose Detection Status - Top Overlay -->
-                            <div id="dynamicPoseStatus" class="absolute top-4 left-4 bg-black bg-opacity-70 text-white text-sm px-3 py-2 rounded-lg hidden">
-                                <span id="dynamicPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2"></span>
-                                <span id="dynamicPoseText">Detecting...</span>
+                            <div id="dynamicPoseStatus" class="absolute top-4 left-4 bg-green-600 bg-opacity-80 text-white text-sm px-3 py-2 rounded-lg z-20">
+                                <span id="dynamicPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2 animate-pulse"></span>
+                                <span id="dynamicPoseText">Starting Camera...</span>
+                            </div>
+                            
+                            <!-- Camera Switch Button - Top Center -->
+                            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
+                                <button id="dynamicCameraSwitch" onclick="switchCamera('dynamic')" class="bg-black bg-opacity-70 text-white p-3 rounded-full hover:bg-opacity-90 transition-all">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                    </svg>
+                                </button>
+                                <div class="text-center mt-1">
+                                    <span id="dynamicCameraLabel" class="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">インカメラ</span>
+                                </div>
                             </div>
                             
                             <!-- Movement Counter - Top Right -->
-                            <div id="movementCounter" class="absolute top-4 right-4 bg-black bg-opacity-70 text-white text-lg px-4 py-2 rounded-lg hidden">
+                            <div id="movementCounter" class="absolute top-4 right-4 bg-black bg-opacity-70 text-white text-lg px-4 py-2 rounded-lg z-20">
                                 <span class="font-bold">Squats: </span>
                                 <span id="squatCount" class="text-2xl font-bold text-green-400">0</span>
                             </div>
                             
                             <!-- Current Exercise Info - Bottom -->
-                            <div class="absolute bottom-24 left-0 right-0 text-center text-white">
+                            <div class="absolute bottom-24 left-0 right-0 text-center text-white z-20">
                                 <div class="bg-blue-600 bg-opacity-80 mx-4 py-3 px-4 rounded-lg">
                                     <p class="text-sm font-medium mb-1">Current Exercise: Squat</p>
-                                    <p class="text-xs opacity-90">現在のエクササイズ：スクワット</p>
+                                    <p class="text-xs opacity-90 mb-2">現在のエクササイズ：スクワット</p>
+                                    <p class="text-xs opacity-70">📷 Tap center-top to switch camera / カメラ切り替えは上中央をタップ</p>
                                 </div>
                             </div>
                         </div>
@@ -921,29 +968,129 @@
         
         // Camera functions
         let cameraStream = null;
+        let currentFacingMode = 'user'; // 'user' = front/インカメラ, 'environment' = back/アウトカメラ
+        let currentVideoElementId = null;
         
-        async function initCamera(videoElementId, placeholderId) {
+        async function initCamera(videoElementId, placeholderId, facingMode = 'user') {
             try {
+                console.log('Initializing camera:', videoElementId, facingMode);
+                
+                // Stop existing stream if any
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+                
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
-                        facingMode: 'user',
-                        width: { ideal: 375 },
-                        height: { ideal: 500 }
+                        facingMode: facingMode,
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
                     } 
                 });
                 
                 const videoElement = document.getElementById(videoElementId);
                 const placeholder = document.getElementById(placeholderId);
                 
+                if (!videoElement || !placeholder) {
+                    console.error('Video elements not found:', videoElementId, placeholderId);
+                    return false;
+                }
+                
                 videoElement.srcObject = stream;
+                
+                // Force show video, hide placeholder
+                videoElement.style.display = 'block';
+                videoElement.style.visibility = 'visible';
                 videoElement.classList.remove('hidden');
+                
+                placeholder.style.display = 'none';
                 placeholder.classList.add('hidden');
                 
                 cameraStream = stream;
+                currentFacingMode = facingMode;
+                currentVideoElementId = videoElementId;
+                
+                // Update camera label
+                updateCameraLabel(videoElementId, facingMode);
+                
+                console.log('Camera initialized successfully');
                 return true;
             } catch (error) {
                 console.error('Camera access denied or unavailable:', error);
                 return false;
+            }
+        }
+        
+        // Switch between front and back camera
+        async function switchCamera(screenType) {
+            if (!cameraStream) return;
+            
+            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            
+            // Determine video element IDs based on screen type
+            const videoElementId = screenType === 'static' ? 'staticCameraFeed' : 'dynamicCameraFeed';
+            const placeholderId = screenType === 'static' ? 'staticCameraPlaceholder' : 'dynamicCameraPlaceholder';
+            
+            // Add switching animation
+            const switchButton = document.getElementById(`${screenType}CameraSwitch`);
+            switchButton.style.transform = 'rotate(180deg)';
+            
+            try {
+                // Initialize camera with new facing mode
+                const success = await initCamera(videoElementId, placeholderId, newFacingMode);
+                
+                if (success) {
+                    // Restart pose detection with new camera
+                    const canvasElementId = screenType === 'static' ? 'staticPoseCanvas' : 'dynamicPoseCanvas';
+                    const statusElementId = screenType === 'static' ? 'staticPoseStatus' : 'dynamicPoseStatus';
+                    
+                    // Small delay to ensure video is ready
+                    setTimeout(() => {
+                        startPoseDetection(videoElementId, canvasElementId, statusElementId);
+                    }, 500);
+                    
+                    // Haptic feedback
+                    if (navigator.vibrate) {
+                        navigator.vibrate(50);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to switch camera:', error);
+                // Revert button animation on error
+                switchButton.style.transform = 'rotate(0deg)';
+            }
+            
+            // Reset button animation
+            setTimeout(() => {
+                switchButton.style.transform = 'rotate(0deg)';
+            }, 300);
+        }
+        
+        // Update camera label text
+        function updateCameraLabel(videoElementId, facingMode) {
+            const screenType = videoElementId.includes('static') ? 'static' : 'dynamic';
+            const labelElement = document.getElementById(`${screenType}CameraLabel`);
+            
+            if (labelElement) {
+                if (facingMode === 'user') {
+                    labelElement.textContent = 'インカメラ';
+                    labelElement.classList.remove('bg-orange-500');
+                    labelElement.classList.add('bg-black');
+                } else {
+                    labelElement.textContent = 'アウトカメラ';
+                    labelElement.classList.remove('bg-black');
+                    labelElement.classList.add('bg-orange-500');
+                }
+            }
+            
+            // Update video mirror effect
+            const videoElement = document.getElementById(videoElementId);
+            if (videoElement) {
+                if (facingMode === 'user') {
+                    videoElement.style.transform = 'scaleX(-1)'; // Mirror for front camera
+                } else {
+                    videoElement.style.transform = 'scaleX(1)'; // Normal for back camera
+                }
             }
         }
         
@@ -961,6 +1108,13 @@
         
         // Initialize MediaPipe Pose
         function initMediaPipe() {
+            console.log('Initializing MediaPipe Pose...');
+            
+            if (typeof Pose === 'undefined') {
+                console.error('MediaPipe Pose not loaded');
+                return;
+            }
+            
             pose = new Pose({
                 locateFile: (file) => {
                     return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
@@ -969,22 +1123,26 @@
             
             // Optimize settings for mobile devices
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            console.log('Device type:', isMobile ? 'Mobile' : 'Desktop');
             
             pose.setOptions({
-                modelComplexity: isMobile ? 0 : 1, // Lower complexity for mobile
+                modelComplexity: 1, // Use model complexity 1 for better accuracy
                 smoothLandmarks: true,
                 enableSegmentation: false,
                 smoothSegmentation: false,
-                minDetectionConfidence: isMobile ? 0.3 : 0.5, // Lower threshold for mobile
-                minTrackingConfidence: isMobile ? 0.3 : 0.5
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
             });
             
             pose.onResults(onPoseResults);
+            console.log('MediaPipe Pose initialized successfully');
         }
         
         // Handle pose detection results
         function onPoseResults(results) {
             currentPoseResults = results;
+            
+            console.log('Pose results received:', results.poseLandmarks ? results.poseLandmarks.length : 'no landmarks');
             
             // Update pose status indicators
             updatePoseStatus(results.poseLandmarks);
@@ -1004,6 +1162,8 @@
                 if (isAnalyzing) {
                     performPoseAnalysis(results.poseLandmarks);
                 }
+            } else {
+                console.log('No pose landmarks detected');
             }
         }
         
@@ -1087,45 +1247,74 @@
         // Draw pose landmarks on canvas
         function drawPoseLandmarks(results) {
             const activeScreen = document.querySelector('.app-screen:not(.hidden)');
-            let canvas, ctx;
+            let canvas, ctx, video;
             
             if (activeScreen && activeScreen.id === 'static-analysis') {
                 canvas = document.getElementById('staticPoseCanvas');
+                video = document.getElementById('staticCameraFeed');
             } else if (activeScreen && activeScreen.id === 'dynamic-analysis') {
                 canvas = document.getElementById('dynamicPoseCanvas');
+                video = document.getElementById('dynamicCameraFeed');
             }
             
-            if (!canvas || !results.poseLandmarks) return;
+            if (!canvas || !video || !results.poseLandmarks) {
+                console.log('Missing elements for drawing:', { canvas: !!canvas, video: !!video, landmarks: !!results.poseLandmarks });
+                return;
+            }
             
             ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match container
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            
+            // Clear canvas with semi-transparent background for debugging
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Set canvas to match video size exactly
-            const video = activeScreen.id === 'static-analysis' ? 
-                document.getElementById('staticCameraFeed') : 
-                document.getElementById('dynamicCameraFeed');
+            // Draw a test rectangle to verify canvas is working
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            if (video && video.videoWidth > 0) {
-                const rect = video.getBoundingClientRect();
-                canvas.width = rect.width;
-                canvas.height = rect.height;
-            }
+            console.log('Canvas size:', canvas.width, 'x', canvas.height, 'Landmarks:', results.poseLandmarks.length);
             
             // Draw pose connections with enhanced visibility
-            if (results.poseLandmarks) {
+            if (results.poseLandmarks && results.poseLandmarks.length > 0) {
                 // Draw thick green connections
-                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, 
-                    { color: '#00FF88', lineWidth: 4 });
-                // Draw large red joint points
-                drawLandmarks(ctx, results.poseLandmarks, 
-                    { color: '#FF3366', lineWidth: 2, radius: 6 });
+                ctx.strokeStyle = '#00FF88';
+                ctx.lineWidth = 8;
                 
-                // Add glow effect for better visibility
-                ctx.shadowColor = '#00FF88';
-                ctx.shadowBlur = 3;
-                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, 
-                    { color: '#00FF88', lineWidth: 2 });
-                ctx.shadowBlur = 0;
+                POSE_CONNECTIONS.forEach(connection => {
+                    const start = results.poseLandmarks[connection[0]];
+                    const end = results.poseLandmarks[connection[1]];
+                    
+                    if (start && end && start.visibility > 0.5 && end.visibility > 0.5) {
+                        ctx.beginPath();
+                        ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
+                        ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
+                        ctx.stroke();
+                    }
+                });
+                
+                // Draw large red joint points
+                ctx.fillStyle = '#FF3366';
+                results.poseLandmarks.forEach(landmark => {
+                    if (landmark.visibility > 0.5) {
+                        ctx.beginPath();
+                        ctx.arc(
+                            landmark.x * canvas.width,
+                            landmark.y * canvas.height,
+                            10,
+                            0,
+                            2 * Math.PI
+                        );
+                        ctx.fill();
+                    }
+                });
+                
+                console.log('Pose landmarks drawn successfully');
             }
         }
         
@@ -1349,48 +1538,83 @@
         
         // Start pose detection for video element
         function startPoseDetection(videoElementId, canvasElementId, statusElementId) {
+            console.log('Starting pose detection...', { videoElementId, canvasElementId, statusElementId });
+            
             const video = document.getElementById(videoElementId);
             const canvas = document.getElementById(canvasElementId);
             const status = document.getElementById(statusElementId);
             
-            if (!video || !canvas || !pose) return;
+            if (!video || !canvas || !pose) {
+                console.error('Missing elements:', { video: !!video, canvas: !!canvas, pose: !!pose });
+                return;
+            }
             
-            // Set canvas to full screen size
-            const updateCanvasSize = () => {
-                const rect = video.getBoundingClientRect();
-                canvas.width = rect.width;
-                canvas.height = rect.height;
-                canvas.style.width = rect.width + 'px';
-                canvas.style.height = rect.height + 'px';
-            };
+            if (typeof Camera === 'undefined') {
+                console.error('MediaPipe Camera not loaded');
+                return;
+            }
             
-            // Show canvas and status immediately
+            // Ensure canvas is visible and properly positioned
+            canvas.style.display = 'block';
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.zIndex = '10';
+            canvas.style.pointerEvents = 'none';
+            
+            // Remove hidden class
             canvas.classList.remove('hidden');
             status.classList.remove('hidden');
             
-            // Update canvas size when video loads
-            video.addEventListener('loadedmetadata', updateCanvasSize);
-            window.addEventListener('resize', updateCanvasSize);
+            console.log('Canvas setup complete');
             
-            // Start pose detection with higher resolution
-            const camera = new Camera(video, {
-                onFrame: async () => {
-                    if (pose && video.videoWidth > 0) {
-                        updateCanvasSize(); // Ensure canvas size is correct
-                        await pose.send({ image: video });
+            // Wait for video to be ready
+            const waitForVideo = () => {
+                if (video.videoWidth > 0 && video.videoHeight > 0) {
+                    console.log('Video ready:', video.videoWidth, 'x', video.videoHeight);
+                    
+                    // Set canvas size to match video container
+                    const container = canvas.parentElement;
+                    const rect = container.getBoundingClientRect();
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                    
+                    console.log('Canvas size set to:', rect.width, 'x', rect.height);
+                    
+                    // Start MediaPipe camera
+                    try {
+                        const camera = new Camera(video, {
+                            onFrame: async () => {
+                                if (pose && video.videoWidth > 0) {
+                                    await pose.send({ image: video });
+                                }
+                            },
+                            width: 640,
+                            height: 480
+                        });
+                        
+                        camera.start();
+                        console.log('MediaPipe camera started successfully');
+                        
+                        // Show additional UI elements for dynamic analysis
+                        if (videoElementId === 'dynamicCameraFeed') {
+                            const counter = document.getElementById('movementCounter');
+                            if (counter) counter.classList.remove('hidden');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Failed to start MediaPipe camera:', error);
                     }
-                },
-                width: 640,  // Increased resolution
-                height: 480
-            });
+                } else {
+                    console.log('Waiting for video to be ready...');
+                    setTimeout(waitForVideo, 100);
+                }
+            };
             
-            camera.start();
-            
-            // Show additional UI elements for dynamic analysis
-            if (videoElementId === 'dynamicCameraFeed') {
-                const counter = document.getElementById('movementCounter');
-                if (counter) counter.classList.remove('hidden');
-            }
+            // Start checking for video readiness
+            setTimeout(waitForVideo, 100);
         }
         
         // Stop pose detection
@@ -1884,9 +2108,12 @@
                 initMediaPipe();
             }
             
+            // Reset to front camera
+            currentFacingMode = 'user';
+            
             // Initialize camera and pose detection
             setTimeout(async () => {
-                const cameraInitialized = await initCamera('staticCameraFeed', 'staticCameraPlaceholder');
+                const cameraInitialized = await initCamera('staticCameraFeed', 'staticCameraPlaceholder', 'user');
                 if (cameraInitialized) {
                     startPoseDetection('staticCameraFeed', 'staticPoseCanvas', 'staticPoseStatus');
                 }
@@ -1908,9 +2135,12 @@
                 initMediaPipe();
             }
             
+            // Reset to front camera
+            currentFacingMode = 'user';
+            
             // Initialize camera and pose detection
             setTimeout(async () => {
-                const cameraInitialized = await initCamera('dynamicCameraFeed', 'dynamicCameraPlaceholder');
+                const cameraInitialized = await initCamera('dynamicCameraFeed', 'dynamicCameraPlaceholder', 'user');
                 if (cameraInitialized) {
                     startPoseDetection('dynamicCameraFeed', 'dynamicPoseCanvas', 'dynamicPoseStatus');
                 }
