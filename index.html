@@ -502,7 +502,7 @@
                     
                     <!-- Button Section - Always visible -->
                     <div class="flex-shrink-0 pb-8">
-                        <button onclick="showRegistration()" 
+                        <button onclick="console.log('Get Started clicked!'); showRegistration();" 
                                 class="welcome-button brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
                             Get Started
                         </button>
@@ -907,6 +907,40 @@
         // PWA Installation
         let deferredPrompt;
         let isInstalled = false;
+        
+        // Core navigation functions - MUST be defined first
+        function showScreen(screenId) {
+            console.log('Switching to screen:', screenId);
+            document.querySelectorAll('.app-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+        
+        function showWelcome() {
+            console.log('Showing welcome screen');
+            showScreen('welcome');
+            document.getElementById('welcome').classList.add('fade-in');
+        }
+        
+        function showRegistration() {
+            console.log('Showing registration screen');
+            showScreen('registration');
+            document.getElementById('registration').classList.add('slide-up');
+        }
+        
+        function showDashboard() {
+            console.log('Showing dashboard screen');
+            // Stop camera and pose detection if running
+            if (typeof stopCamera === 'function') stopCamera();
+            if (typeof stopPoseDetection === 'function') stopPoseDetection();
+            if (typeof isAnalyzing !== 'undefined') isAnalyzing = false;
+            
+            showScreen('dashboard');
+            document.getElementById('dashboard').classList.add('fade-in');
+            if (typeof updateDashboardContent === 'function') updateDashboardContent();
+        }
 
         // サービスワーカーの登録
         if ('serviceWorker' in navigator) {
@@ -952,13 +986,22 @@
             document.body.classList.add('installed');
         }
 
-        // Test function availability
-        console.log('Function check:', {
+        // Test function availability - should all be 'function'
+        console.log('✅ Function availability check:', {
             showScreen: typeof showScreen,
-            showWelcome: typeof showWelcome,
+            showWelcome: typeof showWelcome, 
             showRegistration: typeof showRegistration,
             showDashboard: typeof showDashboard
         });
+        
+        // Test button click handler
+        setTimeout(() => {
+            const button = document.querySelector('button[onclick*="showRegistration"]');
+            console.log('✅ Get Started button found:', !!button);
+            if (button) {
+                console.log('✅ Button onclick attribute:', button.getAttribute('onclick'));
+            }
+        }, 1000);
         
         // Initialize app
         setTimeout(async () => {
@@ -2022,7 +2065,7 @@
             }
         }
         
-        // Core navigation functions moved to top
+        // Navigation functions already defined above
         
         async function handleRegistration() {
             const form = document.getElementById('profileForm');
