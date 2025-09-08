@@ -398,6 +398,24 @@
             #results .flex-1 {
                 padding-bottom: max(80px, env(safe-area-inset-bottom, 80px)) !important;
             }
+            
+            /* 骨格描画Canvas最適化 */
+            #staticPoseCanvas, #dynamicPoseCanvas {
+                mix-blend-mode: screen;
+                pointer-events: none;
+                z-index: 10;
+            }
+            
+            /* スクワットカウンターアニメーション */
+            #squatCount {
+                transition: transform 0.2s ease-in-out;
+            }
+            
+            /* ポーズ検出ステータス */
+            #staticPoseStatus, #dynamicPoseStatus {
+                backdrop-filter: blur(5px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
         }
     </style>
 </head>
@@ -625,23 +643,33 @@
                         </div>
                     </div>
                     
-                    <!-- Camera View -->
-                    <div class="flex-1 bg-gray-100 flex items-center justify-center py-8">
-                        <div class="text-center">
-                            <div class="w-48 h-64 bg-gray-200 rounded-lg mb-4 overflow-hidden relative">
-                                <video id="staticCameraFeed" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
-                                <canvas id="staticPoseCanvas" class="w-full h-full absolute top-0 left-0 hidden" width="192" height="256"></canvas>
-                                <div id="staticCameraPlaceholder" class="w-full h-full flex items-center justify-center">
-                                    <div class="text-4xl text-gray-400">📷</div>
-                                </div>
-                                <!-- Pose Detection Status -->
-                                <div id="staticPoseStatus" class="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded hidden">
-                                    <span id="staticPoseIndicator" class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>
-                                    <span id="staticPoseText">Detecting...</span>
+                    <!-- Camera View - Full Screen -->
+                    <div class="flex-1 bg-gray-900 relative overflow-hidden">
+                        <!-- Full Screen Camera Container -->
+                        <div class="w-full h-full relative">
+                            <video id="staticCameraFeed" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
+                            <canvas id="staticPoseCanvas" class="w-full h-full absolute top-0 left-0 hidden"></canvas>
+                            <div id="staticCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800">
+                                <div class="text-center text-white">
+                                    <div class="text-6xl mb-4">📷</div>
+                                    <p class="text-xl mb-2">Position yourself in the frame</p>
+                                    <p class="text-sm opacity-75">フレーム内に立ってください</p>
                                 </div>
                             </div>
-                            <p class="text-gray-600 mb-4">Position yourself in the frame</p>
-                            <p class="text-sm text-gray-500">フレーム内に立ってください</p>
+                            
+                            <!-- Pose Detection Status - Top Overlay -->
+                            <div id="staticPoseStatus" class="absolute top-4 left-4 bg-black bg-opacity-70 text-white text-sm px-3 py-2 rounded-lg hidden">
+                                <span id="staticPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2"></span>
+                                <span id="staticPoseText">Detecting...</span>
+                            </div>
+                            
+                            <!-- Instruction Overlay - Bottom -->
+                            <div class="absolute bottom-24 left-0 right-0 text-center text-white">
+                                <div class="bg-black bg-opacity-50 mx-4 py-3 px-4 rounded-lg">
+                                    <p class="text-sm mb-1">Stand naturally with arms at your sides</p>
+                                    <p class="text-xs opacity-75">腕を体の横に自然に立ってください</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -669,23 +697,39 @@
                         </div>
                     </div>
                     
-                    <!-- Camera View -->
-                    <div class="flex-1 bg-gray-100 flex items-center justify-center py-8">
-                        <div class="text-center">
-                            <div class="w-48 h-64 bg-gray-200 rounded-lg mb-4 overflow-hidden relative">
-                                <video id="dynamicCameraFeed" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
-                                <canvas id="dynamicPoseCanvas" class="w-full h-full absolute top-0 left-0 hidden" width="192" height="256"></canvas>
-                                <div id="dynamicCameraPlaceholder" class="w-full h-full flex items-center justify-center">
-                                    <div class="text-4xl text-gray-400">🎥</div>
-                                </div>
-                                <!-- Pose Detection Status -->
-                                <div id="dynamicPoseStatus" class="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded hidden">
-                                    <span id="dynamicPoseIndicator" class="w-2 h-2 bg-red-500 rounded-full inline-block mr-1"></span>
-                                    <span id="dynamicPoseText">Detecting...</span>
+                    <!-- Camera View - Full Screen -->
+                    <div class="flex-1 bg-gray-900 relative overflow-hidden">
+                        <!-- Full Screen Camera Container -->
+                        <div class="w-full h-full relative">
+                            <video id="dynamicCameraFeed" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
+                            <canvas id="dynamicPoseCanvas" class="w-full h-full absolute top-0 left-0 hidden"></canvas>
+                            <div id="dynamicCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800">
+                                <div class="text-center text-white">
+                                    <div class="text-6xl mb-4">🎥</div>
+                                    <p class="text-xl mb-2">Perform the movement</p>
+                                    <p class="text-sm opacity-75">動作を行ってください</p>
                                 </div>
                             </div>
-                            <p class="text-gray-600 mb-4">Perform the movement</p>
-                            <p class="text-sm text-gray-500">動作を行ってください</p>
+                            
+                            <!-- Pose Detection Status - Top Overlay -->
+                            <div id="dynamicPoseStatus" class="absolute top-4 left-4 bg-black bg-opacity-70 text-white text-sm px-3 py-2 rounded-lg hidden">
+                                <span id="dynamicPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2"></span>
+                                <span id="dynamicPoseText">Detecting...</span>
+                            </div>
+                            
+                            <!-- Movement Counter - Top Right -->
+                            <div id="movementCounter" class="absolute top-4 right-4 bg-black bg-opacity-70 text-white text-lg px-4 py-2 rounded-lg hidden">
+                                <span class="font-bold">Squats: </span>
+                                <span id="squatCount" class="text-2xl font-bold text-green-400">0</span>
+                            </div>
+                            
+                            <!-- Current Exercise Info - Bottom -->
+                            <div class="absolute bottom-24 left-0 right-0 text-center text-white">
+                                <div class="bg-blue-600 bg-opacity-80 mx-4 py-3 px-4 rounded-lg">
+                                    <p class="text-sm font-medium mb-1">Current Exercise: Squat</p>
+                                    <p class="text-xs opacity-90">現在のエクササイズ：スクワット</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -945,15 +989,55 @@
             // Update pose status indicators
             updatePoseStatus(results.poseLandmarks);
             
-            // Draw pose landmarks on canvas
+            // Draw pose landmarks on canvas - ALWAYS SHOW
             if (results.poseLandmarks) {
                 drawPoseLandmarks(results);
+                
+                // Real-time squat detection for dynamic analysis
+                const activeScreen = document.querySelector('.app-screen:not(.hidden)');
+                if (activeScreen && activeScreen.id === 'dynamic-analysis') {
+                    const squatDetection = detectSquat(results.poseLandmarks);
+                    updateSquatCounter(squatDetection);
+                }
                 
                 // Perform pose analysis if analyzing
                 if (isAnalyzing) {
                     performPoseAnalysis(results.poseLandmarks);
                 }
             }
+        }
+        
+        // Global squat tracking variables
+        let currentSquatCount = 0;
+        let lastSquatPhase = 'standing';
+        
+        // Update squat counter display
+        function updateSquatCounter(squatDetection) {
+            if (!squatDetection) return;
+            
+            // Count completed squats
+            if (squatDetection.phase === 'standing' && lastSquatPhase === 'up') {
+                currentSquatCount++;
+                
+                // Update counter display
+                const countElement = document.getElementById('squatCount');
+                if (countElement) {
+                    countElement.textContent = currentSquatCount;
+                    
+                    // Add animation effect
+                    countElement.style.transform = 'scale(1.5)';
+                    setTimeout(() => {
+                        countElement.style.transform = 'scale(1)';
+                    }, 200);
+                }
+                
+                // Haptic feedback
+                if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                }
+            }
+            
+            lastSquatPhase = squatDetection.phase;
         }
         
         // Update pose detection status
@@ -1016,12 +1100,32 @@
             ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Draw pose connections
+            // Set canvas to match video size exactly
+            const video = activeScreen.id === 'static-analysis' ? 
+                document.getElementById('staticCameraFeed') : 
+                document.getElementById('dynamicCameraFeed');
+            
+            if (video && video.videoWidth > 0) {
+                const rect = video.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+            
+            // Draw pose connections with enhanced visibility
             if (results.poseLandmarks) {
+                // Draw thick green connections
                 drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, 
-                    { color: '#00FF00', lineWidth: 2 });
+                    { color: '#00FF88', lineWidth: 4 });
+                // Draw large red joint points
                 drawLandmarks(ctx, results.poseLandmarks, 
-                    { color: '#FF0000', lineWidth: 1, radius: 2 });
+                    { color: '#FF3366', lineWidth: 2, radius: 6 });
+                
+                // Add glow effect for better visibility
+                ctx.shadowColor = '#00FF88';
+                ctx.shadowBlur = 3;
+                drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, 
+                    { color: '#00FF88', lineWidth: 2 });
+                ctx.shadowBlur = 0;
             }
         }
         
@@ -1251,22 +1355,42 @@
             
             if (!video || !canvas || !pose) return;
             
-            // Show canvas and status
+            // Set canvas to full screen size
+            const updateCanvasSize = () => {
+                const rect = video.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = rect.height + 'px';
+            };
+            
+            // Show canvas and status immediately
             canvas.classList.remove('hidden');
             status.classList.remove('hidden');
             
-            // Start pose detection
+            // Update canvas size when video loads
+            video.addEventListener('loadedmetadata', updateCanvasSize);
+            window.addEventListener('resize', updateCanvasSize);
+            
+            // Start pose detection with higher resolution
             const camera = new Camera(video, {
                 onFrame: async () => {
-                    if (pose) {
+                    if (pose && video.videoWidth > 0) {
+                        updateCanvasSize(); // Ensure canvas size is correct
                         await pose.send({ image: video });
                     }
                 },
-                width: 192,
-                height: 256
+                width: 640,  // Increased resolution
+                height: 480
             });
             
             camera.start();
+            
+            // Show additional UI elements for dynamic analysis
+            if (videoElementId === 'dynamicCameraFeed') {
+                const counter = document.getElementById('movementCounter');
+                if (counter) counter.classList.remove('hidden');
+            }
         }
         
         // Stop pose detection
@@ -1772,6 +1896,12 @@
         async function showDynamicAnalysis() {
             showScreen('dynamic-analysis');
             document.getElementById('dynamic-analysis').classList.add('slide-up');
+            
+            // Reset squat counter
+            currentSquatCount = 0;
+            lastSquatPhase = 'standing';
+            const countElement = document.getElementById('squatCount');
+            if (countElement) countElement.textContent = '0';
             
             // Initialize MediaPipe if not already done
             if (!pose) {
