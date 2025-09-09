@@ -1360,6 +1360,80 @@
             showAnalysisDetail(analysisId);
         };
         
+        // Debug function for photo capture issues
+        window.debugPhotoCapture = function() {
+            const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+            const photosWithData = results.filter(r => r.capturedPhoto);
+            const photosWithoutData = results.filter(r => !r.capturedPhoto);
+            
+            console.log('📸 Photo Capture Debug Report:');
+            console.log('📊 Total analysis results:', results.length);
+            console.log('✅ Results with photos:', photosWithData.length);
+            console.log('❌ Results without photos:', photosWithoutData.length);
+            
+            if (photosWithData.length > 0) {
+                console.log('📷 Sample photo data:');
+                const sample = photosWithData[0];
+                console.log({
+                    id: sample.id,
+                    type: sample.analysis_type,
+                    hasPhoto: !!sample.capturedPhoto,
+                    imageSize: sample.capturedPhoto ? (sample.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A',
+                    dimensions: sample.capturedPhoto ? `${sample.capturedPhoto.width}x${sample.capturedPhoto.height}` : 'N/A'
+                });
+            }
+            
+            if (photosWithoutData.length > 0) {
+                console.log('⚠️ Results without photos (recent 3):');
+                photosWithoutData.slice(-3).forEach(result => {
+                    console.log({
+                        id: result.id,
+                        type: result.analysis_type,
+                        date: new Date(result.analysis_date).toLocaleString()
+                    });
+                });
+            }
+            
+            return {
+                total: results.length,
+                withPhotos: photosWithData.length,
+                withoutPhotos: photosWithoutData.length
+            };
+        };
+        
+        // Debug function to check current camera and pose state
+        window.debugCameraState = function() {
+            const staticVideo = document.getElementById('staticCameraFeed');
+            const dynamicVideo = document.getElementById('dynamicCameraFeed');
+            const staticCanvas = document.getElementById('staticPoseCanvas');
+            const dynamicCanvas = document.getElementById('dynamicPoseCanvas');
+            
+            console.log('📹 Camera State Debug:');
+            console.log('Static video:', {
+                exists: !!staticVideo,
+                width: staticVideo ? staticVideo.videoWidth : 'N/A',
+                height: staticVideo ? staticVideo.videoHeight : 'N/A',
+                readyState: staticVideo ? staticVideo.readyState : 'N/A'
+            });
+            console.log('Dynamic video:', {
+                exists: !!dynamicVideo,
+                width: dynamicVideo ? dynamicVideo.videoWidth : 'N/A',
+                height: dynamicVideo ? dynamicVideo.videoHeight : 'N/A',
+                readyState: dynamicVideo ? dynamicVideo.readyState : 'N/A'
+            });
+            console.log('Pose detection:', {
+                hasPoseResults: !!currentPoseResults,
+                hasLandmarks: currentPoseResults ? !!currentPoseResults.poseLandmarks : false,
+                landmarkCount: currentPoseResults && currentPoseResults.poseLandmarks ? currentPoseResults.poseLandmarks.length : 0
+            });
+            
+            return {
+                staticVideoReady: staticVideo && staticVideo.videoWidth > 0,
+                dynamicVideoReady: dynamicVideo && dynamicVideo.videoWidth > 0,
+                poseDetectionActive: !!(currentPoseResults && currentPoseResults.poseLandmarks)
+            };
+        };
+        
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
@@ -1749,8 +1823,24 @@
             const video = document.getElementById(videoElementId);
             const overlayCanvas = document.getElementById(canvasElementId);
             
+            console.log('🔍 Photo capture elements check:', {
+                videoElement: !!video,
+                videoWidth: video ? video.videoWidth : 'N/A',
+                videoHeight: video ? video.videoHeight : 'N/A',
+                videoReadyState: video ? video.readyState : 'N/A',
+                overlayCanvas: !!overlayCanvas,
+                includeOverlay: includeOverlay,
+                currentPoseResults: !!currentPoseResults,
+                poseLandmarks: currentPoseResults ? !!currentPoseResults.poseLandmarks : false
+            });
+            
             if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
-                console.error('❌ Video not ready for capture');
+                console.error('❌ Video not ready for capture:', {
+                    videoExists: !!video,
+                    videoWidth: video ? video.videoWidth : 'N/A',
+                    videoHeight: video ? video.videoHeight : 'N/A',
+                    readyState: video ? video.readyState : 'N/A'
+                });
                 return null;
             }
             
@@ -4342,37 +4432,53 @@
         }
         
         async function startStaticCapture() {
-            // Start countdown process
-            const button = event.target;
-            button.disabled = true;
+            console.log('🎯 Starting static capture analysis (after countdown)...');
             
-            // Show countdown overlay
-            showCountdownOverlay('static', 5, async () => {
-                // Start actual analysis after countdown
-                isAnalyzing = true;
+            // Start actual analysis immediately (countdown already done in Improved function)
+            isAnalyzing = true;
+            
+            // Update UI to show analyzing state
+            const button = document.getElementById('staticCaptureBtn');
+            if (button) {
+                button.disabled = true;
                 button.textContent = 'Analyzing... / 分析中...';
-                
-                // Add camera flash effect for capture moment
-                showCameraFlash('static');
-                
-                // Capture pose data for 3 seconds
-                let analysisResults = [];
-                const captureInterval = setInterval(() => {
-                    if (currentPoseResults && currentPoseResults.poseLandmarks) {
-                        const analysis = performPoseAnalysis(currentPoseResults.poseLandmarks);
-                        if (analysis) {
-                            analysisResults.push(analysis);
-                        }
+            }
+            
+            // Capture pose data for 3 seconds
+            let analysisResults = [];
+            const captureInterval = setInterval(() => {
+                if (currentPoseResults && currentPoseResults.poseLandmarks) {
+                    const analysis = performPoseAnalysis(currentPoseResults.poseLandmarks);
+                    if (analysis) {
+                        analysisResults.push(analysis);
                     }
-                }, 100); // Capture every 100ms
-                
-                setTimeout(async () => {
+                }
+            }, 100); // Capture every 100ms
+            
+            setTimeout(async () => {
                     clearInterval(captureInterval);
                     isAnalyzing = false;
                     
                     // 📸 Capture photo with pose overlay
                     console.log('📸 Capturing static analysis photo...');
+                    console.log('🎥 Current video element state before capture:', {
+                        videoId: 'staticCameraFeed',
+                        videoExists: !!document.getElementById('staticCameraFeed'),
+                        canvasId: 'staticPoseCanvas', 
+                        canvasExists: !!document.getElementById('staticPoseCanvas'),
+                        hasPoseResults: !!currentPoseResults,
+                        hasLandmarks: !!(currentPoseResults && currentPoseResults.poseLandmarks)
+                    });
+                    
                     const capturedPhoto = capturePhoto('staticCameraFeed', 'staticPoseCanvas', true);
+                    
+                    console.log('📸 Photo capture result:', {
+                        captureSuccessful: !!capturedPhoto,
+                        hasImageData: !!(capturedPhoto && capturedPhoto.imageData),
+                        imageSize: capturedPhoto ? (capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A',
+                        dimensions: capturedPhoto ? `${capturedPhoto.width}x${capturedPhoto.height}` : 'N/A',
+                        hasPoseOverlay: capturedPhoto ? capturedPhoto.hasPoseOverlay : false
+                    });
                     
                     // Process captured analysis data
                     let analysisData;
@@ -4394,6 +4500,14 @@
                             ...analysisData
                         };
                         
+                        console.log('💾 Saving analysis result with photo data:', {
+                            analysisId: resultData.id,
+                            userId: resultData.user_id,
+                            hasPhoto: !!resultData.capturedPhoto,
+                            photoSize: resultData.capturedPhoto ? (resultData.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A',
+                            analysisType: resultData.analysis_type
+                        });
+                        
                         // ローカルに保存
                         saveAnalysisResultLocal(resultData);
                         
@@ -4401,10 +4515,21 @@
                         if (capturedPhoto) {
                             console.log('✅ Photo captured and saved with analysis');
                             showPhotoCaptureFeedback();
+                        } else {
+                            console.warn('⚠️ No photo was captured during static analysis');
                         }
+                    } else {
+                        console.error('❌ No currentUser found, cannot save analysis');
                     }
                     
                     updateResultsDisplay(analysisData);
+                    
+                    // Re-enable button
+                    const button = document.getElementById('staticCaptureBtn');
+                    if (button) {
+                        button.disabled = false;
+                        button.textContent = 'Start 10s Countdown / 10秒カウントダウン開始';
+                    }
                     
                     // 分析完了の振動フィードバック
                     if (navigator.vibrate) {
@@ -4508,7 +4633,24 @@
                                 
                                 // 📸 Capture photo with pose overlay at end of movement
                                 console.log('📸 Capturing dynamic analysis photo...');
+                                console.log('🎥 Current video element state before capture:', {
+                                    videoId: 'dynamicCameraFeed',
+                                    videoExists: !!document.getElementById('dynamicCameraFeed'),
+                                    canvasId: 'dynamicPoseCanvas', 
+                                    canvasExists: !!document.getElementById('dynamicPoseCanvas'),
+                                    hasPoseResults: !!currentPoseResults,
+                                    hasLandmarks: !!(currentPoseResults && currentPoseResults.poseLandmarks)
+                                });
+                                
                                 const capturedPhoto = capturePhoto('dynamicCameraFeed', 'dynamicPoseCanvas', true);
+                                
+                                console.log('📸 Photo capture result:', {
+                                    captureSuccessful: !!capturedPhoto,
+                                    hasImageData: !!(capturedPhoto && capturedPhoto.imageData),
+                                    imageSize: capturedPhoto ? (capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A',
+                                    dimensions: capturedPhoto ? `${capturedPhoto.width}x${capturedPhoto.height}` : 'N/A',
+                                    hasPoseOverlay: capturedPhoto ? capturedPhoto.hasPoseOverlay : false
+                                });
                                 
                                 // Process movement analysis data
                                 let analysisData;
