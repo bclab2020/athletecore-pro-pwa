@@ -2830,7 +2830,7 @@
                 console.log('🗣️ Testing voice before countdown...');
                 // Wait a moment for speech to be fully enabled
                 setTimeout(() => {
-                    speakCountdown('Ready', true);
+                    speakCountdown('Are you ready', true);
                 }, 200);
             }
             
@@ -2855,21 +2855,11 @@
             overlay.className = 'fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-40 flex items-center justify-center';
             overlay.style.zIndex = '10001';
             overlay.innerHTML = `
-                <!-- Compact Top-Right Counter -->
-                <div class="absolute top-4 right-4 text-center text-white bg-gradient-to-br from-gray-900 to-black bg-opacity-90 px-6 py-4 rounded-2xl shadow-2xl border-2 border-white border-opacity-30 backdrop-blur-sm max-w-xs">
-                    <div class="text-5xl font-black mb-2 text-white drop-shadow-2xl transition-all duration-300 ease-out" id="staticCountdownNumber" style="text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(16,185,129,0.6);">10</div>
-                    <div class="text-sm mb-2 text-white drop-shadow-md font-medium">Get ready!</div>
-                    <div class="text-xs opacity-75 mb-2">準備してください</div>
-                    <div class="w-12 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mx-auto mb-2" id="countdownProgress"></div>
-                    ${isFrontCamera ? `<div class="text-xs opacity-75 bg-green-500 bg-opacity-20 px-2 py-1 rounded-full border border-green-400 border-opacity-50">🔊 Audio ON</div>` : '<div class="text-xs opacity-75 bg-blue-500 bg-opacity-20 px-2 py-1 rounded-full border border-blue-400 border-opacity-50">🎯 Visual</div>'}
-                </div>
-                
-                <!-- Bottom Instructions - Non-blocking -->
-                <div class="absolute bottom-4 left-4 right-4 text-center">
-                    <div class="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
-                        <div class="text-sm opacity-90">Stand naturally with arms at sides</div>
-                        <div class="text-xs opacity-75">腕を体の横に自然に立ってください</div>
-                    </div>
+                <!-- Minimal Top-Right Counter -->
+                <div class="absolute top-4 right-4 text-center text-white bg-black bg-opacity-75 px-3 py-2 rounded-lg shadow-lg border border-white border-opacity-20 backdrop-blur-sm" style="min-width: 80px;">
+                    <div class="text-2xl font-bold mb-1 text-white transition-all duration-200 ease-out" id="staticCountdownNumber" style="text-shadow: 0 0 10px rgba(255,255,255,0.6);">10</div>
+                    <div class="text-xs opacity-75 mb-1" id="countdownMessage">Are you ready?</div>
+                    <div class="w-8 h-0.5 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mx-auto" id="countdownProgress"></div>
                 </div>
             `;
             
@@ -2901,31 +2891,31 @@
                         pulseIntensity = '0 0 60px rgba(239,68,68,0.9)';
                     }
                     
-                    // Apply dynamic styling - more subtle for compact display
+                    // Apply dynamic styling - minimal for small display
                     countdownNumber.style.color = color;
-                    countdownNumber.style.textShadow = `0 0 20px ${shadowColor}, ${pulseIntensity}, 0 0 40px rgba(255,255,255,0.4)`;
-                    countdownNumber.style.transform = 'scale(1.1)';
-                    countdownNumber.style.animation = 'none';
+                    countdownNumber.style.textShadow = `0 0 10px ${shadowColor}`;
+                    countdownNumber.style.transform = 'scale(1.05)';
                     
-                    // Add subtle pulsing animation
+                    // Add very subtle animation
                     setTimeout(() => {
                         countdownNumber.style.transform = 'scale(1.0)';
-                        countdownNumber.style.animation = 'pulse 0.6s ease-in-out';
-                    }, 150);
+                    }, 100);
                     
                     // Update progress bar
                     const progressBar = document.getElementById('countdownProgress');
                     if (progressBar) {
                         const progressWidth = ((10 - currentCount) / 10) * 100;
                         progressBar.style.width = `${progressWidth}%`;
-                        progressBar.style.background = `linear-gradient(90deg, ${color} 0%, rgba(255,255,255,0.5) 100%)`;
+                        progressBar.style.background = color;
                     }
                     
-                    // Subtle screen flash effect - less intrusive
-                    overlay.style.background = `radial-gradient(circle at top right, rgba(255,255,255,0.05) 0%, transparent 50%)`;
-                    setTimeout(() => {
-                        overlay.style.background = 'transparent';
-                    }, 200);
+                    // Update message
+                    const messageElement = document.getElementById('countdownMessage');
+                    if (messageElement && currentCount <= 5) {
+                        messageElement.textContent = 'Get ready!';
+                    }
+                    
+                    // No screen flash effect for minimal display
                     
                     // Multi-modal feedback: Voice + Audio + Haptic
                     
@@ -2956,30 +2946,31 @@
                         }
                     }
                 } else {
-                    // "OK!" final sequence - compact version
-                    countdownNumber.textContent = 'OK!';
-                    countdownNumber.style.transform = 'scale(1.3)';
+                    // "GO!" final sequence - minimal version
+                    countdownNumber.textContent = 'GO!';
+                    countdownNumber.style.transform = 'scale(1.1)';
                     countdownNumber.style.color = '#10B981'; // Bright green
-                    countdownNumber.style.textShadow = '0 0 20px rgba(16,185,129,1), 0 0 40px rgba(16,185,129,0.8), 0 0 60px rgba(255,255,255,0.6)';
-                    countdownNumber.style.animation = 'pulse 0.5s ease-in-out 3';
+                    countdownNumber.style.textShadow = '0 0 10px rgba(16,185,129,1)';
                     
                     // Full progress bar
                     const progressBar = document.getElementById('countdownProgress');
                     if (progressBar) {
                         progressBar.style.width = '100%';
-                        progressBar.style.background = 'linear-gradient(90deg, #10B981 0%, #34D399 50%, #6EE7B7 100%)';
-                        progressBar.style.height = '4px';
+                        progressBar.style.background = '#10B981';
                     }
                     
-                    // Subtle success flash
-                    overlay.style.background = 'radial-gradient(circle at top right, rgba(16,185,129,0.2) 0%, transparent 60%)';
+                    // Update message
+                    const messageElement = document.getElementById('countdownMessage');
+                    if (messageElement) {
+                        messageElement.textContent = 'Capture!';
+                    }
                     
                     // Final "OK!" multi-modal feedback
                     
-                    // Voice "OK!" only for front camera
+                    // Voice "GO!" only for front camera
                     if (isFrontCamera) {
                         setTimeout(() => {
-                            speakCountdown('OK!', true);
+                            speakCountdown('GO!', true);
                         }, 100);
                     }
                     
