@@ -931,15 +931,20 @@
                     
                     <!-- Filter Tabs -->
                     <div class="bg-white px-6 py-3 border-b">
-                        <div class="flex space-x-4">
-                            <button id="filterAll" onclick="filterAnalysisHistory('all')" class="px-4 py-2 text-sm rounded-lg bg-blue-50 brand-color font-medium">
-                                All / 全て
-                            </button>
-                            <button id="filterStatic" onclick="filterAnalysisHistory('static')" class="px-4 py-2 text-sm rounded-lg text-gray-600">
-                                Static / 静的
-                            </button>
-                            <button id="filterDynamic" onclick="filterAnalysisHistory('dynamic')" class="px-4 py-2 text-sm rounded-lg text-gray-600">
-                                Dynamic / 動的
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-4">
+                                <button id="filterAll" onclick="filterAnalysisHistory('all')" class="px-4 py-2 text-sm rounded-lg bg-blue-50 brand-color font-medium">
+                                    All / 全て
+                                </button>
+                                <button id="filterStatic" onclick="filterAnalysisHistory('static')" class="px-4 py-2 text-sm rounded-lg text-gray-600">
+                                    Static / 静的
+                                </button>
+                                <button id="filterDynamic" onclick="filterAnalysisHistory('dynamic')" class="px-4 py-2 text-sm rounded-lg text-gray-600">
+                                    Dynamic / 動的
+                                </button>
+                            </div>
+                            <button onclick="showPhotoComparison()" class="px-3 py-2 text-sm bg-green-50 text-green-700 rounded-lg hover:bg-green-100 flex items-center">
+                                📊 Compare / 比較
                             </button>
                         </div>
                     </div>
@@ -1085,6 +1090,89 @@
                 </div>
             </div>
             
+            <!-- Photo Comparison Screen -->
+            <div id="photo-comparison" class="app-screen bg-gray-50">
+                <div class="flex-1 overflow-y-auto">
+                    <!-- Header -->
+                    <div class="bg-white px-6 py-4 shadow-sm sticky top-0 z-10">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <button onclick="showAnalysisHistory()" class="mr-4 text-gray-600">←</button>
+                                <h2 class="text-lg font-semibold brand-color">Photo Comparison / 写真比較</h2>
+                            </div>
+                            <button onclick="resetComparison()" class="text-sm text-gray-500 hover:text-gray-700">
+                                Reset / リセット
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Photo Selection -->
+                    <div class="px-6 py-4">
+                        <div class="mb-6">
+                            <h3 class="text-md font-semibold text-gray-800 mb-4">Select Photos to Compare / 比較する写真を選択</h3>
+                            <div class="grid grid-cols-2 gap-4" id="photoSelectionGrid">
+                                <!-- Photos will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Comparison Display -->
+                        <div id="comparisonDisplay" class="hidden">
+                            <h3 class="text-md font-semibold text-gray-800 mb-4">Before vs After Comparison</h3>
+                            
+                            <!-- Side by side photos -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="bg-white rounded-xl p-4 shadow-sm">
+                                    <div class="text-center mb-3">
+                                        <div class="text-sm font-medium text-blue-600" id="beforeLabel">Before</div>
+                                        <div class="text-xs text-gray-500" id="beforeDate"></div>
+                                    </div>
+                                    <div class="relative">
+                                        <img id="beforePhoto" class="w-full h-auto rounded-lg shadow-md" style="max-height: 300px; object-fit: contain;">
+                                        <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded" id="beforeScore">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white rounded-xl p-4 shadow-sm">
+                                    <div class="text-center mb-3">
+                                        <div class="text-sm font-medium text-green-600" id="afterLabel">After</div>
+                                        <div class="text-xs text-gray-500" id="afterDate"></div>
+                                    </div>
+                                    <div class="relative">
+                                        <img id="afterPhoto" class="w-full h-auto rounded-lg shadow-md" style="max-height: 300px; object-fit: contain;">
+                                        <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded" id="afterScore">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Score Comparison -->
+                            <div class="bg-white rounded-xl p-6 shadow-sm">
+                                <h4 class="text-lg font-semibold brand-color mb-4">Score Improvement / スコア改善</h4>
+                                <div id="scoreComparison" class="space-y-4">
+                                    <!-- Score comparison will be populated here -->
+                                </div>
+                                
+                                <!-- Progress Analysis -->
+                                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                    <div class="text-sm font-medium text-blue-800 mb-2">Progress Analysis / 進歩分析</div>
+                                    <div id="progressAnalysis" class="text-sm text-blue-700">
+                                        <!-- Progress analysis will be populated here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="comparisonEmptyState" class="text-center py-12">
+                            <div class="text-6xl mb-4">📊</div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Select Two Photos to Compare</h3>
+                            <p class="text-gray-500">2つの写真を選択して比較してください</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1255,6 +1343,22 @@
         // Make test functions available globally for debugging
         window.testVoice = testVoice;
         window.testFullscreenMode = testFullscreenMode;
+        
+        // Debug functions for analysis history
+        window.debugAnalysisHistory = function() {
+            const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+            console.log('📊 All analysis results:', results);
+            console.log('👤 Current user:', currentUser);
+            if (currentUser) {
+                const userResults = results.filter(r => r.user_id === currentUser.id);
+                console.log('🗂️ User results:', userResults);
+            }
+        };
+        
+        window.testAnalysisDetail = function(analysisId) {
+            console.log('🧪 Testing showAnalysisDetail with ID:', analysisId);
+            showAnalysisDetail(analysisId);
+        };
         
         function showWelcome() {
             console.log('Showing welcome screen');
@@ -1636,6 +1740,197 @@
                 cameraStream.getTracks().forEach(track => track.stop());
                 cameraStream = null;
             }
+        }
+        
+        // Photo Capture Functions
+        function capturePhoto(videoElementId, canvasElementId, includeOverlay = true) {
+            console.log('📸 Capturing photo from:', videoElementId);
+            
+            const video = document.getElementById(videoElementId);
+            const overlayCanvas = document.getElementById(canvasElementId);
+            
+            if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+                console.error('❌ Video not ready for capture');
+                return null;
+            }
+            
+            // Create a new canvas for the photo
+            const captureCanvas = document.createElement('canvas');
+            const ctx = captureCanvas.getContext('2d');
+            
+            // Set canvas size to match video
+            captureCanvas.width = video.videoWidth;
+            captureCanvas.height = video.videoHeight;
+            
+            console.log('🎯 Capture canvas size:', captureCanvas.width, 'x', captureCanvas.height);
+            
+            // Check if this is a front camera (mirrored)
+            const isFrontCamera = video.style.transform.includes('scaleX(-1)');
+            
+            // Draw video frame
+            if (isFrontCamera) {
+                // For front camera, flip the captured image back to normal
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, -captureCanvas.width, 0, captureCanvas.width, captureCanvas.height);
+                ctx.scale(-1, 1); // Reset scale
+            } else {
+                ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            }
+            
+            // Draw pose overlay if available and requested
+            if (includeOverlay && overlayCanvas && currentPoseResults && currentPoseResults.poseLandmarks) {
+                console.log('🎨 Adding pose overlay to captured photo');
+                drawPoseOverlayOnPhoto(ctx, currentPoseResults.poseLandmarks, captureCanvas, !isFrontCamera);
+            }
+            
+            // Convert to base64
+            const photoData = captureCanvas.toDataURL('image/jpeg', 0.85);
+            console.log('✅ Photo captured successfully, size:', (photoData.length / 1024).toFixed(1), 'KB');
+            
+            return {
+                imageData: photoData,
+                width: captureCanvas.width,
+                height: captureCanvas.height,
+                timestamp: new Date().toISOString(),
+                hasPoseOverlay: includeOverlay && currentPoseResults && currentPoseResults.poseLandmarks,
+                cameraType: isFrontCamera ? 'front' : 'back'
+            };
+        }
+        
+        // Draw pose overlay on captured photo
+        function drawPoseOverlayOnPhoto(ctx, landmarks, canvas, isBackCamera) {
+            console.log('🎨 Drawing pose overlay on photo');
+            
+            // Save current context state
+            ctx.save();
+            
+            // Draw skeleton connections
+            ctx.strokeStyle = '#00FF00'; // Bright green for photo
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            POSE_CONNECTIONS.forEach(connection => {
+                const start = landmarks[connection[0]];
+                const end = landmarks[connection[1]];
+                
+                if (start && end && start.visibility > 0.3 && end.visibility > 0.3) {
+                    ctx.beginPath();
+                    // For back camera, use normal coordinates. For front camera in photo, coordinates are already corrected
+                    const startX = start.x * canvas.width;
+                    const startY = start.y * canvas.height;
+                    const endX = end.x * canvas.width;
+                    const endY = end.y * canvas.height;
+                    
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+            });
+            
+            // Draw landmark points
+            ctx.fillStyle = '#FFFF00'; // Bright yellow for photo points
+            landmarks.forEach((landmark, index) => {
+                if (landmark.visibility > 0.3) {
+                    const x = landmark.x * canvas.width;
+                    const y = landmark.y * canvas.height;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Add numbers for key landmarks
+                    if ([0, 11, 12, 23, 24].includes(index)) {
+                        ctx.fillStyle = '#000000';
+                        ctx.font = 'bold 16px Arial';
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.lineWidth = 4;
+                        ctx.strokeText(index.toString(), x + 12, y + 6);
+                        ctx.fillText(index.toString(), x + 12, y + 6);
+                        ctx.fillStyle = '#FFFF00';
+                    }
+                }
+            });
+            
+            // Draw vertical reference lines from hip center
+            drawVerticalReferenceLinesOnPhoto(ctx, landmarks, canvas);
+            
+            // Restore context state
+            ctx.restore();
+            
+            console.log('✅ Pose overlay drawn successfully on photo');
+        }
+        
+        // Draw vertical reference lines on photo
+        function drawVerticalReferenceLinesOnPhoto(ctx, landmarks, canvas) {
+            const leftHip = landmarks[23];
+            const rightHip = landmarks[24];
+            const nose = landmarks[0];
+            
+            if (leftHip && rightHip && leftHip.visibility > 0.3 && rightHip.visibility > 0.3) {
+                const hipCenterX = ((leftHip.x + rightHip.x) / 2) * canvas.width;
+                const hipCenterY = ((leftHip.y + rightHip.y) / 2) * canvas.height;
+                
+                // Vertical reference line style for photo
+                ctx.strokeStyle = '#FF0080'; // Bright magenta for photo
+                ctx.lineWidth = 3;
+                ctx.setLineDash([12, 6]); // Larger dash pattern for photo
+                
+                // Draw vertical lines
+                ctx.beginPath();
+                ctx.moveTo(hipCenterX, 0);
+                ctx.lineTo(hipCenterX, canvas.height);
+                ctx.stroke();
+                
+                // Draw hip center point
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#FF0080';
+                ctx.beginPath();
+                ctx.arc(hipCenterX, hipCenterY, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Hip center label
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 14px Arial';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                ctx.strokeText('HIP CENTER', hipCenterX + 15, hipCenterY + 5);
+                ctx.fillText('HIP CENTER', hipCenterX + 15, hipCenterY + 5);
+                
+                // Draw deviation line if nose is visible
+                if (nose && nose.visibility > 0.3) {
+                    const noseX = nose.x * canvas.width;
+                    const noseY = nose.y * canvas.height;
+                    
+                    ctx.strokeStyle = '#00FFFF'; // Cyan for deviation line
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([6, 3]);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(noseX, noseY);
+                    ctx.lineTo(hipCenterX, noseY);
+                    ctx.stroke();
+                    
+                    // Deviation measurement
+                    const deviationPx = Math.abs(noseX - hipCenterX);
+                    const deviationPercent = (deviationPx / canvas.width * 100).toFixed(1);
+                    
+                    if (deviationPx > 15) {
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 16px Arial';
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 3;
+                        
+                        const textX = Math.min(noseX, hipCenterX) + Math.abs(noseX - hipCenterX) / 2;
+                        const textY = noseY - 15;
+                        
+                        ctx.strokeText(`${deviationPercent}%`, textX, textY);
+                        ctx.fillText(`${deviationPercent}%`, textX, textY);
+                    }
+                }
+            }
+            
+            ctx.setLineDash([]); // Reset dash pattern
         }
         
         // MediaPipe Pose Detection
@@ -2841,7 +3136,11 @@
             try {
                 localStorage.setItem('athletecore_user', JSON.stringify(profileData));
                 currentUser = profileData;
-                console.log('Profile saved locally:', currentUser);
+                console.log('✅ Profile saved locally:', currentUser);
+                
+                // Create sample analysis data for the new user
+                createSampleAnalysisData();
+                
                 showDashboard();
             } catch (error) {
                 console.error('Local storage error:', error);
@@ -2854,6 +3153,47 @@
         // UUID生成関数
         function generateUUID() {
             return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // サンプル分析データ作成関数
+        function createSampleAnalysisData() {
+            if (!currentUser) return [];
+            
+            const now = new Date();
+            const sampleData = [];
+            
+            // Create 3 sample analysis results with different dates
+            const dates = [
+                new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+                new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+                new Date(now.getTime() - 3 * 60 * 60 * 1000)       // 3 hours ago
+            ];
+            
+            const analysisTypes = ['static', 'dynamic', 'static'];
+            const baseScores = [
+                { overall_score: 85, hip_flexibility: 88, postural_stability: 82, dynamic_balance: 86 },
+                { overall_score: 78, hip_flexibility: 75, postural_stability: 85, dynamic_balance: 75 },
+                { overall_score: 92, hip_flexibility: 95, postural_stability: 88, dynamic_balance: 93 }
+            ];
+            
+            dates.forEach((date, index) => {
+                const analysisResult = {
+                    id: generateUUID(),
+                    user_id: currentUser.id,
+                    analysis_type: analysisTypes[index],
+                    sport: currentUser.primary_sport,
+                    analysis_date: date.toISOString(),
+                    ...baseScores[index],
+                    recommendations: [
+                        "Focus on core strengthening exercises / 体幹強化エクササイズに重点を置く",
+                        "Improve hip flexor mobility / 股関節屈筋群の可動性を向上させる"
+                    ]
+                };
+                sampleData.push(analysisResult);
+            });
+            
+            console.log('📊 Created sample analysis data:', sampleData.length, 'items');
+            return sampleData;
         }
         
         // アプリ起動時にローカルデータをロード
@@ -2879,8 +3219,15 @@
                     greetingElement.textContent = `Hello, ${currentUser.name}!`;
                 }
                 
+                console.log('📊 Loading analysis history for user:', currentUser.name);
                 // Load and display analysis history
                 await loadAnalysisHistory();
+            } else {
+                console.warn('⚠️ No current user found in updateDashboardContent');
+                // Redirect to registration if no user
+                setTimeout(() => {
+                    showRegistration();
+                }, 1000);
             }
         }
         
@@ -2888,25 +3235,559 @@
         function saveAnalysisResultLocal(resultData) {
             try {
                 let results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-                results.push(resultData);
-                // 最新10件のみ保持
-                if (results.length > 10) {
-                    results = results.slice(-10);
+                
+                // Check localStorage size before adding new data
+                const currentSize = new Blob([JSON.stringify(results)]).size;
+                const newDataSize = new Blob([JSON.stringify(resultData)]).size;
+                const totalSize = currentSize + newDataSize;
+                
+                console.log('📊 Storage size check:', {
+                    currentSize: (currentSize / 1024 / 1024).toFixed(2) + 'MB',
+                    newDataSize: (newDataSize / 1024 / 1024).toFixed(2) + 'MB',
+                    totalSize: (totalSize / 1024 / 1024).toFixed(2) + 'MB',
+                    hasPhoto: !!resultData.capturedPhoto
+                });
+                
+                // If total size would exceed 8MB, remove oldest entries with photos first
+                while (totalSize > 8 * 1024 * 1024 && results.length > 0) {
+                    // Find oldest entry with photo to remove first
+                    const oldestWithPhoto = results.find(r => r.capturedPhoto);
+                    if (oldestWithPhoto) {
+                        const index = results.findIndex(r => r.id === oldestWithPhoto.id);
+                        results.splice(index, 1);
+                        console.log('🗑️ Removed oldest analysis with photo to save space');
+                    } else {
+                        // Remove oldest entry if no photos found
+                        results.shift();
+                        console.log('🗑️ Removed oldest analysis to save space');
+                    }
                 }
+                
+                results.push(resultData);
+                
+                // Additional safety: keep maximum 20 entries total
+                if (results.length > 20) {
+                    results = results.slice(-20);
+                }
+                
                 localStorage.setItem('athletecore_results', JSON.stringify(results));
-                console.log('Analysis result saved locally:', resultData);
+                console.log('✅ Analysis result saved locally:', {
+                    id: resultData.id,
+                    type: resultData.analysis_type,
+                    hasPhoto: !!resultData.capturedPhoto,
+                    totalEntries: results.length
+                });
+                
             } catch (error) {
-                console.error('Error saving analysis result locally:', error);
+                console.error('❌ Error saving analysis result locally:', error);
+                
+                // If localStorage is full, try to save without photo
+                if (error.name === 'QuotaExceededError' && resultData.capturedPhoto) {
+                    console.warn('⚠️ Storage full, attempting to save without photo');
+                    const resultDataWithoutPhoto = { ...resultData };
+                    delete resultDataWithoutPhoto.capturedPhoto;
+                    
+                    try {
+                        let results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                        results.push(resultDataWithoutPhoto);
+                        localStorage.setItem('athletecore_results', JSON.stringify(results));
+                        console.log('✅ Analysis saved without photo due to storage constraints');
+                        
+                        // Show user notification
+                        showStorageWarning();
+                    } catch (secondError) {
+                        console.error('❌ Failed to save even without photo:', secondError);
+                    }
+                }
             }
+        }
+        
+        // Show storage warning to user
+        function showStorageWarning() {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'fixed top-4 left-4 right-4 bg-yellow-500 text-white p-3 rounded-lg shadow-lg z-50';
+            warningDiv.innerHTML = `
+                <div class="text-sm font-medium">Storage Almost Full</div>
+                <div class="text-xs mt-1">Photo not saved. Consider clearing old analysis data.</div>
+                <button onclick="this.parentElement.remove()" class="absolute top-1 right-2 text-white text-lg">×</button>
+            `;
+            document.body.appendChild(warningDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                warningDiv.remove();
+            }, 5000);
+        }
+        
+        // Helper function to estimate data size
+        function getStorageUsage() {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const size = new Blob([JSON.stringify(results)]).size;
+                const photosCount = results.filter(r => r.capturedPhoto).length;
+                
+                return {
+                    totalSize: size,
+                    totalSizeMB: (size / 1024 / 1024).toFixed(2),
+                    entriesCount: results.length,
+                    photosCount: photosCount,
+                    averagePhotoSize: photosCount > 0 ? (size / photosCount / 1024).toFixed(1) + 'KB' : 'N/A'
+                };
+            } catch (error) {
+                return { error: error.message };
+            }
+        }
+        
+        // Show photo capture success feedback
+        function showPhotoCaptureFeedback() {
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'fixed top-4 left-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50';
+            feedbackDiv.innerHTML = `
+                <div class="flex items-center">
+                    <div class="text-2xl mr-3">📸</div>
+                    <div>
+                        <div class="text-sm font-medium">Photo Captured!</div>
+                        <div class="text-xs mt-1">Analysis saved with pose overlay / 姿勢オーバーレイ付きで保存</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(feedbackDiv);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                feedbackDiv.remove();
+            }, 3000);
+            
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 50, 50]);
+            }
+        }
+        
+        // Show photo in full-screen modal
+        function showPhotoModal(analysisId) {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const analysis = results.find(result => result.id === analysisId);
+                
+                if (!analysis || !analysis.capturedPhoto) {
+                    console.error('❌ Photo not found for analysis:', analysisId);
+                    return;
+                }
+                
+                const photo = analysis.capturedPhoto;
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="relative max-w-full max-h-full p-4">
+                        <img src="${photo.imageData}" 
+                             alt="Analysis Photo" 
+                             class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+                        
+                        <!-- Close button -->
+                        <button onclick="this.parentElement.parentElement.remove()" 
+                                class="absolute top-2 right-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl">
+                            ×
+                        </button>
+                        
+                        <!-- Photo info overlay -->
+                        <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-3 rounded-lg">
+                            <div class="text-sm font-medium">${analysis.analysis_type.toUpperCase()} Analysis Photo</div>
+                            <div class="text-xs opacity-75">${photo.width} × ${photo.height} • ${photo.cameraType} camera</div>
+                            <div class="text-xs opacity-75">${new Date(photo.timestamp).toLocaleString('ja-JP')}</div>
+                        </div>
+                        
+                        <!-- Action buttons -->
+                        <div class="absolute bottom-4 right-4 space-x-2">
+                            <button onclick="downloadPhoto('${analysisId}')" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                💾 Download
+                            </button>
+                            <button onclick="sharePhoto('${analysisId}')" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                📤 Share
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Close modal on background click
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                };
+                
+                // Close modal on escape key
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        modal.remove();
+                        document.removeEventListener('keydown', handleEscape);
+                    }
+                };
+                document.addEventListener('keydown', handleEscape);
+                
+                document.body.appendChild(modal);
+                console.log('✅ Photo modal displayed');
+                
+            } catch (error) {
+                console.error('❌ Error showing photo modal:', error);
+            }
+        }
+        
+        // Download photo function
+        function downloadPhoto(analysisId) {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const analysis = results.find(result => result.id === analysisId);
+                
+                if (!analysis || !analysis.capturedPhoto) {
+                    console.error('❌ Photo not found for download:', analysisId);
+                    return;
+                }
+                
+                const photo = analysis.capturedPhoto;
+                const link = document.createElement('a');
+                link.href = photo.imageData;
+                link.download = `AthleteCore_${analysis.analysis_type}_${new Date(analysis.analysis_date).toISOString().slice(0, 19).replace(/[:]/g, '-')}.jpg`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                console.log('✅ Photo download initiated');
+                
+                // Show success feedback
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'fixed bottom-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50';
+                feedbackDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="text-xl mr-2">💾</div>
+                        <div class="text-sm">Photo Downloaded!</div>
+                    </div>
+                `;
+                document.body.appendChild(feedbackDiv);
+                
+                setTimeout(() => {
+                    feedbackDiv.remove();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Error downloading photo:', error);
+            }
+        }
+        
+        // Share photo function
+        function sharePhoto(analysisId) {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const analysis = results.find(result => result.id === analysisId);
+                
+                if (!analysis || !analysis.capturedPhoto) {
+                    console.error('❌ Photo not found for sharing:', analysisId);
+                    return;
+                }
+                
+                // Convert base64 to blob for sharing
+                const base64Data = analysis.capturedPhoto.imageData.split(',')[1];
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                
+                const file = new File([blob], `AthleteCore_Analysis_${analysis.analysis_type}.jpg`, { type: 'image/jpeg' });
+                
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: 'AthleteCore Pro Analysis',
+                        text: `My ${analysis.analysis_type} analysis result: ${analysis.overall_score}/100`,
+                        files: [file]
+                    }).then(() => {
+                        console.log('✅ Photo shared successfully');
+                    }).catch((error) => {
+                        console.log('❌ Error sharing photo:', error);
+                        fallbackShare(analysisId);
+                    });
+                } else {
+                    fallbackShare(analysisId);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error sharing photo:', error);
+                fallbackShare(analysisId);
+            }
+        }
+        
+        // Fallback share function
+        function fallbackShare(analysisId) {
+            const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+            const analysis = results.find(result => result.id === analysisId);
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'AthleteCore Pro Analysis',
+                    text: `Check out my ${analysis.analysis_type} analysis result: ${analysis.overall_score}/100! 💪`,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                // Copy URL to clipboard
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Link copied to clipboard! / リンクをクリップボードにコピーしました！');
+                }).catch(() => {
+                    alert('Analysis shared! / 分析結果を共有しました！');
+                });
+            }
+        }
+        
+        // Photo Comparison Functions
+        let selectedPhotos = [];
+        
+        function showPhotoComparison() {
+            console.log('📊 Showing photo comparison...');
+            showScreen('photo-comparison');
+            document.getElementById('photo-comparison').classList.add('fade-in');
+            loadPhotosForComparison();
+        }
+        
+        function loadPhotosForComparison() {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const userResults = results.filter(result => 
+                    result.user_id === currentUser.id && result.capturedPhoto
+                );
+                
+                const photoGrid = document.getElementById('photoSelectionGrid');
+                
+                if (userResults.length === 0) {
+                    photoGrid.innerHTML = `
+                        <div class="col-span-2 text-center py-8">
+                            <div class="text-4xl mb-2">📷</div>
+                            <p class="text-gray-500">No photos available for comparison</p>
+                            <p class="text-sm text-gray-400">写真が見つかりません</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                photoGrid.innerHTML = userResults.map(analysis => {
+                    const photo = analysis.capturedPhoto;
+                    const isSelected = selectedPhotos.includes(analysis.id);
+                    
+                    return `
+                        <div class="relative cursor-pointer ${isSelected ? 'ring-4 ring-blue-500' : 'hover:ring-2 hover:ring-gray-300'} rounded-lg transition-all" 
+                             onclick="togglePhotoSelection('${analysis.id}')">
+                            <img src="${photo.imageData}" 
+                                 alt="Analysis Photo" 
+                                 class="w-full h-32 object-cover rounded-lg shadow-sm">
+                            <div class="absolute top-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                                ${analysis.overall_score}/100
+                            </div>
+                            <div class="absolute top-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                                ${analysis.analysis_type}
+                            </div>
+                            <div class="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                                ${new Date(analysis.analysis_date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}
+                            </div>
+                            ${isSelected ? `
+                                <div class="absolute inset-0 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                                    <div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg">
+                                        ${selectedPhotos.indexOf(analysis.id) + 1}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                console.log('📷 Loaded', userResults.length, 'photos for comparison');
+                
+            } catch (error) {
+                console.error('❌ Error loading photos for comparison:', error);
+            }
+        }
+        
+        function togglePhotoSelection(analysisId) {
+            const index = selectedPhotos.indexOf(analysisId);
+            
+            if (index > -1) {
+                // Remove from selection
+                selectedPhotos.splice(index, 1);
+            } else {
+                // Add to selection (max 2 photos)
+                if (selectedPhotos.length < 2) {
+                    selectedPhotos.push(analysisId);
+                } else {
+                    // Replace first selected photo
+                    selectedPhotos[0] = selectedPhotos[1];
+                    selectedPhotos[1] = analysisId;
+                }
+            }
+            
+            console.log('📊 Selected photos:', selectedPhotos);
+            
+            // Refresh the photo grid
+            loadPhotosForComparison();
+            
+            // Show or hide comparison
+            if (selectedPhotos.length === 2) {
+                showComparison();
+            } else {
+                hideComparison();
+            }
+        }
+        
+        function showComparison() {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const photo1 = results.find(r => r.id === selectedPhotos[0]);
+                const photo2 = results.find(r => r.id === selectedPhotos[1]);
+                
+                if (!photo1 || !photo2) {
+                    console.error('❌ Photos not found for comparison');
+                    return;
+                }
+                
+                // Determine which is "before" and which is "after" based on date
+                const [beforeAnalysis, afterAnalysis] = new Date(photo1.analysis_date) < new Date(photo2.analysis_date) 
+                    ? [photo1, photo2] : [photo2, photo1];
+                
+                // Show comparison display
+                document.getElementById('comparisonDisplay').classList.remove('hidden');
+                document.getElementById('comparisonEmptyState').classList.add('hidden');
+                
+                // Update photos
+                document.getElementById('beforePhoto').src = beforeAnalysis.capturedPhoto.imageData;
+                document.getElementById('afterPhoto').src = afterAnalysis.capturedPhoto.imageData;
+                
+                // Update labels and dates
+                document.getElementById('beforeDate').textContent = new Date(beforeAnalysis.analysis_date).toLocaleDateString('ja-JP');
+                document.getElementById('afterDate').textContent = new Date(afterAnalysis.analysis_date).toLocaleDateString('ja-JP');
+                document.getElementById('beforeScore').textContent = `${beforeAnalysis.overall_score}/100`;
+                document.getElementById('afterScore').textContent = `${afterAnalysis.overall_score}/100`;
+                
+                // Create score comparison
+                createScoreComparison(beforeAnalysis, afterAnalysis);
+                
+                console.log('✅ Comparison displayed successfully');
+                
+            } catch (error) {
+                console.error('❌ Error showing comparison:', error);
+            }
+        }
+        
+        function createScoreComparison(beforeAnalysis, afterAnalysis) {
+            const scoreFields = [
+                {key: 'overall_score', label: 'Overall Score / 総合スコア'},
+                {key: 'hip_flexibility', label: 'Hip Flexibility / 股関節柔軟性'},
+                {key: 'postural_stability', label: 'Postural Stability / 姿勢安定性'},
+                {key: 'dynamic_balance', label: 'Dynamic Balance / 動的バランス'}
+            ];
+            
+            const comparisonContainer = document.getElementById('scoreComparison');
+            const progressContainer = document.getElementById('progressAnalysis');
+            
+            let improvementCount = 0;
+            let totalImprovement = 0;
+            
+            comparisonContainer.innerHTML = scoreFields.map(field => {
+                const beforeScore = beforeAnalysis[field.key] || 0;
+                const afterScore = afterAnalysis[field.key] || 0;
+                const difference = afterScore - beforeScore;
+                const improvement = difference > 0;
+                const decline = difference < 0;
+                
+                if (improvement) {
+                    improvementCount++;
+                    totalImprovement += difference;
+                }
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-800">${field.label}</div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-600">${beforeScore}</div>
+                            <div class="text-2xl ${improvement ? 'text-green-500' : decline ? 'text-red-500' : 'text-gray-400'}">
+                                ${improvement ? '→' : decline ? '↓' : '='}
+                            </div>
+                            <div class="text-sm font-medium ${improvement ? 'text-green-600' : decline ? 'text-red-600' : 'text-gray-600'}">
+                                ${afterScore}
+                            </div>
+                            <div class="text-xs ${improvement ? 'text-green-600' : decline ? 'text-red-600' : 'text-gray-400'} min-w-16 text-right">
+                                ${difference > 0 ? '+' : ''}${difference}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Generate progress analysis
+            const daysDifference = Math.ceil((new Date(afterAnalysis.analysis_date) - new Date(beforeAnalysis.analysis_date)) / (1000 * 60 * 60 * 24));
+            const overallImprovement = afterAnalysis.overall_score - beforeAnalysis.overall_score;
+            
+            let progressText = '';
+            if (overallImprovement > 0) {
+                progressText = `🎉 Great progress! Your overall score improved by ${overallImprovement} points over ${daysDifference} days. `;
+                progressText += `${improvementCount} out of ${scoreFields.length} metrics showed improvement. `;
+                progressText += `素晴らしい進歩です！${daysDifference}日間で総合スコアが${overallImprovement}点向上しました。`;
+            } else if (overallImprovement < 0) {
+                progressText = `📉 Your overall score decreased by ${Math.abs(overallImprovement)} points over ${daysDifference} days. `;
+                progressText += `Focus on consistent training to improve your results. `;
+                progressText += `総合スコアが${Math.abs(overallImprovement)}点下がりました。継続的なトレーニングに集中しましょう。`;
+            } else {
+                progressText = `📊 Your overall score remained stable over ${daysDifference} days. `;
+                progressText += `Consider varying your training routine for continued improvement. `;
+                progressText += `総合スコアは安定しています。更なる向上のため、トレーニング内容を変化させることを検討してください。`;
+            }
+            
+            progressContainer.textContent = progressText;
+        }
+        
+        function hideComparison() {
+            document.getElementById('comparisonDisplay').classList.add('hidden');
+            document.getElementById('comparisonEmptyState').classList.remove('hidden');
+        }
+        
+        function resetComparison() {
+            selectedPhotos = [];
+            loadPhotosForComparison();
+            hideComparison();
+            console.log('🔄 Comparison reset');
         }
         
         function loadAnalysisHistory() {
             try {
                 const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-                const userResults = results.filter(result => result.user_id === currentUser.id);
                 const historyContainer = document.getElementById('analysisHistory');
                 
+                // Debug: Check if currentUser exists
+                if (!currentUser) {
+                    console.warn('❌ No current user found for history loading');
+                    historyContainer.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Please register first / まず登録してください</p>';
+                    return;
+                }
+                
+                console.log('📊 Loading history for user:', currentUser.id);
+                const userResults = results.filter(result => result.user_id === currentUser.id);
+                console.log('🗂️ Found analysis results:', userResults.length);
+                
                 if (userResults.length === 0) {
+                    // Add sample data for demonstration if no results exist
+                    const sampleData = createSampleAnalysisData();
+                    if (sampleData.length > 0) {
+                        // Save sample data to localStorage
+                        const allResults = [...results, ...sampleData];
+                        localStorage.setItem('athletecore_results', JSON.stringify(allResults));
+                        console.log('📝 Created sample analysis data for demonstration');
+                        // Reload with sample data
+                        loadAnalysisHistory();
+                        return;
+                    }
+                    
                     historyContainer.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No analysis yet / まだ分析がありません</p>';
                     return;
                 }
@@ -2921,11 +3802,14 @@
                     };
                     
                     return `
-                        <div class="bg-white p-3 rounded-lg border border-gray-100 cursor-pointer hover:shadow-md transition-shadow" onclick="showAnalysisDetail('${analysis.id}')">
+                        <div class="bg-white p-3 rounded-lg border border-gray-100 cursor-pointer hover:shadow-md transition-shadow" 
+                             onclick="console.log('🖱️ Clicked analysis:', '${analysis.id}'); showAnalysisDetail('${analysis.id}');"
+                             data-analysis-id="${analysis.id}">
                             <div class="flex justify-between items-center">
                                 <div>
                                     <div class="text-sm font-medium brand-color">${typeLabel[analysis.analysis_type] || analysis.analysis_type}</div>
                                     <div class="text-xs text-gray-500">${date} ${time}</div>
+                                    <div class="text-xs text-gray-400">ID: ${analysis.id.slice(-8)}</div>
                                 </div>
                                 <div class="text-right">
                                     <div class="text-sm font-bold ${analysis.overall_score >= 80 ? 'text-green-600' : 'text-orange-600'}">${analysis.overall_score}/100</div>
@@ -3486,6 +4370,10 @@
                     clearInterval(captureInterval);
                     isAnalyzing = false;
                     
+                    // 📸 Capture photo with pose overlay
+                    console.log('📸 Capturing static analysis photo...');
+                    const capturedPhoto = capturePhoto('staticCameraFeed', 'staticPoseCanvas', true);
+                    
                     // Process captured analysis data
                     let analysisData;
                     if (analysisResults.length > 0) {
@@ -3502,11 +4390,18 @@
                             analysis_type: 'static',
                             sport: currentUser.primary_sport,
                             analysis_date: new Date().toISOString(),
+                            capturedPhoto: capturedPhoto, // 📸 Add photo data
                             ...analysisData
                         };
                         
                         // ローカルに保存
                         saveAnalysisResultLocal(resultData);
+                        
+                        // Show photo capture success
+                        if (capturedPhoto) {
+                            console.log('✅ Photo captured and saved with analysis');
+                            showPhotoCaptureFeedback();
+                        }
                     }
                     
                     updateResultsDisplay(analysisData);
@@ -3611,6 +4506,10 @@
                                     floatingButton.textContent = 'Start Auto Recording / 自動録画開始';
                                 }
                                 
+                                // 📸 Capture photo with pose overlay at end of movement
+                                console.log('📸 Capturing dynamic analysis photo...');
+                                const capturedPhoto = capturePhoto('dynamicCameraFeed', 'dynamicPoseCanvas', true);
+                                
                                 // Process movement analysis data
                                 let analysisData;
                                 if (movementAnalysisData.length > 0) {
@@ -3626,10 +4525,18 @@
                                         analysis_type: 'dynamic',
                                         sport: currentUser.primary_sport,
                                         analysis_date: new Date().toISOString(),
+                                        capturedPhoto: capturedPhoto, // 📸 Add photo data
+                                        repetitions_performed: currentSquatCount, // Add squat count
                                         ...analysisData
                                     };
                                     
                                     saveAnalysisResultLocal(resultData);
+                                    
+                                    // Show photo capture success
+                                    if (capturedPhoto) {
+                                        console.log('✅ Dynamic analysis photo captured and saved');
+                                        showPhotoCaptureFeedback();
+                                    }
                                 }
                                 
                                 updateResultsDisplay(analysisData);
@@ -4247,27 +5154,48 @@
             
             try {
                 const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                console.log('🗃️ Available results:', results.length);
+                console.log('🔍 Looking for ID:', analysisId);
+                
                 const analysis = results.find(result => result.id === analysisId);
                 
                 if (!analysis) {
-                    console.error('Analysis not found:', analysisId);
+                    console.error('❌ Analysis not found:', analysisId);
+                    console.log('Available IDs:', results.map(r => r.id));
+                    
+                    // Show error message to user
+                    alert('分析データが見つかりません / Analysis data not found');
                     return;
                 }
+                
+                console.log('✅ Found analysis:', analysis);
                 
                 showScreen('analysis-detail');
                 document.getElementById('analysis-detail').classList.add('slide-up');
                 
                 // Populate detail content
                 const detailContent = document.getElementById('analysisDetailContent');
+                if (!detailContent) {
+                    console.error('❌ Detail content element not found');
+                    return;
+                }
+                
                 detailContent.innerHTML = createAnalysisDetailContent(analysis);
                 
                 // Create detailed chart if element exists
                 setTimeout(() => {
-                    createDetailedAnalysisChart(analysis);
+                    const chartCanvas = document.getElementById('detailAnalysisChart');
+                    if (chartCanvas) {
+                        createDetailedAnalysisChart(analysis);
+                        console.log('✅ Chart created successfully');
+                    } else {
+                        console.warn('⚠️ Chart canvas not found');
+                    }
                 }, 100);
                 
             } catch (error) {
-                console.error('Error showing analysis detail:', error);
+                console.error('❌ Error showing analysis detail:', error);
+                alert('分析詳細の表示でエラーが発生しました / Error displaying analysis details');
             }
         }
         
@@ -4301,8 +5229,44 @@
                         <div class="text-sm text-gray-500">${date}</div>
                         <div class="text-sm text-gray-500">${time}</div>
                         ${analysis.sport ? `<div class="text-sm text-gray-500 mt-1">${getSportLabel(analysis.sport)}</div>` : ''}
+                        ${analysis.repetitions_performed ? `<div class="text-sm text-blue-600 mt-1">Repetitions: ${analysis.repetitions_performed}</div>` : ''}
                     </div>
                 </div>
+                
+                ${analysis.capturedPhoto ? `
+                <!-- Captured Photo with Pose Analysis -->
+                <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold brand-color">📸 Analysis Photo / 分析写真</h3>
+                        <div class="text-xs text-gray-500">
+                            ${analysis.capturedPhoto.hasPoseOverlay ? '🦴 With pose overlay' : '📷 Original photo'}
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <img src="${analysis.capturedPhoto.imageData}" 
+                             alt="Analysis Photo" 
+                             class="w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                             onclick="showPhotoModal('${analysis.id}')"
+                             style="max-height: 400px; object-fit: contain;">
+                        <div class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            ${analysis.capturedPhoto.cameraType === 'front' ? '🤳 Front Camera' : '📷 Back Camera'}
+                        </div>
+                        <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
+                            ${analysis.capturedPhoto.width} × ${analysis.capturedPhoto.height}
+                        </div>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <button onclick="showPhotoModal('${analysis.id}')" 
+                                class="text-blue-600 text-sm hover:underline">
+                            🔍 View Full Size / フルサイズで表示
+                        </button>
+                        <button onclick="downloadPhoto('${analysis.id}')" 
+                                class="ml-4 text-green-600 text-sm hover:underline">
+                            💾 Download Photo / 写真をダウンロード
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
                 
                 <!-- Detailed Chart -->
                 <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
