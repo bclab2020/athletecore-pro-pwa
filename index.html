@@ -240,7 +240,7 @@
         /* カメラビューの改善 */
         video {
             object-fit: cover;
-            transform: scaleX(-1); /* 前面カメラのミラー効果 */
+            /* ミラー効果は個別に適用するように変更 */
         }
         
         /* プルツーリフレッシュの無効化 */
@@ -1315,10 +1315,11 @@
         
         async function initCamera(videoElementId, placeholderId, facingMode = 'user') {
             try {
-                console.log('Initializing camera:', videoElementId, facingMode);
+                console.log('🎥 Initializing camera:', videoElementId, facingMode);
                 
                 // Stop existing stream if any
                 if (cameraStream) {
+                    console.log('🔄 Stopping existing camera stream');
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
                 
@@ -1331,41 +1332,69 @@
                     }
                 };
                 
+                console.log('📋 Camera constraints:', constraints);
+                
                 let stream;
                 try {
                     // Try with exact constraint first
+                    console.log('🔍 Trying exact facingMode constraint...');
                     stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    console.log('✅ Camera access granted with exact constraint');
                 } catch (exactError) {
-                    console.log('Exact facingMode failed, trying ideal:', exactError);
+                    console.log('⚠️ Exact facingMode failed, trying ideal:', exactError);
                     // Fallback to ideal constraint
                     constraints.video.facingMode = { ideal: facingMode };
                     stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    console.log('✅ Camera access granted with ideal constraint');
                 }
                 
                 const videoElement = document.getElementById(videoElementId);
                 const placeholder = document.getElementById(placeholderId);
                 
                 if (!videoElement || !placeholder) {
-                    console.error('Video elements not found:', videoElementId, placeholderId);
+                    console.error('❌ Video elements not found:', videoElementId, placeholderId);
                     return false;
                 }
+                
+                console.log('📱 Video element found:', videoElement);
+                console.log('🖼️ Placeholder element found:', placeholder);
                 
                 // Check actual camera facing mode from stream
                 const videoTrack = stream.getVideoTracks()[0];
                 const actualSettings = videoTrack.getSettings();
                 const actualFacingMode = actualSettings.facingMode || facingMode;
                 
-                console.log('Requested facingMode:', facingMode, 'Actual facingMode:', actualFacingMode);
+                console.log('📊 Camera settings:', actualSettings);
+                console.log('🎯 Requested facingMode:', facingMode, 'Actual facingMode:', actualFacingMode);
                 
+                // CRITICAL: Set video source
                 videoElement.srcObject = stream;
+                console.log('🔗 Video srcObject set');
                 
-                // Force show video, hide placeholder
+                // Force show video with explicit styling and ensure visibility
                 videoElement.style.display = 'block';
                 videoElement.style.visibility = 'visible';
+                videoElement.style.opacity = '1';
+                videoElement.style.position = 'absolute';
+                videoElement.style.top = '0';
+                videoElement.style.left = '0';
+                videoElement.style.width = '100%';
+                videoElement.style.height = '100%';
+                videoElement.style.objectFit = 'cover';
+                videoElement.style.zIndex = '5'; // Higher z-index to ensure video is above placeholder
+                videoElement.style.transform = actualFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
                 videoElement.classList.remove('hidden');
                 
+                console.log('👁️ Video visibility forced - display:', videoElement.style.display, 'visibility:', videoElement.style.visibility);
+                
+                // Force hide placeholder completely
                 placeholder.style.display = 'none';
+                placeholder.style.visibility = 'hidden';
+                placeholder.style.opacity = '0';
+                placeholder.style.zIndex = '0';
                 placeholder.classList.add('hidden');
+                
+                console.log('🚫 Placeholder hidden');
                 
                 cameraStream = stream;
                 currentFacingMode = actualFacingMode; // Use actual facing mode
@@ -1376,15 +1405,42 @@
                 
                 // Start pose detection when camera is ready
                 videoElement.onloadedmetadata = () => {
+                    console.log('📹 Video metadata loaded - dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
                     const canvasElementId = videoElementId.replace('CameraFeed', 'PoseCanvas');
                     const statusElementId = videoElementId.includes('static') ? 'staticPoseStatus' : 'dynamicPoseStatus';
                     startPoseDetection(videoElementId, canvasElementId, statusElementId);
                 };
                 
-                console.log('Camera initialized successfully with actual facingMode:', actualFacingMode);
+                // Add additional debug event listeners
+                videoElement.oncanplay = () => {
+                    console.log('▶️ Video can play');
+                };
+                
+                videoElement.onplaying = () => {
+                    console.log('🎬 Video playing');
+                };
+                
+                videoElement.onerror = (error) => {
+                    console.error('❌ Video error:', error);
+                };
+                
+                console.log('✅ Camera initialized successfully with actual facingMode:', actualFacingMode);
                 return true;
             } catch (error) {
-                console.error('Camera access denied or unavailable:', error);
+                console.error('❌ Camera access denied or unavailable:', error);
+                
+                // Show error in placeholder
+                const placeholder = document.getElementById(placeholderId);
+                if (placeholder) {
+                    placeholder.innerHTML = `
+                        <div class="text-center text-white">
+                            <div class="text-6xl mb-4">⚠️</div>
+                            <p class="text-xl mb-2">Camera access denied</p>
+                            <p class="text-sm opacity-75">カメラアクセスが拒否されました</p>
+                            <p class="text-xs opacity-50 mt-2">${error.message}</p>
+                        </div>
+                    `;
+                }
                 return false;
             }
         }
@@ -1439,6 +1495,8 @@
             const screenType = videoElementId.includes('static') ? 'static' : 'dynamic';
             const labelElement = document.getElementById(`${screenType}CameraLabel`);
             
+            console.log('🏷️ Updating camera label for:', screenType, 'facingMode:', facingMode);
+            
             if (labelElement) {
                 if (facingMode === 'user') {
                     labelElement.textContent = 'インカメラ';
@@ -1449,16 +1507,33 @@
                     labelElement.classList.remove('bg-black');
                     labelElement.classList.add('bg-orange-500');
                 }
+                console.log('🏷️ Label updated:', labelElement.textContent);
             }
             
-            // Update video mirror effect
+            // Update video mirror effect - ENSURE video is visible first
             const videoElement = document.getElementById(videoElementId);
             if (videoElement) {
+                // Force video to be visible before applying transform
+                videoElement.style.display = 'block';
+                videoElement.style.visibility = 'visible';
+                videoElement.style.opacity = '1';
+                
                 if (facingMode === 'user') {
                     videoElement.style.transform = 'scaleX(-1)'; // Mirror for front camera
+                    console.log('🪞 Applied mirror effect for front camera');
                 } else {
                     videoElement.style.transform = 'scaleX(1)'; // Normal for back camera
+                    console.log('📹 Applied normal orientation for back camera');
                 }
+                
+                console.log('📺 Video element styles:', {
+                    display: videoElement.style.display,
+                    visibility: videoElement.style.visibility,
+                    opacity: videoElement.style.opacity,
+                    transform: videoElement.style.transform
+                });
+            } else {
+                console.error('❌ Video element not found:', videoElementId);
             }
         }
         
@@ -2542,29 +2617,54 @@
         }
         
         async function showStaticAnalysis() {
+            console.log('🎯 Starting static analysis...');
             showScreen('static-analysis');
             document.getElementById('static-analysis').classList.add('slide-up');
             
             // Initialize MediaPipe if not already done
             if (!pose) {
+                console.log('🧠 Initializing MediaPipe...');
                 const initialized = await initMediaPipe();
                 if (!initialized) {
-                    console.error('Failed to initialize MediaPipe for static analysis');
+                    console.error('❌ Failed to initialize MediaPipe for static analysis');
                     return;
                 }
+            } else {
+                console.log('✅ MediaPipe already initialized');
             }
             
             // Reset to front camera
             currentFacingMode = 'user';
+            console.log('📱 Set to front camera mode');
             
-            // Initialize camera and pose detection
+            // Initialize camera and pose detection with debug
             setTimeout(async () => {
+                console.log('🎥 Initializing camera for static analysis...');
                 const cameraInitialized = await initCamera('staticCameraFeed', 'staticCameraPlaceholder', 'user');
+                
                 if (cameraInitialized) {
+                    console.log('✅ Camera initialized, waiting for video to be ready...');
+                    
+                    // Check video element immediately
+                    const videoElement = document.getElementById('staticCameraFeed');
+                    if (videoElement) {
+                        console.log('📺 Video element state:', {
+                            srcObject: !!videoElement.srcObject,
+                            videoWidth: videoElement.videoWidth,
+                            videoHeight: videoElement.videoHeight,
+                            readyState: videoElement.readyState,
+                            display: videoElement.style.display,
+                            visibility: videoElement.style.visibility
+                        });
+                    }
+                    
                     // Wait a bit more for video to be ready
                     setTimeout(() => {
+                        console.log('🎬 Starting pose detection...');
                         startPoseDetection('staticCameraFeed', 'staticPoseCanvas', 'staticPoseStatus');
                     }, 1000);
+                } else {
+                    console.error('❌ Camera initialization failed');
                 }
             }, 500);
         }
