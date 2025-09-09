@@ -981,73 +981,108 @@
             document.getElementById(screenId).classList.add('active');
             currentScreen = screenId;
             
-            // Show/hide floating buttons based on screen
+            // Hide all floating buttons when switching screens (they're only shown in fullscreen mode)
             hideAllFloatingButtons();
-            if (screenId === 'static-analysis') {
-                showFloatingButton('static');
-            } else if (screenId === 'dynamic-analysis') {
-                showFloatingButton('dynamic');
-            }
         }
         
         // Fullscreen camera control functions
         function enterFullscreenMode(type) {
             console.log('Entering fullscreen mode for:', type);
             
-            if (type === 'static') {
-                const header = document.getElementById('staticHeader');
-                const controls = document.getElementById('staticControlsBottom');
-                const container = document.getElementById('staticCameraContainer');
-                
-                header.classList.add('hidden');
-                controls.classList.add('hidden');
-                container.classList.add('fullscreen');
-                container.style.height = '100vh';
-                container.style.minHeight = '100vh';
-                
-                hideFloatingButton('static');
-            } else if (type === 'dynamic') {
-                const header = document.getElementById('dynamicHeader');
-                const controls = document.getElementById('dynamicControlsBottom');
-                const container = document.getElementById('dynamicCameraContainer');
-                
-                header.classList.add('hidden');
-                controls.classList.add('hidden');
-                container.classList.add('fullscreen');
-                container.style.height = '100vh';
-                container.style.minHeight = '100vh';
-                
-                hideFloatingButton('dynamic');
+            try {
+                if (type === 'static') {
+                    const header = document.getElementById('staticHeader');
+                    const controls = document.getElementById('staticControlsBottom');
+                    const container = document.getElementById('staticCameraContainer');
+                    
+                    if (header && controls && container) {
+                        // Hide header and controls completely
+                        header.style.display = 'none';
+                        controls.style.display = 'none';
+                        
+                        // Make camera container fullscreen
+                        container.classList.add('fullscreen');
+                        container.style.height = '100vh';
+                        container.style.minHeight = '100vh';
+                        
+                        // Show floating button
+                        showFloatingButton('static');
+                        console.log('✅ Static fullscreen mode activated');
+                    } else {
+                        console.error('❌ Static elements not found:', {header, controls, container});
+                    }
+                } else if (type === 'dynamic') {
+                    const header = document.getElementById('dynamicHeader');
+                    const controls = document.getElementById('dynamicControlsBottom');
+                    const container = document.getElementById('dynamicCameraContainer');
+                    
+                    if (header && controls && container) {
+                        // Hide header and controls completely
+                        header.style.display = 'none';
+                        controls.style.display = 'none';
+                        
+                        // Make camera container fullscreen
+                        container.classList.add('fullscreen');
+                        container.style.height = '100vh';
+                        container.style.minHeight = '100vh';
+                        
+                        // Show floating button
+                        showFloatingButton('dynamic');
+                        console.log('✅ Dynamic fullscreen mode activated');
+                    } else {
+                        console.error('❌ Dynamic elements not found:', {header, controls, container});
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error entering fullscreen mode:', error);
             }
         }
         
         function exitFullscreenMode(type) {
             console.log('Exiting fullscreen mode for:', type);
             
-            if (type === 'static') {
-                const header = document.getElementById('staticHeader');
-                const controls = document.getElementById('staticControlsBottom');
-                const container = document.getElementById('staticCameraContainer');
-                
-                header.classList.remove('hidden');
-                controls.classList.remove('hidden');
-                container.classList.remove('fullscreen');
-                container.style.height = 'calc(100vh - 140px)';
-                container.style.minHeight = 'calc(100vh - 140px)';
-                
-                showFloatingButton('static');
-            } else if (type === 'dynamic') {
-                const header = document.getElementById('dynamicHeader');
-                const controls = document.getElementById('dynamicControlsBottom');
-                const container = document.getElementById('dynamicCameraContainer');
-                
-                header.classList.remove('hidden');
-                controls.classList.remove('hidden');
-                container.classList.remove('fullscreen');
-                container.style.height = 'calc(100vh - 140px)';
-                container.style.minHeight = 'calc(100vh - 140px)';
-                
-                showFloatingButton('dynamic');
+            try {
+                if (type === 'static') {
+                    const header = document.getElementById('staticHeader');
+                    const controls = document.getElementById('staticControlsBottom');
+                    const container = document.getElementById('staticCameraContainer');
+                    
+                    if (header && controls && container) {
+                        // Show header and controls again
+                        header.style.display = 'flex';
+                        controls.style.display = 'block';
+                        
+                        // Remove fullscreen from camera container
+                        container.classList.remove('fullscreen');
+                        container.style.height = 'calc(100vh - 140px)';
+                        container.style.minHeight = 'calc(100vh - 140px)';
+                        
+                        // Hide floating button and return to normal UI
+                        hideFloatingButton('static');
+                        console.log('✅ Static fullscreen mode deactivated');
+                    }
+                } else if (type === 'dynamic') {
+                    const header = document.getElementById('dynamicHeader');
+                    const controls = document.getElementById('dynamicControlsBottom');
+                    const container = document.getElementById('dynamicCameraContainer');
+                    
+                    if (header && controls && container) {
+                        // Show header and controls again
+                        header.style.display = 'flex';
+                        controls.style.display = 'block';
+                        
+                        // Remove fullscreen from camera container
+                        container.classList.remove('fullscreen');
+                        container.style.height = 'calc(100vh - 140px)';
+                        container.style.minHeight = 'calc(100vh - 140px)';
+                        
+                        // Hide floating button and return to normal UI
+                        hideFloatingButton('dynamic');
+                        console.log('✅ Dynamic fullscreen mode deactivated');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error exiting fullscreen mode:', error);
             }
         }
         
@@ -1074,6 +1109,16 @@
             document.getElementById('floatingDynamicBtn').classList.remove('visible');
         }
         
+        // Debug function to test fullscreen mode
+        function testFullscreenMode() {
+            console.log('Testing fullscreen mode for static analysis');
+            enterFullscreenMode('static');
+            setTimeout(() => {
+                console.log('Exiting fullscreen mode after 3 seconds');
+                exitFullscreenMode('static');
+            }, 3000);
+        }
+        
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
@@ -1088,6 +1133,11 @@
         
         function showDashboard() {
             console.log('Showing dashboard screen');
+            
+            // Exit any fullscreen mode first
+            exitFullscreenMode('static');
+            exitFullscreenMode('dynamic');
+            
             // Stop camera and pose detection if running
             if (typeof stopCamera === 'function') stopCamera();
             if (typeof stopPoseDetection === 'function') stopPoseDetection();
@@ -2499,11 +2549,14 @@
             // Enter fullscreen mode
             enterFullscreenMode('static');
             
-            // Disable all capture buttons
+            // Disable and hide floating button during countdown
             const bottomButton = document.getElementById('staticCaptureBtn');
             const floatingButton = document.getElementById('floatingStaticBtn');
             if (bottomButton) bottomButton.disabled = true;
-            if (floatingButton) floatingButton.disabled = true;
+            if (floatingButton) {
+                floatingButton.disabled = true;
+                hideFloatingButton('static');
+            }
             
             // Show countdown overlay
             const screenElement = document.getElementById('static-analysis');
@@ -2657,7 +2710,7 @@
             // Enter fullscreen mode
             enterFullscreenMode('dynamic');
             
-            // Disable all capture buttons
+            // Disable and hide floating button during recording
             const bottomButton = document.getElementById('dynamicCaptureBtn');
             const floatingButton = document.getElementById('floatingDynamicBtn');
             if (bottomButton) {
@@ -2667,6 +2720,7 @@
             if (floatingButton) {
                 floatingButton.disabled = true;
                 floatingButton.textContent = 'Ready to move... / 動作準備中...';
+                hideFloatingButton('dynamic');
             }
             
             // Wait for movement to start
