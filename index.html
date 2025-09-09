@@ -1151,6 +1151,9 @@
         // サービスワーカーの登録
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
+                // Initialize speech synthesis voices
+                initializeVoices();
+                
                 navigator.serviceWorker.register('/service-worker.js')
                     .then(registration => {
                         console.log('AthleteCore Pro: サービスワーカーが登録されました', registration.scope);
@@ -2544,6 +2547,55 @@
             event.target.classList.add('bg-blue-50', 'brand-color', 'font-medium');
         }
         
+        // Voice speech function for countdown
+        let voicesLoaded = false;
+        let preferredVoice = null;
+        
+        // Initialize voices when available
+        function initializeVoices() {
+            if ('speechSynthesis' in window) {
+                const loadVoices = () => {
+                    const voices = speechSynthesis.getVoices();
+                    if (voices.length > 0 && !voicesLoaded) {
+                        voicesLoaded = true;
+                        // Try to find a good English voice
+                        preferredVoice = voices.find(voice => 
+                            voice.lang.startsWith('en') && 
+                            (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Apple'))
+                        ) || voices.find(voice => voice.lang.startsWith('en'));
+                        
+                        console.log('Voice initialized:', preferredVoice ? preferredVoice.name : 'Default voice');
+                    }
+                };
+                
+                // Load voices immediately if available
+                loadVoices();
+                
+                // Also load when voices change (for some browsers)
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        }
+        
+        function speakCountdown(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 0.8;
+                
+                // Use preferred voice if available
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+                
+                speechSynthesis.speak(utterance);
+            }
+        }
+        
         // Improved static capture with countdown
         async function startStaticCaptureImproved() {
             // Enter fullscreen mode
@@ -2590,6 +2642,9 @@
                         countdownNumber.style.transform = 'scale(1)';
                     }, 200);
                     
+                    // Voice countdown
+                    speakCountdown(currentCount.toString());
+                    
                     // Haptic feedback for each count
                     if (navigator.vibrate) {
                         navigator.vibrate(50);
@@ -2599,6 +2654,9 @@
                     countdownNumber.textContent = 'GO!';
                     countdownNumber.style.transform = 'scale(1.5)';
                     countdownNumber.style.color = '#10B981'; // Green color
+                    
+                    // Voice "GO!"
+                    speakCountdown('GO!');
                     
                     // Strong haptic feedback for GO
                     if (navigator.vibrate) {
@@ -2771,6 +2829,9 @@
                             clearInterval(checkMovementInterval);
                             waitingOverlay.remove();
                             
+                            // Voice announcement for movement detection
+                            speakCountdown('Movement detected! Recording started!');
+                            
                             // Strong haptic feedback for movement start
                             if (navigator.vibrate) {
                                 navigator.vibrate([200, 100, 200]);
@@ -2837,6 +2898,9 @@
                     isWaitingForMovement = false;
                     movementStartTime = Date.now();
                     waitingOverlay.remove();
+                    
+                    // Voice announcement for timeout start
+                    speakCountdown('No movement detected. Starting recording now!');
                     
                     // Force start recording
                     startRecordingTimer(screenElement, 15, () => {
@@ -2918,6 +2982,10 @@
                         timerElement.style.color = '#FCD34D'; // Yellow
                         timerElement.parentElement.classList.remove('bg-red-600');
                         timerElement.parentElement.classList.add('bg-yellow-600');
+                        
+                        // Voice countdown for last 5 seconds
+                        speakCountdown(currentTime.toString());
+                        
                         if (navigator.vibrate) {
                             navigator.vibrate(30);
                         }
@@ -2935,6 +3003,9 @@
                     clearInterval(timerInterval);
                     clearInterval(recordingInterval);
                     timerOverlay.remove();
+                    
+                    // Voice completion announcement
+                    speakCountdown('Recording complete!');
                     
                     // Strong completion haptic
                     if (navigator.vibrate) {
