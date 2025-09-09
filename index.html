@@ -778,7 +778,7 @@
                             <p class="text-xs text-gray-500">腕を体の横に自然に立ってください</p>
                         </div>
                         <button id="staticCaptureBtn" onclick="startStaticCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
-                            Start 5s Countdown / 5秒カウントダウン開始
+                            Start 10s Countdown / 10秒カウントダウン開始
                         </button>
                     </div>
                 </div>
@@ -2562,9 +2562,19 @@
                         preferredVoice = voices.find(voice => 
                             voice.lang.startsWith('en') && 
                             (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Apple'))
-                        ) || voices.find(voice => voice.lang.startsWith('en'));
+                        ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
                         
                         console.log('Voice initialized:', preferredVoice ? preferredVoice.name : 'Default voice');
+                        console.log('Available voices:', voices.length);
+                        
+                        // Test voice functionality
+                        if (preferredVoice) {
+                            console.log('Selected voice details:', {
+                                name: preferredVoice.name,
+                                lang: preferredVoice.lang,
+                                localService: preferredVoice.localService
+                            });
+                        }
                     }
                 };
                 
@@ -2573,31 +2583,57 @@
                 
                 // Also load when voices change (for some browsers)
                 speechSynthesis.onvoiceschanged = loadVoices;
+                
+                // Force load voices after a delay
+                setTimeout(loadVoices, 1000);
+            } else {
+                console.warn('Speech synthesis not supported');
             }
         }
         
-        function speakCountdown(text) {
-            if ('speechSynthesis' in window) {
+        function speakCountdown(text, shouldSpeak = true) {
+            // Only speak if enabled and speech synthesis is available
+            if (shouldSpeak && 'speechSynthesis' in window) {
                 // Cancel any ongoing speech
                 speechSynthesis.cancel();
                 
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'en-US';
-                utterance.rate = 1.0;
+                utterance.rate = 0.9;
                 utterance.pitch = 1.0;
-                utterance.volume = 0.8;
+                utterance.volume = 0.9;
                 
                 // Use preferred voice if available
                 if (preferredVoice) {
                     utterance.voice = preferredVoice;
                 }
                 
-                speechSynthesis.speak(utterance);
+                // Add error handling
+                utterance.onerror = (event) => {
+                    console.log('Speech synthesis error:', event.error);
+                };
+                
+                utterance.onstart = () => {
+                    console.log('Speech started:', text);
+                };
+                
+                try {
+                    speechSynthesis.speak(utterance);
+                    console.log('Speaking:', text);
+                } catch (error) {
+                    console.error('Speech synthesis failed:', error);
+                }
+            } else {
+                console.log('Speech not enabled or not available');
             }
         }
         
         // Improved static capture with countdown
         async function startStaticCaptureImproved() {
+            // Check if we're using front camera for voice enablement
+            const isFrontCamera = currentFacingMode === 'user';
+            console.log('Starting static capture, front camera:', isFrontCamera, 'facing mode:', currentFacingMode);
+            
             // Enter fullscreen mode
             enterFullscreenMode('static');
             
@@ -2620,16 +2656,17 @@
             overlay.style.zIndex = '10001';
             overlay.innerHTML = `
                 <div class="text-center text-white bg-black bg-opacity-60 px-8 py-6 rounded-2xl shadow-2xl border border-white border-opacity-20">
-                    <div class="text-8xl font-bold mb-4 text-white drop-shadow-lg" id="staticCountdownNumber">5</div>
+                    <div class="text-8xl font-bold mb-4 text-white drop-shadow-lg" id="staticCountdownNumber">10</div>
                     <div class="text-xl mb-2 text-white drop-shadow-md">Get ready! / 準備してください！</div>
                     <div class="text-sm opacity-90 drop-shadow-sm">Stand naturally with arms at sides</div>
                     <div class="text-sm opacity-90 drop-shadow-sm">腕を体の横に自然に立ってください</div>
+                    ${isFrontCamera ? '<div class="text-xs opacity-75 mt-2">🔊 Voice countdown enabled</div>' : ''}
                 </div>
             `;
             
             document.body.appendChild(overlay);
             
-            let currentCount = 5;
+            let currentCount = 10; // Changed from 5 to 10
             const countdownNumber = document.getElementById('staticCountdownNumber');
             
             const countdownInterval = setInterval(() => {
@@ -2642,23 +2679,27 @@
                         countdownNumber.style.transform = 'scale(1)';
                     }, 200);
                     
-                    // Voice countdown
-                    speakCountdown(currentCount.toString());
+                    // Voice countdown only for front camera
+                    if (isFrontCamera) {
+                        speakCountdown(currentCount.toString(), true);
+                    }
                     
                     // Haptic feedback for each count
                     if (navigator.vibrate) {
                         navigator.vibrate(50);
                     }
                 } else {
-                    // Show "GO!" and trigger capture
-                    countdownNumber.textContent = 'GO!';
+                    // Show "OK!" and trigger capture (changed from "GO!")
+                    countdownNumber.textContent = 'OK!';
                     countdownNumber.style.transform = 'scale(1.5)';
                     countdownNumber.style.color = '#10B981'; // Green color
                     
-                    // Voice "GO!"
-                    speakCountdown('GO!');
+                    // Voice "OK!" only for front camera
+                    if (isFrontCamera) {
+                        speakCountdown('OK!', true);
+                    }
                     
-                    // Strong haptic feedback for GO
+                    // Strong haptic feedback for OK
                     if (navigator.vibrate) {
                         navigator.vibrate([100, 50, 100]);
                     }
@@ -2829,9 +2870,7 @@
                             clearInterval(checkMovementInterval);
                             waitingOverlay.remove();
                             
-                            // Voice announcement for movement detection
-                            speakCountdown('Movement detected! Recording started!');
-                            
+                            // Voice announcement removed - only for static front camera
                             // Strong haptic feedback for movement start
                             if (navigator.vibrate) {
                                 navigator.vibrate([200, 100, 200]);
@@ -2899,9 +2938,7 @@
                     movementStartTime = Date.now();
                     waitingOverlay.remove();
                     
-                    // Voice announcement for timeout start
-                    speakCountdown('No movement detected. Starting recording now!');
-                    
+                    // Voice announcement removed - only for static front camera
                     // Force start recording
                     startRecordingTimer(screenElement, 15, () => {
                         // Exit fullscreen mode after timeout completion
@@ -2983,9 +3020,7 @@
                         timerElement.parentElement.classList.remove('bg-red-600');
                         timerElement.parentElement.classList.add('bg-yellow-600');
                         
-                        // Voice countdown for last 5 seconds
-                        speakCountdown(currentTime.toString());
-                        
+                        // Voice countdown removed - only for static front camera
                         if (navigator.vibrate) {
                             navigator.vibrate(30);
                         }
@@ -3004,9 +3039,7 @@
                     clearInterval(recordingInterval);
                     timerOverlay.remove();
                     
-                    // Voice completion announcement
-                    speakCountdown('Recording complete!');
-                    
+                    // Voice completion announcement removed - only for static front camera
                     // Strong completion haptic
                     if (navigator.vibrate) {
                         navigator.vibrate([300, 100, 300]);
@@ -3384,7 +3417,7 @@
     
     <!-- Floating Capture Buttons -->
     <button id="floatingStaticBtn" class="floating-capture-btn" onclick="startStaticCaptureImproved()">
-        Start 5s Countdown / 5秒カウントダウン開始
+        Start 10s Countdown / 10秒カウントダウン開始
     </button>
     <button id="floatingDynamicBtn" class="floating-capture-btn" onclick="startDynamicCaptureImproved()">
         Start Auto Recording / 自動録画開始
