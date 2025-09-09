@@ -918,6 +918,69 @@
                 </div>
             </div>
             
+            <!-- Analysis History Screen -->
+            <div id="analysis-history" class="app-screen bg-gray-50">
+                <div class="flex-1 overflow-y-auto">
+                    <!-- Header -->
+                    <div class="bg-white px-6 py-4 shadow-sm sticky top-0 z-10">
+                        <div class="flex items-center">
+                            <button onclick="showDashboard()" class="mr-4 text-gray-600">←</button>
+                            <h2 class="text-lg font-semibold brand-color">Analysis History / 分析履歴</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Tabs -->
+                    <div class="bg-white px-6 py-3 border-b">
+                        <div class="flex space-x-4">
+                            <button id="filterAll" onclick="filterAnalysisHistory('all')" class="px-4 py-2 text-sm rounded-lg bg-blue-50 brand-color font-medium">
+                                All / 全て
+                            </button>
+                            <button id="filterStatic" onclick="filterAnalysisHistory('static')" class="px-4 py-2 text-sm rounded-lg text-gray-600">
+                                Static / 静的
+                            </button>
+                            <button id="filterDynamic" onclick="filterAnalysisHistory('dynamic')" class="px-4 py-2 text-sm rounded-lg text-gray-600">
+                                Dynamic / 動的
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- History Timeline -->
+                    <div class="px-6 py-4">
+                        <div id="historyTimeline" class="space-y-4">
+                            <!-- Timeline items will be populated here -->
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="historyEmptyState" class="text-center py-12 hidden">
+                            <div class="text-6xl mb-4">📊</div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">No Analysis Yet</h3>
+                            <p class="text-gray-500 mb-6">まだ分析データがありません</p>
+                            <button onclick="showDashboard()" class="brand-bg text-white px-6 py-3 rounded-lg">
+                                Start Analysis / 分析を開始
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Detail Screen -->
+            <div id="analysis-detail" class="app-screen bg-gray-50">
+                <div class="flex-1 overflow-y-auto">
+                    <!-- Header -->
+                    <div class="bg-white px-6 py-4 shadow-sm sticky top-0 z-10">
+                        <div class="flex items-center">
+                            <button onclick="showAnalysisHistory()" class="mr-4 text-gray-600">←</button>
+                            <h2 class="text-lg font-semibold brand-color">Analysis Detail / 分析詳細</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- Detail Content -->
+                    <div class="px-6 py-4" id="analysisDetailContent">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Results Screen -->
             <div id="results" class="app-screen bg-gray-50">
                 <div class="flex-1 overflow-y-auto">
@@ -2848,8 +2911,9 @@
                     return;
                 }
                 
-                historyContainer.innerHTML = userResults.slice(-5).reverse().map(analysis => {
+                historyContainer.innerHTML = userResults.slice(-5).reverse().map((analysis, index) => {
                     const date = new Date(analysis.analysis_date).toLocaleDateString('ja-JP');
+                    const time = new Date(analysis.analysis_date).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
                     const typeLabel = {
                         'static': 'Static / 静的',
                         'dynamic': 'Dynamic / 動的',
@@ -2857,19 +2921,31 @@
                     };
                     
                     return `
-                        <div class="bg-white p-3 rounded-lg border border-gray-100">
+                        <div class="bg-white p-3 rounded-lg border border-gray-100 cursor-pointer hover:shadow-md transition-shadow" onclick="showAnalysisDetail('${analysis.id}')">
                             <div class="flex justify-between items-center">
                                 <div>
                                     <div class="text-sm font-medium brand-color">${typeLabel[analysis.analysis_type] || analysis.analysis_type}</div>
-                                    <div class="text-xs text-gray-500">${date}</div>
+                                    <div class="text-xs text-gray-500">${date} ${time}</div>
                                 </div>
                                 <div class="text-right">
                                     <div class="text-sm font-bold ${analysis.overall_score >= 80 ? 'text-green-600' : 'text-orange-600'}">${analysis.overall_score}/100</div>
+                                    <div class="text-xs text-gray-400">→</div>
                                 </div>
                             </div>
                         </div>
                     `;
                 }).join('');
+                
+                // Add "View All" button if there are more than 5 results
+                if (userResults.length > 5) {
+                    historyContainer.innerHTML += `
+                        <div class="text-center mt-4">
+                            <button onclick="showAnalysisHistory()" class="text-blue-600 text-sm font-medium hover:underline">
+                                View All History (${userResults.length}) / 全履歴を見る (${userResults.length}件)
+                            </button>
+                        </div>
+                    `;
+                }
                 
             } catch (error) {
                 console.error('Error loading history:', error);
@@ -3950,6 +4026,481 @@
                 }).catch(console.error);
             } else {
                 alert('Results shared! / 結果を共有しました！');
+            }
+        }
+        
+        // Analysis History Functions
+        function showAnalysisHistory() {
+            console.log('🗂️ Showing analysis history...');
+            showScreen('analysis-history');
+            document.getElementById('analysis-history').classList.add('fade-in');
+            loadFullAnalysisHistory();
+        }
+        
+        function loadFullAnalysisHistory() {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const userResults = results.filter(result => result.user_id === currentUser.id);
+                const timeline = document.getElementById('historyTimeline');
+                const emptyState = document.getElementById('historyEmptyState');
+                
+                if (userResults.length === 0) {
+                    timeline.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                
+                // Group by date for better organization
+                const groupedResults = groupAnalysisByDate(userResults);
+                
+                timeline.innerHTML = Object.keys(groupedResults).reverse().map(dateKey => {
+                    const analyses = groupedResults[dateKey];
+                    const displayDate = new Date(dateKey).toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        weekday: 'short'
+                    });
+                    
+                    return `
+                        <div class="mb-6">
+                            <div class="flex items-center mb-3">
+                                <div class="w-3 h-3 bg-blue-600 rounded-full mr-3"></div>
+                                <h3 class="text-lg font-semibold text-gray-800">${displayDate}</h3>
+                                <div class="flex-1 h-px bg-gray-200 ml-4"></div>
+                            </div>
+                            <div class="ml-6 space-y-3">
+                                ${analyses.map(analysis => createTimelineItem(analysis)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error loading full analysis history:', error);
+                document.getElementById('historyTimeline').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Error loading history</p>
+                        <p class="text-sm text-gray-500">履歴の読み込みに失敗しました</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function groupAnalysisByDate(analyses) {
+            return analyses.reduce((groups, analysis) => {
+                const date = new Date(analysis.analysis_date).toDateString();
+                if (!groups[date]) {
+                    groups[date] = [];
+                }
+                groups[date].push(analysis);
+                return groups;
+            }, {});
+        }
+        
+        function createTimelineItem(analysis) {
+            const time = new Date(analysis.analysis_date).toLocaleTimeString('ja-JP', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const typeLabel = {
+                'static': 'Static Analysis / 静的分析',
+                'dynamic': 'Dynamic Analysis / 動的分析',
+                'sport_specific': 'Sport-Specific / 競技特化'
+            };
+            
+            const typeIcon = {
+                'static': '📷',
+                'dynamic': '🎥', 
+                'sport_specific': '⚽'
+            };
+            
+            const scoreColor = analysis.overall_score >= 90 ? 'text-green-600' :
+                              analysis.overall_score >= 80 ? 'text-blue-600' :
+                              analysis.overall_score >= 70 ? 'text-yellow-600' :
+                              analysis.overall_score >= 60 ? 'text-orange-600' : 'text-red-600';
+            
+            const scoreBg = analysis.overall_score >= 90 ? 'bg-green-50' :
+                           analysis.overall_score >= 80 ? 'bg-blue-50' :
+                           analysis.overall_score >= 70 ? 'bg-yellow-50' :
+                           analysis.overall_score >= 60 ? 'bg-orange-50' : 'bg-red-50';
+            
+            return `
+                <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200" onclick="showAnalysisDetail('${analysis.id}')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-2xl">${typeIcon[analysis.analysis_type] || '📊'}</div>
+                            <div>
+                                <div class="font-semibold text-gray-800">${typeLabel[analysis.analysis_type] || analysis.analysis_type}</div>
+                                <div class="text-sm text-gray-500">${time}</div>
+                                ${analysis.sport ? `<div class="text-xs text-gray-400">${getSportLabel(analysis.sport)}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="px-3 py-2 ${scoreBg} rounded-lg">
+                                <div class="text-xl font-bold ${scoreColor}">${analysis.overall_score}</div>
+                                <div class="text-xs text-gray-500">/ 100</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats Preview -->
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">${analysis.hip_flexibility || '--'}</div>
+                                <div class="text-xs text-gray-500">Hip / 股関節</div>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">${analysis.postural_stability || '--'}</div>
+                                <div class="text-xs text-gray-500">Posture / 姿勢</div>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-600">${analysis.dynamic_balance || '--'}</div>
+                                <div class="text-xs text-gray-500">Balance / バランス</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2 text-right">
+                        <span class="text-xs text-gray-400">Tap for details / タップで詳細 →</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getSportLabel(sport) {
+            const sportLabels = {
+                'soccer': 'Soccer / サッカー',
+                'basketball': 'Basketball / バスケ',
+                'baseball': 'Baseball / 野球',
+                'tabletennis': 'Table Tennis / 卓球',
+                'volleyball': 'Volleyball / バレー'
+            };
+            return sportLabels[sport] || sport;
+        }
+        
+        function filterAnalysisHistory(type) {
+            // Update filter buttons
+            document.querySelectorAll('[id^="filter"]').forEach(btn => {
+                btn.classList.remove('bg-blue-50', 'brand-color', 'font-medium');
+                btn.classList.add('text-gray-600');
+            });
+            
+            document.getElementById(`filter${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.add('bg-blue-50', 'brand-color', 'font-medium');
+            document.getElementById(`filter${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.remove('text-gray-600');
+            
+            // Filter and display results
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                let userResults = results.filter(result => result.user_id === currentUser.id);
+                
+                if (type !== 'all') {
+                    userResults = userResults.filter(result => result.analysis_type === type);
+                }
+                
+                const timeline = document.getElementById('historyTimeline');
+                const emptyState = document.getElementById('historyEmptyState');
+                
+                if (userResults.length === 0) {
+                    timeline.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                const groupedResults = groupAnalysisByDate(userResults);
+                
+                timeline.innerHTML = Object.keys(groupedResults).reverse().map(dateKey => {
+                    const analyses = groupedResults[dateKey];
+                    const displayDate = new Date(dateKey).toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'long', 
+                        day: 'numeric',
+                        weekday: 'short'
+                    });
+                    
+                    return `
+                        <div class="mb-6">
+                            <div class="flex items-center mb-3">
+                                <div class="w-3 h-3 bg-blue-600 rounded-full mr-3"></div>
+                                <h3 class="text-lg font-semibold text-gray-800">${displayDate}</h3>
+                                <div class="flex-1 h-px bg-gray-200 ml-4"></div>
+                            </div>
+                            <div class="ml-6 space-y-3">
+                                ${analyses.map(analysis => createTimelineItem(analysis)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('Error filtering analysis history:', error);
+            }
+        }
+        
+        function showAnalysisDetail(analysisId) {
+            console.log('📊 Showing analysis detail for:', analysisId);
+            
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const analysis = results.find(result => result.id === analysisId);
+                
+                if (!analysis) {
+                    console.error('Analysis not found:', analysisId);
+                    return;
+                }
+                
+                showScreen('analysis-detail');
+                document.getElementById('analysis-detail').classList.add('slide-up');
+                
+                // Populate detail content
+                const detailContent = document.getElementById('analysisDetailContent');
+                detailContent.innerHTML = createAnalysisDetailContent(analysis);
+                
+                // Create detailed chart if element exists
+                setTimeout(() => {
+                    createDetailedAnalysisChart(analysis);
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error showing analysis detail:', error);
+            }
+        }
+        
+        function createAnalysisDetailContent(analysis) {
+            const date = new Date(analysis.analysis_date).toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            });
+            const time = new Date(analysis.analysis_date).toLocaleTimeString('ja-JP');
+            
+            const typeLabel = {
+                'static': 'Static Posture Analysis / 静的姿勢分析',
+                'dynamic': 'Dynamic Movement Analysis / 動的動作分析',
+                'sport_specific': 'Sport-Specific Analysis / 競技特化分析'
+            };
+            
+            const scoreGrade = analysis.overall_score >= 90 ? 'A+' :
+                              analysis.overall_score >= 80 ? 'A' :
+                              analysis.overall_score >= 70 ? 'B' :
+                              analysis.overall_score >= 60 ? 'C' : 'D';
+            
+            return `
+                <!-- Header Info -->
+                <div class="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold brand-color mb-2">${analysis.overall_score}/100</div>
+                        <div class="text-2xl font-bold text-gray-600 mb-1">Grade ${scoreGrade}</div>
+                        <div class="text-lg text-gray-700 mb-2">${typeLabel[analysis.analysis_type] || analysis.analysis_type}</div>
+                        <div class="text-sm text-gray-500">${date}</div>
+                        <div class="text-sm text-gray-500">${time}</div>
+                        ${analysis.sport ? `<div class="text-sm text-gray-500 mt-1">${getSportLabel(analysis.sport)}</div>` : ''}
+                    </div>
+                </div>
+                
+                <!-- Detailed Chart -->
+                <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
+                    <h3 class="text-lg font-semibold brand-color mb-4">Performance Breakdown / パフォーマンス詳細</h3>
+                    <div style="height: 300px;">
+                        <canvas id="detailAnalysisChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Detailed Scores -->
+                <div class="space-y-4 mb-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-semibold brand-color">Hip Flexibility</div>
+                                <div class="text-sm text-gray-500">股関節柔軟性</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold ${analysis.hip_flexibility >= 80 ? 'text-green-600' : analysis.hip_flexibility >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.hip_flexibility}%</div>
+                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.hip_flexibility)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-semibold brand-color">Postural Stability</div>
+                                <div class="text-sm text-gray-500">姿勢安定性</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold ${analysis.postural_stability >= 80 ? 'text-green-600' : analysis.postural_stability >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.postural_stability}%</div>
+                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.postural_stability)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-semibold brand-color">Dynamic Balance</div>
+                                <div class="text-sm text-gray-500">動的バランス</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold ${analysis.dynamic_balance >= 80 ? 'text-green-600' : analysis.dynamic_balance >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.dynamic_balance}%</div>
+                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.dynamic_balance)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recommendations -->
+                ${analysis.recommendations && analysis.recommendations.length > 0 ? `
+                    <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
+                        <h3 class="text-lg font-semibold brand-color mb-4">Recommendations / 推奨事項</h3>
+                        <div class="space-y-3">
+                            ${analysis.recommendations.map(rec => `
+                                <div class="flex items-start">
+                                    <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                    <p class="text-sm text-gray-700">${rec}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Action Buttons -->
+                <div class="space-y-3">
+                    <button onclick="shareAnalysisDetail('${analysis.id}')" class="w-full bg-gray-100 text-gray-700 font-medium py-3 px-6 rounded-xl">
+                        Share This Analysis / この分析を共有
+                    </button>
+                    <button onclick="showAnalysisHistory()" class="w-full brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg">
+                        Back to History / 履歴に戻る
+                    </button>
+                </div>
+            `;
+        }
+        
+        function getScoreLabel(score) {
+            if (score >= 90) return 'Excellent / 優秀';
+            if (score >= 80) return 'Good / 良好';
+            if (score >= 70) return 'Fair / 普通';
+            if (score >= 60) return 'Needs Work / 要改善';
+            return 'Poor / 不良';
+        }
+        
+        function createDetailedAnalysisChart(analysis) {
+            const canvas = document.getElementById('detailAnalysisChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.detailAnalysisChart instanceof Chart) {
+                window.detailAnalysisChart.destroy();
+            }
+            
+            window.detailAnalysisChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Hip Flexibility\n股関節柔軟性',
+                        'Postural Stability\n姿勢安定性',
+                        'Dynamic Balance\n動的バランス',
+                        'Overall Performance\n総合パフォーマンス'
+                    ],
+                    datasets: [{
+                        label: 'Current Score',
+                        data: [
+                            analysis.hip_flexibility,
+                            analysis.postural_stability,
+                            analysis.dynamic_balance,
+                            analysis.overall_score
+                        ],
+                        backgroundColor: 'rgba(30, 58, 138, 0.2)',
+                        borderColor: 'rgba(30, 58, 138, 0.8)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'rgba(30, 58, 138, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(30, 58, 138, 1)',
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            angleLines: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                },
+                                color: '#374151'
+                            },
+                            ticks: {
+                                display: true,
+                                stepSize: 20,
+                                font: {
+                                    size: 10
+                                },
+                                color: '#9CA3AF',
+                                backdropColor: 'rgba(255, 255, 255, 0.8)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function shareAnalysisDetail(analysisId) {
+            try {
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const analysis = results.find(result => result.id === analysisId);
+                
+                if (!analysis) return;
+                
+                const date = new Date(analysis.analysis_date).toLocaleDateString('ja-JP');
+                const typeLabel = {
+                    'static': 'Static Analysis',
+                    'dynamic': 'Dynamic Analysis',
+                    'sport_specific': 'Sport-Specific Analysis'
+                };
+                
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'AthleteCore Pro - 分析結果',
+                        text: `${typeLabel[analysis.analysis_type]} (${date})\nOverall Score: ${analysis.overall_score}/100\nHip Flexibility: ${analysis.hip_flexibility}%\nPostural Stability: ${analysis.postural_stability}%\nDynamic Balance: ${analysis.dynamic_balance}%`,
+                        url: window.location.href
+                    }).catch(console.error);
+                } else {
+                    // Fallback: copy to clipboard
+                    const shareText = `AthleteCore Pro Analysis Results\n${typeLabel[analysis.analysis_type]} (${date})\nOverall Score: ${analysis.overall_score}/100`;
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        alert('Analysis results copied to clipboard! / 分析結果をクリップボードにコピーしました！');
+                    }).catch(() => {
+                        alert('Analysis results shared! / 分析結果を共有しました！');
+                    });
+                }
+            } catch (error) {
+                console.error('Error sharing analysis detail:', error);
+                alert('Analysis results shared! / 分析結果を共有しました！');
             }
         }
 
