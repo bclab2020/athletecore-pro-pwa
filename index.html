@@ -1500,6 +1500,121 @@
             return newTestResult;
         };
         
+        // New debug function to test current video capture immediately
+        window.debugCaptureNow = function() {
+            console.log('📸 DEBUG: Attempting immediate photo capture...');
+            
+            // Try both static and dynamic videos
+            const staticVideo = document.getElementById('staticVideo');
+            const dynamicVideo = document.getElementById('dynamicVideo');
+            
+            let activeVideo = null;
+            let canvasId = null;
+            
+            if (staticVideo && staticVideo.srcObject && staticVideo.videoWidth > 0) {
+                activeVideo = staticVideo;
+                canvasId = 'staticCanvas';
+                console.log('🎥 Using static video for capture');
+            } else if (dynamicVideo && dynamicVideo.srcObject && dynamicVideo.videoWidth > 0) {
+                activeVideo = dynamicVideo;
+                canvasId = 'dynamicCanvas';
+                console.log('🎥 Using dynamic video for capture');
+            } else {
+                console.error('❌ No active video stream found for capture');
+                return null;
+            }
+            
+            console.log('🔍 Active video details:', {
+                videoId: activeVideo.id,
+                srcObject: !!activeVideo.srcObject,
+                videoWidth: activeVideo.videoWidth,
+                videoHeight: activeVideo.videoHeight,
+                readyState: activeVideo.readyState,
+                currentTime: activeVideo.currentTime,
+                paused: activeVideo.paused
+            });
+            
+            // Capture the photo
+            const photo = capturePhoto(activeVideo.id, canvasId, true);
+            
+            if (photo) {
+                console.log('🎉 Photo captured successfully!', {
+                    size: (photo.imageData.length / 1024).toFixed(1) + 'KB',
+                    dimensions: photo.width + 'x' + photo.height,
+                    cameraType: photo.cameraType,
+                    detectionMethod: photo.detectionMethod
+                });
+                
+                // Create a test analysis result with this photo
+                const testResult = {
+                    id: generateUUID(),
+                    user_id: currentUser ? currentUser.id : 'debug-user',
+                    analysis_type: activeVideo.id.includes('static') ? 'static' : 'dynamic',
+                    sport: currentUser ? currentUser.primary_sport : 'debug',
+                    analysis_date: new Date().toISOString(),
+                    overall_score: 92,
+                    hip_flexibility: 95,
+                    postural_stability: 88,
+                    dynamic_balance: 94,
+                    capturedPhoto: photo,
+                    recommendations: [
+                        "📸 リアルタイムキャプチャテスト - 成功!",
+                        "🎉 Real-time capture test - Success!"
+                    ]
+                };
+                
+                if (currentUser) {
+                    saveAnalysisResultLocal(testResult);
+                    refreshAnalysisHistory();
+                }
+                
+                return photo;
+            } else {
+                console.error('❌ Photo capture failed');
+                return null;
+            }
+        };
+        
+        // New debug function to validate video stream
+        window.debugVideoStatus = function() {
+            console.log('📹 === VIDEO STREAM STATUS DEBUG ===');
+            
+            const staticVideo = document.getElementById('staticVideo');
+            const dynamicVideo = document.getElementById('dynamicVideo');
+            
+            [staticVideo, dynamicVideo].forEach(video => {
+                if (video) {
+                    console.log(`📹 ${video.id} status:`, {
+                        exists: true,
+                        srcObject: !!video.srcObject,
+                        videoWidth: video.videoWidth,
+                        videoHeight: video.videoHeight,
+                        readyState: video.readyState,
+                        readyStateText: getReadyStateText(video.readyState),
+                        currentTime: video.currentTime,
+                        paused: video.paused,
+                        ended: video.ended,
+                        networkState: video.networkState,
+                        currentFacingMode: currentFacingMode,
+                        dataFacingMode: video.getAttribute('data-facing-mode'),
+                        transform: video.style.transform,
+                        display: video.style.display,
+                        visibility: video.style.visibility,
+                        opacity: video.style.opacity
+                    });
+                } else {
+                    console.log(`📹 ${!staticVideo && video === staticVideo ? 'staticVideo' : 'dynamicVideo'}: NOT FOUND`);
+                }
+            });
+            
+            // Test MediaPipe status
+            console.log('🦾 MediaPipe Status:', {
+                poseLoaded: !!pose,
+                currentPoseResults: !!currentPoseResults,
+                hasLandmarks: !!(currentPoseResults && currentPoseResults.poseLandmarks)
+            });
+        };
+        
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
@@ -1822,6 +1937,10 @@
             
             console.log('🏷️ Updating camera label for:', screenType, 'facingMode:', facingMode);
             
+            // Update global currentFacingMode to ensure consistency
+            currentFacingMode = facingMode;
+            console.log('🔄 Updated global currentFacingMode to:', currentFacingMode);
+            
             if (labelElement) {
                 if (facingMode === 'user') {
                     labelElement.textContent = 'インカメラ';
@@ -1851,11 +1970,15 @@
                     console.log('📹 Applied normal orientation for back camera');
                 }
                 
-                console.log('📺 Video element styles:', {
+                // Store facing mode as data attribute for reliable detection
+                videoElement.setAttribute('data-facing-mode', facingMode);
+                
+                console.log('📺 Video element updated:', {
                     display: videoElement.style.display,
                     visibility: videoElement.style.visibility,
                     opacity: videoElement.style.opacity,
-                    transform: videoElement.style.transform
+                    transform: videoElement.style.transform,
+                    dataFacingMode: videoElement.getAttribute('data-facing-mode')
                 });
             } else {
                 console.error('❌ Video element not found:', videoElementId);
@@ -1889,25 +2012,74 @@
             const video = document.getElementById(videoElementId);
             const overlayCanvas = document.getElementById(canvasElementId);
             
+            // More reliable camera type detection using multiple methods
+            const dataFacingMode = video ? video.getAttribute('data-facing-mode') : null;
+            const transformBasedDetection = video && video.style.transform.includes('scaleX(-1)');
+            const isFrontCamera = currentFacingMode === 'user' || dataFacingMode === 'user' || transformBasedDetection;
+            
             console.log('🔍 Photo capture elements check:', {
                 videoElement: !!video,
                 videoWidth: video ? video.videoWidth : 'N/A',
                 videoHeight: video ? video.videoHeight : 'N/A',
                 videoReadyState: video ? video.readyState : 'N/A',
+                videoCurrentTime: video ? video.currentTime : 'N/A',
+                videoSrcObject: video ? !!video.srcObject : false,
                 overlayCanvas: !!overlayCanvas,
                 includeOverlay: includeOverlay,
                 currentPoseResults: !!currentPoseResults,
-                poseLandmarks: currentPoseResults ? !!currentPoseResults.poseLandmarks : false
+                poseLandmarks: currentPoseResults ? !!currentPoseResults.poseLandmarks : false,
+                currentFacingMode: currentFacingMode,
+                dataFacingMode: dataFacingMode,
+                transformBasedDetection: transformBasedDetection,
+                detectedAsFront: isFrontCamera
             });
             
-            if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
-                console.error('❌ Video not ready for capture:', {
-                    videoExists: !!video,
-                    videoWidth: video ? video.videoWidth : 'N/A',
-                    videoHeight: video ? video.videoHeight : 'N/A',
-                    readyState: video ? video.readyState : 'N/A'
-                });
+            // Enhanced video readiness check with multiple conditions
+            if (!video || !video.srcObject) {
+                console.error('❌ Video or srcObject missing');
                 return null;
+            }
+            
+            // Wait for video to have actual frame data
+            if (video.readyState < 3 || video.videoWidth === 0 || video.videoHeight === 0 || video.currentTime === 0) {
+                console.warn('⏳ Video not fully ready, waiting and retrying...', {
+                    readyState: video.readyState,
+                    readyStateText: getReadyStateText(video.readyState),
+                    videoWidth: video.videoWidth,
+                    videoHeight: video.videoHeight,
+                    currentTime: video.currentTime
+                });
+                
+                // Return a promise that resolves after video is ready
+                return new Promise((resolve) => {
+                    let retryCount = 0;
+                    const maxRetries = 10;
+                    
+                    const checkVideoReady = () => {
+                        retryCount++;
+                        console.log(`📹 Video ready check attempt ${retryCount}/${maxRetries}:`, {
+                            readyState: video.readyState,
+                            videoWidth: video.videoWidth,
+                            videoHeight: video.videoHeight,
+                            currentTime: video.currentTime
+                        });
+                        
+                        if (video.readyState >= 3 && video.videoWidth > 0 && video.videoHeight > 0 && video.currentTime > 0) {
+                            console.log('✅ Video is now ready for capture');
+                            // Small additional delay to ensure frame is painted
+                            setTimeout(() => {
+                                resolve(capturePhoto(videoElementId, canvasElementId, includeOverlay));
+                            }, 100);
+                        } else if (retryCount < maxRetries) {
+                            setTimeout(checkVideoReady, 200);
+                        } else {
+                            console.error('❌ Video failed to become ready after maximum retries');
+                            resolve(null);
+                        }
+                    };
+                    
+                    checkVideoReady();
+                });
             }
             
             // Create a new canvas for the photo
@@ -1919,29 +2091,102 @@
             captureCanvas.height = video.videoHeight;
             
             console.log('🎯 Capture canvas size:', captureCanvas.width, 'x', captureCanvas.height);
+            console.log('📷 Camera type detection result:', {
+                currentFacingMode: currentFacingMode,
+                dataFacingMode: dataFacingMode,
+                videoTransform: video.style.transform,
+                transformBasedDetection: transformBasedDetection,
+                finalDetection: isFrontCamera ? 'front' : 'back'
+            });
             
-            // Check if this is a front camera (mirrored)
-            const isFrontCamera = video.style.transform.includes('scaleX(-1)');
+            // Save context state
+            ctx.save();
             
-            // Draw video frame
-            if (isFrontCamera) {
-                // For front camera, flip the captured image back to normal
-                ctx.scale(-1, 1);
-                ctx.drawImage(video, -captureCanvas.width, 0, captureCanvas.width, captureCanvas.height);
-                ctx.scale(-1, 1); // Reset scale
-            } else {
-                ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            // Enhanced drawing with proper handling
+            try {
+                // Create a temporary canvas to test video frame
+                const testCanvas = document.createElement('canvas');
+                const testCtx = testCanvas.getContext('2d');
+                testCanvas.width = 100;
+                testCanvas.height = 100;
+                testCtx.drawImage(video, 0, 0, 100, 100);
+                const testData = testCtx.getImageData(0, 0, 100, 100);
+                
+                // Check if video frame has actual data (not all black)
+                let hasData = false;
+                for (let i = 0; i < testData.data.length; i += 4) {
+                    if (testData.data[i] > 10 || testData.data[i + 1] > 10 || testData.data[i + 2] > 10) {
+                        hasData = true;
+                        break;
+                    }
+                }
+                
+                if (!hasData) {
+                    console.error('❌ Video frame appears to be black/empty');
+                    ctx.restore();
+                    return null;
+                }
+                
+                console.log('✅ Video frame has actual image data');
+                
+                if (isFrontCamera) {
+                    // For front camera, capture without mirroring to get natural orientation
+                    console.log('🪞 Capturing front camera (unmirrored)');
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, -captureCanvas.width, 0, captureCanvas.width, captureCanvas.height);
+                } else {
+                    // For back camera, draw normally
+                    console.log('📷 Capturing back camera (normal)');
+                    ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+                }
+                
+                console.log('✅ Video frame drawn successfully');
+                
+            } catch (drawError) {
+                console.error('❌ Error drawing video frame:', drawError);
+                ctx.restore();
+                return null;
             }
+            
+            // Restore context after drawing video
+            ctx.restore();
             
             // Draw pose overlay if available and requested
             if (includeOverlay && overlayCanvas && currentPoseResults && currentPoseResults.poseLandmarks) {
                 console.log('🎨 Adding pose overlay to captured photo');
-                drawPoseOverlayOnPhoto(ctx, currentPoseResults.poseLandmarks, captureCanvas, !isFrontCamera);
+                try {
+                    drawPoseOverlayOnPhoto(ctx, currentPoseResults.poseLandmarks, captureCanvas, !isFrontCamera);
+                    console.log('✅ Pose overlay added successfully');
+                } catch (overlayError) {
+                    console.error('❌ Error adding pose overlay:', overlayError);
+                    // Continue without overlay
+                }
             }
             
-            // Convert to base64
-            const photoData = captureCanvas.toDataURL('image/jpeg', 0.85);
-            console.log('✅ Photo captured successfully, size:', (photoData.length / 1024).toFixed(1), 'KB');
+            // Convert to base64 with error handling
+            let photoData;
+            try {
+                photoData = captureCanvas.toDataURL('image/jpeg', 0.85);
+                console.log('✅ Photo captured successfully, size:', (photoData.length / 1024).toFixed(1), 'KB');
+                
+                // Verify the image is not just black by checking if it's too small
+                if (photoData.length < 15000) { // Increased threshold
+                    console.warn('⚠️ Captured image seems very small, might be black/empty. Size:', photoData.length);
+                    // Try to validate image content
+                    const img = new Image();
+                    img.onload = function() {
+                        console.log('🖼️ Image validation: Image loaded successfully');
+                    };
+                    img.onerror = function() {
+                        console.error('❌ Image validation: Failed to load captured image');
+                    };
+                    img.src = photoData;
+                }
+                
+            } catch (encodeError) {
+                console.error('❌ Error converting to base64:', encodeError);
+                return null;
+            }
             
             return {
                 imageData: photoData,
@@ -1949,8 +2194,26 @@
                 height: captureCanvas.height,
                 timestamp: new Date().toISOString(),
                 hasPoseOverlay: includeOverlay && currentPoseResults && currentPoseResults.poseLandmarks,
-                cameraType: isFrontCamera ? 'front' : 'back'
+                cameraType: isFrontCamera ? 'front' : 'back',
+                actualFacingMode: currentFacingMode, // Include actual facing mode for debugging
+                detectionMethod: {
+                    currentFacingMode: currentFacingMode,
+                    dataFacingMode: dataFacingMode,
+                    transformBasedDetection: transformBasedDetection
+                }
             };
+        }
+        
+        // Helper function to get readable ready state
+        function getReadyStateText(readyState) {
+            const states = {
+                0: 'HAVE_NOTHING',
+                1: 'HAVE_METADATA', 
+                2: 'HAVE_CURRENT_DATA',
+                3: 'HAVE_FUTURE_DATA',
+                4: 'HAVE_ENOUGH_DATA'
+            };
+            return states[readyState] || 'UNKNOWN';
         }
         
         // Draw pose overlay on captured photo
