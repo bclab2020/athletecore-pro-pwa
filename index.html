@@ -146,6 +146,67 @@
             background-color: #F59E0B;
         }
         
+        /* Fullscreen Camera Mode */
+        .fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+        }
+        
+        .hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        
+        /* Floating Capture Button */
+        .floating-capture-btn {
+            position: fixed;
+            bottom: env(safe-area-inset-bottom, 20px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            padding: 16px 32px;
+            background: #1E3A8A;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(30, 58, 138, 0.4);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .floating-capture-btn.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .floating-capture-btn:hover {
+            background: #1D4ED8;
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 12px 30px rgba(30, 58, 138, 0.5);
+        }
+        
+        .floating-capture-btn:active {
+            transform: translateX(-50%) translateY(0px);
+        }
+        
+        /* Mobile Adjustments for Floating Button */
+        @media (max-width: 767px) {
+            .floating-capture-btn {
+                bottom: calc(env(safe-area-inset-bottom) + 30px);
+                padding: 18px 36px;
+                font-size: 18px;
+            }
+        }
+        
         /* PWA & Mobile Optimizations */
         .installed {
             padding-top: env(safe-area-inset-top);
@@ -660,7 +721,7 @@
             <div id="static-analysis" class="app-screen bg-white">
                 <div class="flex-1 flex flex-col min-h-screen">
                     <!-- Header -->
-                    <div class="flex-shrink-0 px-6 py-4 border-b bg-white">
+                    <div id="staticHeader" class="flex-shrink-0 px-6 py-4 border-b bg-white transition-all duration-300">
                         <div class="flex items-center">
                             <button onclick="showDashboard()" class="mr-4 text-gray-600">←</button>
                             <h2 class="text-lg font-semibold brand-color">Static Posture Analysis</h2>
@@ -668,7 +729,7 @@
                     </div>
                     
                     <!-- Camera View - Full Screen -->
-                    <div class="flex-1 bg-gray-900 relative" style="height: calc(100vh - 140px); min-height: calc(100vh - 140px);">
+                    <div id="staticCameraContainer" class="flex-1 bg-gray-900 relative transition-all duration-300" style="height: calc(100vh - 140px); min-height: calc(100vh - 140px);">
                         <!-- Full Screen Camera Container -->
                         <div class="w-full h-full relative absolute inset-0">
                             <video id="staticCameraFeed" class="w-full h-full object-cover" autoplay muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></video>
@@ -711,12 +772,12 @@
                     </div>
                     
                     <!-- Controls - Sticky Bottom -->
-                    <div class="flex-shrink-0 px-6 py-6 bg-white border-t space-y-4">
+                    <div id="staticControlsBottom" class="flex-shrink-0 px-6 py-6 bg-white border-t space-y-4 transition-all duration-300">
                         <div class="text-center">
                             <p class="text-sm text-gray-600 mb-2">Stand naturally with arms at your sides</p>
                             <p class="text-xs text-gray-500">腕を体の横に自然に立ってください</p>
                         </div>
-                        <button onclick="startStaticCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
+                        <button id="staticCaptureBtn" onclick="startStaticCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
                             Start 5s Countdown / 5秒カウントダウン開始
                         </button>
                     </div>
@@ -727,7 +788,7 @@
             <div id="dynamic-analysis" class="app-screen bg-white">
                 <div class="flex-1 flex flex-col min-h-screen">
                     <!-- Header -->
-                    <div class="flex-shrink-0 px-6 py-4 border-b bg-white">
+                    <div id="dynamicHeader" class="flex-shrink-0 px-6 py-4 border-b bg-white transition-all duration-300">
                         <div class="flex items-center">
                             <button onclick="showDashboard()" class="mr-4 text-gray-600">←</button>
                             <h2 class="text-lg font-semibold brand-color">Dynamic Movement Analysis</h2>
@@ -735,7 +796,7 @@
                     </div>
                     
                     <!-- Camera View - Full Screen -->
-                    <div class="flex-1 bg-gray-900 relative" style="height: calc(100vh - 140px); min-height: calc(100vh - 140px);">
+                    <div id="dynamicCameraContainer" class="flex-1 bg-gray-900 relative transition-all duration-300" style="height: calc(100vh - 140px); min-height: calc(100vh - 140px);">
                         <!-- Full Screen Camera Container -->
                         <div class="w-full h-full relative absolute inset-0">
                             <video id="dynamicCameraFeed" class="w-full h-full object-cover" autoplay muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></video>
@@ -784,12 +845,12 @@
                     </div>
                     
                     <!-- Controls - Sticky Bottom -->
-                    <div class="flex-shrink-0 px-6 py-6 bg-white border-t space-y-4">
+                    <div id="dynamicControlsBottom" class="flex-shrink-0 px-6 py-6 bg-white border-t space-y-4 transition-all duration-300">
                         <div class="bg-blue-50 p-4 rounded-lg">
                             <p class="text-sm brand-color font-medium mb-1">Current Exercise: Squat</p>
                             <p class="text-xs text-gray-600">現在のエクササイズ：スクワット</p>
                         </div>
-                        <button onclick="startDynamicCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
+                        <button id="dynamicCaptureBtn" onclick="startDynamicCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
                             Start Auto Recording / 自動録画開始
                         </button>
                     </div>
@@ -919,6 +980,98 @@
             });
             document.getElementById(screenId).classList.add('active');
             currentScreen = screenId;
+            
+            // Show/hide floating buttons based on screen
+            hideAllFloatingButtons();
+            if (screenId === 'static-analysis') {
+                showFloatingButton('static');
+            } else if (screenId === 'dynamic-analysis') {
+                showFloatingButton('dynamic');
+            }
+        }
+        
+        // Fullscreen camera control functions
+        function enterFullscreenMode(type) {
+            console.log('Entering fullscreen mode for:', type);
+            
+            if (type === 'static') {
+                const header = document.getElementById('staticHeader');
+                const controls = document.getElementById('staticControlsBottom');
+                const container = document.getElementById('staticCameraContainer');
+                
+                header.classList.add('hidden');
+                controls.classList.add('hidden');
+                container.classList.add('fullscreen');
+                container.style.height = '100vh';
+                container.style.minHeight = '100vh';
+                
+                hideFloatingButton('static');
+            } else if (type === 'dynamic') {
+                const header = document.getElementById('dynamicHeader');
+                const controls = document.getElementById('dynamicControlsBottom');
+                const container = document.getElementById('dynamicCameraContainer');
+                
+                header.classList.add('hidden');
+                controls.classList.add('hidden');
+                container.classList.add('fullscreen');
+                container.style.height = '100vh';
+                container.style.minHeight = '100vh';
+                
+                hideFloatingButton('dynamic');
+            }
+        }
+        
+        function exitFullscreenMode(type) {
+            console.log('Exiting fullscreen mode for:', type);
+            
+            if (type === 'static') {
+                const header = document.getElementById('staticHeader');
+                const controls = document.getElementById('staticControlsBottom');
+                const container = document.getElementById('staticCameraContainer');
+                
+                header.classList.remove('hidden');
+                controls.classList.remove('hidden');
+                container.classList.remove('fullscreen');
+                container.style.height = 'calc(100vh - 140px)';
+                container.style.minHeight = 'calc(100vh - 140px)';
+                
+                showFloatingButton('static');
+            } else if (type === 'dynamic') {
+                const header = document.getElementById('dynamicHeader');
+                const controls = document.getElementById('dynamicControlsBottom');
+                const container = document.getElementById('dynamicCameraContainer');
+                
+                header.classList.remove('hidden');
+                controls.classList.remove('hidden');
+                container.classList.remove('fullscreen');
+                container.style.height = 'calc(100vh - 140px)';
+                container.style.minHeight = 'calc(100vh - 140px)';
+                
+                showFloatingButton('dynamic');
+            }
+        }
+        
+        // Floating button control functions
+        function showFloatingButton(type) {
+            hideAllFloatingButtons();
+            if (type === 'static') {
+                document.getElementById('floatingStaticBtn').classList.add('visible');
+            } else if (type === 'dynamic') {
+                document.getElementById('floatingDynamicBtn').classList.add('visible');
+            }
+        }
+        
+        function hideFloatingButton(type) {
+            if (type === 'static') {
+                document.getElementById('floatingStaticBtn').classList.remove('visible');
+            } else if (type === 'dynamic') {
+                document.getElementById('floatingDynamicBtn').classList.remove('visible');
+            }
+        }
+        
+        function hideAllFloatingButtons() {
+            document.getElementById('floatingStaticBtn').classList.remove('visible');
+            document.getElementById('floatingDynamicBtn').classList.remove('visible');
         }
         
         function showWelcome() {
@@ -2343,8 +2496,14 @@
         
         // Improved static capture with countdown
         async function startStaticCaptureImproved() {
-            const button = event.target;
-            button.disabled = true;
+            // Enter fullscreen mode
+            enterFullscreenMode('static');
+            
+            // Disable all capture buttons
+            const bottomButton = document.getElementById('staticCaptureBtn');
+            const floatingButton = document.getElementById('floatingStaticBtn');
+            if (bottomButton) bottomButton.disabled = true;
+            if (floatingButton) floatingButton.disabled = true;
             
             // Show countdown overlay
             const screenElement = document.getElementById('static-analysis');
@@ -2352,7 +2511,8 @@
             // Create countdown overlay
             const overlay = document.createElement('div');
             overlay.id = 'staticCountdownOverlay';
-            overlay.className = 'absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-30';
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center';
+            overlay.style.zIndex = '10001';
             overlay.innerHTML = `
                 <div class="text-center text-white">
                     <div class="text-8xl font-bold mb-4" id="staticCountdownNumber">5</div>
@@ -2362,7 +2522,7 @@
                 </div>
             `;
             
-            screenElement.appendChild(overlay);
+            document.body.appendChild(overlay);
             
             let currentCount = 5;
             const countdownNumber = document.getElementById('staticCountdownNumber');
@@ -2397,9 +2557,10 @@
                         
                         // Add camera flash effect
                         const flash = document.createElement('div');
-                        flash.className = 'absolute inset-0 bg-white z-25';
+                        flash.className = 'fixed inset-0 bg-white';
+                        flash.style.zIndex = '10001';
                         flash.style.opacity = '0';
-                        screenElement.appendChild(flash);
+                        document.body.appendChild(flash);
                         
                         // Flash animation
                         flash.style.transition = 'opacity 0.1s';
@@ -2409,6 +2570,12 @@
                             flash.style.opacity = '0';
                             setTimeout(() => {
                                 flash.remove();
+                                // Exit fullscreen after capture
+                                exitFullscreenMode('static');
+                                
+                                // Re-enable buttons
+                                if (bottomButton) bottomButton.disabled = false;
+                                if (floatingButton) floatingButton.disabled = false;
                             }, 100);
                         }, 100);
                         
@@ -2487,9 +2654,20 @@
         
         // Improved dynamic capture with movement detection
         async function startDynamicCaptureImproved() {
-            const button = event.target;
-            button.disabled = true;
-            button.textContent = 'Ready to move... / 動作準備中...';
+            // Enter fullscreen mode
+            enterFullscreenMode('dynamic');
+            
+            // Disable all capture buttons
+            const bottomButton = document.getElementById('dynamicCaptureBtn');
+            const floatingButton = document.getElementById('floatingDynamicBtn');
+            if (bottomButton) {
+                bottomButton.disabled = true;
+                bottomButton.textContent = 'Ready to move... / 動作準備中...';
+            }
+            if (floatingButton) {
+                floatingButton.disabled = true;
+                floatingButton.textContent = 'Ready to move... / 動作準備中...';
+            }
             
             // Wait for movement to start
             isWaitingForMovement = true;
@@ -2500,7 +2678,8 @@
             const screenElement = document.getElementById('dynamic-analysis');
             const waitingOverlay = document.createElement('div');
             waitingOverlay.id = 'dynamicWaitingOverlay';
-            waitingOverlay.className = 'absolute top-20 left-4 right-4 text-center z-25';
+            waitingOverlay.className = 'fixed top-20 left-4 right-4 text-center';
+            waitingOverlay.style.zIndex = '10001';
             waitingOverlay.innerHTML = `
                 <div class="bg-blue-600 bg-opacity-90 text-white px-4 py-3 rounded-lg">
                     <div class="text-lg font-medium mb-1">🤸‍♂️ Ready to start!</div>
@@ -2508,7 +2687,7 @@
                     <div class="text-xs opacity-75">動き始めると録画が開始されます</div>
                 </div>
             `;
-            screenElement.appendChild(waitingOverlay);
+            document.body.appendChild(waitingOverlay);
             
             let previousLandmarks = null;
             const checkMovementInterval = setInterval(() => {
@@ -2547,6 +2726,19 @@
                             startRecordingTimer(screenElement, 15, () => {
                                 // Recording complete
                                 isAnalyzing = false;
+                                
+                                // Exit fullscreen mode
+                                exitFullscreenMode('dynamic');
+                                
+                                // Re-enable buttons
+                                if (bottomButton) {
+                                    bottomButton.disabled = false;
+                                    bottomButton.textContent = 'Start Auto Recording / 自動録画開始';
+                                }
+                                if (floatingButton) {
+                                    floatingButton.disabled = false;
+                                    floatingButton.textContent = 'Start Auto Recording / 自動録画開始';
+                                }
                                 
                                 // Process movement analysis data
                                 let analysisData;
@@ -2594,6 +2786,19 @@
                     
                     // Force start recording
                     startRecordingTimer(screenElement, 15, () => {
+                        // Exit fullscreen mode after timeout completion
+                        exitFullscreenMode('dynamic');
+                        
+                        // Re-enable buttons
+                        if (bottomButton) {
+                            bottomButton.disabled = false;
+                            bottomButton.textContent = 'Start Auto Recording / 自動録画開始';
+                        }
+                        if (floatingButton) {
+                            floatingButton.disabled = false;
+                            floatingButton.textContent = 'Start Auto Recording / 自動録画開始';
+                        }
+                        
                         // Auto-complete logic same as above
                         startDynamicCapture();
                     });
@@ -2605,7 +2810,8 @@
         function startRecordingTimer(screenElement, seconds, onComplete) {
             const timerOverlay = document.createElement('div');
             timerOverlay.id = 'dynamicTimerOverlay';
-            timerOverlay.className = 'absolute top-16 left-4 right-4 text-center z-25';
+            timerOverlay.className = 'fixed top-16 left-4 right-4 text-center';
+            timerOverlay.style.zIndex = '10001';
             timerOverlay.innerHTML = `
                 <div class="bg-red-600 bg-opacity-90 text-white px-4 py-2 rounded-lg">
                     <div class="text-sm font-medium flex items-center justify-center">
@@ -2617,7 +2823,7 @@
                 </div>
             `;
             
-            screenElement.appendChild(timerOverlay);
+            document.body.appendChild(timerOverlay);
             
             let currentTime = seconds;
             const timerElement = document.getElementById('dynamicTimer');
@@ -3050,5 +3256,13 @@
             });
         }
     </script>
+    
+    <!-- Floating Capture Buttons -->
+    <button id="floatingStaticBtn" class="floating-capture-btn" onclick="startStaticCaptureImproved()">
+        Start 5s Countdown / 5秒カウントダウン開始
+    </button>
+    <button id="floatingDynamicBtn" class="floating-capture-btn" onclick="startDynamicCaptureImproved()">
+        Start Auto Recording / 自動録画開始
+    </button>
 </body>
 </html>
