@@ -1956,6 +1956,9 @@
                 
                 console.log(`✅ Drawing complete! Connections: ${connectionsDrawn}/${POSE_CONNECTIONS.length}, Landmarks: ${landmarksDrawn}/${results.poseLandmarks.length}`);
                 
+                // Draw vertical reference lines from hip center
+                drawVerticalReferenceLines(ctx, results.poseLandmarks, isFrontCamera, canvas);
+                
                 // Draw a visible test indicator in corner to confirm canvas is working
                 ctx.fillStyle = '#FFFF00';
                 ctx.fillRect(5, 5, 15, 15);
@@ -2014,6 +2017,102 @@
             [11, 23], [12, 24], [23, 24], [23, 25], [24, 26], [25, 27], [26, 28],
             [27, 29], [28, 30], [29, 31], [30, 32], [27, 31], [28, 32]
         ];
+        
+        // Draw vertical reference lines from hip center
+        function drawVerticalReferenceLines(ctx, landmarks, isFrontCamera, canvas) {
+            const leftHip = landmarks[23];   // 左腰
+            const rightHip = landmarks[24];  // 右腰
+            const nose = landmarks[0];       // 鼻（頭頂部の代用）
+            
+            // 腰の中央点を計算
+            if (leftHip && rightHip && leftHip.visibility > 0.3 && rightHip.visibility > 0.3) {
+                const hipCenterX = isFrontCamera ? 
+                    (1 - (leftHip.x + rightHip.x) / 2) * canvas.width : 
+                    ((leftHip.x + rightHip.x) / 2) * canvas.width;
+                const hipCenterY = ((leftHip.y + rightHip.y) / 2) * canvas.height;
+                
+                // 垂直基準線のスタイル設定
+                ctx.strokeStyle = '#FF6B6B'; // 赤オレンジ色
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 4]); // 破線パターン
+                ctx.lineCap = 'round';
+                
+                // 1. 腰中央から画面下端まで（地面への垂直線）
+                ctx.beginPath();
+                ctx.moveTo(hipCenterX, hipCenterY);
+                ctx.lineTo(hipCenterX, canvas.height);
+                ctx.stroke();
+                
+                // 2. 腰中央から画面上端まで（頭頂部への垂直線）
+                ctx.beginPath();
+                ctx.moveTo(hipCenterX, hipCenterY);
+                ctx.lineTo(hipCenterX, 0);
+                ctx.stroke();
+                
+                // 3. 頭頂部（鼻）から垂直線への距離を可視化
+                if (nose && nose.visibility > 0.3) {
+                    const noseX = isFrontCamera ? (1 - nose.x) * canvas.width : nose.x * canvas.width;
+                    const noseY = nose.y * canvas.height;
+                    
+                    // 鼻から垂直線への水平線（姿勢の前後傾を示す）
+                    ctx.strokeStyle = '#4ECDC4'; // ターコイズ色
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 2]);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(noseX, noseY);
+                    ctx.lineTo(hipCenterX, noseY);
+                    ctx.stroke();
+                    
+                    // 偏差距離の表示
+                    const deviationPx = Math.abs(noseX - hipCenterX);
+                    const deviationPercent = (deviationPx / canvas.width * 100).toFixed(1);
+                    
+                    if (deviationPx > 10) { // 10px以上の偏差がある場合のみ表示
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 2;
+                        
+                        const textX = Math.min(noseX, hipCenterX) + Math.abs(noseX - hipCenterX) / 2;
+                        const textY = noseY - 10;
+                        
+                        ctx.strokeText(`${deviationPercent}%`, textX, textY);
+                        ctx.fillText(`${deviationPercent}%`, textX, textY);
+                    }
+                }
+                
+                // 4. 腰中央点を強調表示
+                ctx.setLineDash([]); // 実線に戻す
+                ctx.fillStyle = '#FF6B6B';
+                ctx.beginPath();
+                ctx.arc(hipCenterX, hipCenterY, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // 腰中央点にラベル表示
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 10px Arial';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.strokeText('HIP', hipCenterX + 10, hipCenterY + 5);
+                ctx.fillText('HIP', hipCenterX + 10, hipCenterY + 5);
+                
+                console.log(`📏 Vertical reference lines drawn from hip center (${hipCenterX.toFixed(1)}, ${hipCenterY.toFixed(1)})`);
+                
+                // デバッグ情報をログ出力
+                if (nose && nose.visibility > 0.3) {
+                    const noseX = isFrontCamera ? (1 - nose.x) * canvas.width : nose.x * canvas.width;
+                    const deviation = Math.abs(noseX - hipCenterX);
+                    console.log(`📐 Posture deviation: ${deviation.toFixed(1)}px (${(deviation/canvas.width*100).toFixed(1)}%)`);
+                }
+            } else {
+                console.log('⚠️ Hip landmarks not available for vertical reference lines');
+            }
+            
+            // 線のスタイルをリセット
+            ctx.setLineDash([]);
+            ctx.lineWidth = 3; // 骨格線の元の太さに戻す
+        }
         
         // Pose Analysis Algorithms
         function performPoseAnalysis(landmarks) {
