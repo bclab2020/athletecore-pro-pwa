@@ -839,7 +839,7 @@
                             <p class="text-xs text-gray-500">腕を体の横に自然に立ってください</p>
                         </div>
                         <button id="staticCaptureBtn" onclick="startStaticCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
-                            Start 10s Countdown / 10秒カウントダウン開始
+                            <span id="staticCaptureText">Start 10s Countdown / 10秒カウントダウン開始</span>
                         </button>
                     </div>
                 </div>
@@ -1552,6 +1552,19 @@
                 });
             } else {
                 console.error('❌ Video element not found:', videoElementId);
+            }
+            
+            // Update button text for static analysis based on camera type
+            if (screenType === 'static') {
+                const captureText = document.getElementById('staticCaptureText');
+                const floatingText = document.getElementById('floatingStaticText');
+                if (facingMode === 'user') {
+                    if (captureText) captureText.textContent = 'Start 10s Countdown / 10秒カウントダウン開始';
+                    if (floatingText) floatingText.textContent = 'Start 10s Countdown / 10秒カウントダウン開始';
+                } else {
+                    if (captureText) captureText.textContent = 'Capture Photo / 写真撮影';
+                    if (floatingText) floatingText.textContent = 'Capture Photo / 写真撮影';
+                }
             }
         }
         
@@ -3870,7 +3883,7 @@
     
     <!-- Floating Capture Buttons -->
     <button id="floatingStaticBtn" class="floating-capture-btn" onclick="startStaticCaptureImproved()">
-        Start 10s Countdown / 10秒カウントダウン開始
+        <span id="floatingStaticText">Start 10s Countdown / 10秒カウントダウン開始</span>
     </button>
     <button id="floatingDynamicBtn" class="floating-capture-btn" onclick="startDynamicCaptureImproved()">
         Start Auto Recording / 自動録画開始
