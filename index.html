@@ -1347,12 +1347,24 @@
         // Debug functions for analysis history
         window.debugAnalysisHistory = function() {
             const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-            console.log('📊 All analysis results:', results);
+            console.log('📊 Analysis History Debug:', {
+                totalEntries: results.length,
+                entriesWithPhotos: results.filter(r => r.capturedPhoto).length,
+                entries: results.map(r => ({
+                    id: r.id.substring(0, 8) + '...',
+                    type: r.analysis_type,
+                    date: new Date(r.analysis_date).toLocaleDateString('ja-JP'),
+                    hasPhoto: !!r.capturedPhoto,
+                    photoSize: r.capturedPhoto ? (r.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A',
+                    score: r.overall_score
+                }))
+            });
             console.log('👤 Current user:', currentUser);
             if (currentUser) {
                 const userResults = results.filter(r => r.user_id === currentUser.id);
-                console.log('🗂️ User results:', userResults);
+                console.log('🗂️ User results:', userResults.length);
             }
+            return results;
         };
         
         window.testAnalysisDetail = function(analysisId) {
@@ -3266,6 +3278,16 @@
                 { overall_score: 92, hip_flexibility: 95, postural_stability: 88, dynamic_balance: 93 }
             ];
             
+            // 🧪 Sample Base64 image (small blue square for testing)
+            const samplePhotoData = {
+                imageData: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAyADIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD+/iiiigD/2Q==",
+                width: 50,
+                height: 50,
+                timestamp: new Date().toISOString(),
+                hasPoseOverlay: true,
+                cameraType: 'front'
+            };
+            
             dates.forEach((date, index) => {
                 const analysisResult = {
                     id: generateUUID(),
@@ -3274,6 +3296,12 @@
                     sport: currentUser.primary_sport,
                     analysis_date: date.toISOString(),
                     ...baseScores[index],
+                    // 🧪 Add sample photo data to test photo display (add to first and third entries)
+                    capturedPhoto: (index === 0 || index === 2) ? {
+                        ...samplePhotoData,
+                        timestamp: date.toISOString(),
+                        cameraType: index === 0 ? 'front' : 'back'
+                    } : null,
                     recommendations: [
                         "Focus on core strengthening exercises / 体幹強化エクササイズに重点を置く",
                         "Improve hip flexor mobility / 股関節屈筋群の可動性を向上させる"
@@ -3283,6 +3311,7 @@
             });
             
             console.log('📊 Created sample analysis data:', sampleData.length, 'items');
+            console.log('🧪 Sample data with photo entries:', sampleData.filter(d => d.capturedPhoto).length);
             return sampleData;
         }
         
@@ -3353,6 +3382,14 @@
                     }
                 }
                 
+                // 🔍 Debug: Check resultData before saving
+                console.log('🔍 Data being saved:', {
+                    id: resultData.id,
+                    hasPhoto: !!resultData.capturedPhoto,
+                    photoDataSize: resultData.capturedPhoto ? (resultData.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A',
+                    photoTimestamp: resultData.capturedPhoto ? resultData.capturedPhoto.timestamp : 'N/A'
+                });
+                
                 results.push(resultData);
                 
                 // Additional safety: keep maximum 20 entries total
@@ -3361,10 +3398,15 @@
                 }
                 
                 localStorage.setItem('athletecore_results', JSON.stringify(results));
+                
+                // 🔍 Debug: Verify data was saved correctly by re-reading
+                const savedResults = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const savedEntry = savedResults.find(r => r.id === resultData.id);
                 console.log('✅ Analysis result saved locally:', {
                     id: resultData.id,
                     type: resultData.analysis_type,
                     hasPhoto: !!resultData.capturedPhoto,
+                    savedWithPhoto: !!(savedEntry && savedEntry.capturedPhoto),
                     totalEntries: results.length
                 });
                 
@@ -4511,6 +4553,17 @@
                         // ローカルに保存
                         saveAnalysisResultLocal(resultData);
                         
+                        // 🔍 Debug: Immediately verify the data was saved
+                        setTimeout(() => {
+                            const savedResults = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                            const savedEntry = savedResults.find(r => r.id === resultData.id);
+                            console.log('🔍 Verification after save:', {
+                                entryFound: !!savedEntry,
+                                hasPhoto: !!(savedEntry && savedEntry.capturedPhoto),
+                                photoDataExists: !!(savedEntry && savedEntry.capturedPhoto && savedEntry.capturedPhoto.imageData)
+                            });
+                        }, 100);
+                        
                         // Show photo capture success
                         if (capturedPhoto) {
                             console.log('✅ Photo captured and saved with analysis');
@@ -5309,7 +5362,20 @@
                     return;
                 }
                 
-                console.log('✅ Found analysis:', analysis);
+                // 🔍 Debug: Check photo data in retrieved analysis
+                console.log('✅ Found analysis:', {
+                    id: analysis.id,
+                    type: analysis.analysis_type,
+                    hasPhoto: !!analysis.capturedPhoto,
+                    photoData: analysis.capturedPhoto ? {
+                        hasImageData: !!analysis.capturedPhoto.imageData,
+                        imageDataLength: analysis.capturedPhoto.imageData ? analysis.capturedPhoto.imageData.length : 0,
+                        width: analysis.capturedPhoto.width,
+                        height: analysis.capturedPhoto.height,
+                        timestamp: analysis.capturedPhoto.timestamp,
+                        cameraType: analysis.capturedPhoto.cameraType
+                    } : null
+                });
                 
                 showScreen('analysis-detail');
                 document.getElementById('analysis-detail').classList.add('slide-up');
