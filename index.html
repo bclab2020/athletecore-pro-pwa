@@ -1582,25 +1582,30 @@
         
         // Initialize MediaPipe Pose
         async function initMediaPipe() {
-            console.log('Initializing MediaPipe Pose...');
+            const timestamp = new Date().toISOString().slice(11, 23);
+            console.log(`🚀 [${timestamp}] Initializing MediaPipe Pose...`);
             
             if (typeof Pose === 'undefined') {
-                console.error('MediaPipe Pose not loaded - retrying in 1 second');
+                console.error(`❌ [${timestamp}] MediaPipe Pose not loaded - retrying in 1 second`);
                 setTimeout(initMediaPipe, 1000);
                 return false;
             }
             
             try {
+                console.log(`🔧 [${timestamp}] Creating new Pose instance...`);
                 pose = new Pose({
                     locateFile: (file) => {
-                        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+                        const url = `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+                        console.log(`📦 [${timestamp}] Loading MediaPipe file: ${url}`);
+                        return url;
                     }
                 });
                 
                 // Optimize settings for mobile devices
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                console.log('Device type:', isMobile ? 'Mobile' : 'Desktop');
+                console.log(`📱 [${timestamp}] Device type: ${isMobile ? 'Mobile' : 'Desktop'}`);
                 
+                console.log(`⚙️ [${timestamp}] Setting MediaPipe options...`);
                 pose.setOptions({
                     modelComplexity: 1, // Use model complexity 1 for better accuracy
                     smoothLandmarks: true,
@@ -1610,15 +1615,24 @@
                     minTrackingConfidence: 0.5
                 });
                 
+                console.log(`🔗 [${timestamp}] Setting pose.onResults callback...`);
                 pose.onResults(onPoseResults);
                 
                 // Wait for initialization to complete
+                console.log(`⏳ [${timestamp}] Waiting for initialization to complete...`);
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
-                console.log('✅ MediaPipe Pose initialized successfully');
+                // Test the pose object
+                console.log(`🧪 [${timestamp}] Testing pose object:`, {
+                    poseExists: !!pose,
+                    poseType: typeof pose,
+                    poseMethods: pose ? Object.getOwnPropertyNames(Object.getPrototypeOf(pose)) : 'N/A'
+                });
+                
+                console.log(`✅ [${timestamp}] MediaPipe Pose initialized successfully`);
                 return true;
             } catch (error) {
-                console.error('Failed to initialize MediaPipe Pose:', error);
+                console.error(`❌ [${timestamp}] Failed to initialize MediaPipe Pose:`, error);
                 return false;
             }
         }
@@ -1627,15 +1641,30 @@
         function onPoseResults(results) {
             currentPoseResults = results;
             
-            console.log('Pose results received:', results.poseLandmarks ? results.poseLandmarks.length : 'no landmarks');
+            // Enhanced debugging for pose results
+            const landmarks = results.poseLandmarks;
+            const landmarkCount = landmarks ? landmarks.length : 0;
+            const timestamp = new Date().toISOString().slice(11, 23); // HH:MM:SS.mmm
             
-            // Update pose status indicators
+            console.log(`🎯 [${timestamp}] Pose results received:`, {
+                landmarks: landmarkCount,
+                hasResults: !!results,
+                resultsKeys: Object.keys(results),
+                worldLandmarks: results.poseWorldLandmarks ? results.poseWorldLandmarks.length : 0
+            });
+            
+            // Update pose status indicators with enhanced logging
             updatePoseStatus(results.poseLandmarks);
             
             // Draw pose landmarks on canvas - ALWAYS SHOW
             if (results.poseLandmarks) {
-                console.log('🎯 Calling drawPoseLandmarks with', results.poseLandmarks.length, 'landmarks');
-                drawPoseLandmarks(results);
+                console.log(`🎯 [${timestamp}] Calling drawPoseLandmarks with`, results.poseLandmarks.length, 'landmarks');
+                try {
+                    drawPoseLandmarks(results);
+                    console.log(`✅ [${timestamp}] drawPoseLandmarks completed successfully`);
+                } catch (drawError) {
+                    console.error(`❌ [${timestamp}] drawPoseLandmarks failed:`, drawError);
+                }
                 
                 // Real-time squat detection for dynamic analysis
                 const activeScreen = document.querySelector('.app-screen:not(.hidden)');
@@ -1649,7 +1678,11 @@
                     performPoseAnalysis(results.poseLandmarks);
                 }
             } else {
-                console.log('No pose landmarks detected');
+                console.log(`❌ [${timestamp}] No pose landmarks detected in results:`, {
+                    resultsType: typeof results,
+                    resultsKeys: results ? Object.keys(results) : 'null/undefined',
+                    poseLandmarksType: typeof results?.poseLandmarks
+                });
             }
         }
         
@@ -1690,7 +1723,7 @@
             lastSquatPhase = squatDetection.phase;
         }
         
-        // Update pose detection status
+        // Update pose detection status with enhanced debugging
         function updatePoseStatus(landmarks) {
             const staticIndicator = document.getElementById('staticPoseIndicator');
             const staticText = document.getElementById('staticPoseText');
@@ -1699,27 +1732,48 @@
             
             const isDetected = landmarks && landmarks.length > 0;
             const confidence = isDetected ? calculatePoseConfidence(landmarks) : 0;
+            const timestamp = new Date().toISOString().slice(11, 23);
+            
+            // Enhanced logging for status updates
+            console.log(`📊 [${timestamp}] Updating pose status:`, {
+                isDetected,
+                landmarkCount: landmarks ? landmarks.length : 0,
+                confidence: Math.round(confidence * 100),
+                staticElements: { indicator: !!staticIndicator, text: !!staticText },
+                dynamicElements: { indicator: !!dynamicIndicator, text: !!dynamicText },
+                currentScreen: currentScreen
+            });
             
             // Update static analysis status
             if (staticIndicator && staticText) {
                 if (isDetected) {
                     staticIndicator.className = 'w-2 h-2 bg-green-500 rounded-full inline-block mr-1';
-                    staticText.textContent = `Pose Detected (${Math.round(confidence * 100)}%)`;
+                    const newText = `Pose Detected (${Math.round(confidence * 100)}%)`;
+                    staticText.textContent = newText;
+                    console.log(`✅ Static status updated: ${newText}`);
                 } else {
                     staticIndicator.className = 'w-2 h-2 bg-red-500 rounded-full inline-block mr-1';
                     staticText.textContent = 'No Pose Detected';
+                    console.log(`❌ Static status: No Pose Detected`);
                 }
+            } else {
+                console.warn('⚠️ Static status elements not found:', { indicator: !!staticIndicator, text: !!staticText });
             }
             
             // Update dynamic analysis status
             if (dynamicIndicator && dynamicText) {
                 if (isDetected) {
                     dynamicIndicator.className = 'w-2 h-2 bg-green-500 rounded-full inline-block mr-1';
-                    dynamicText.textContent = `Tracking (${Math.round(confidence * 100)}%)`;
+                    const newText = `Tracking (${Math.round(confidence * 100)}%)`;
+                    dynamicText.textContent = newText;
+                    console.log(`✅ Dynamic status updated: ${newText}`);
                 } else {
                     dynamicIndicator.className = 'w-2 h-2 bg-red-500 rounded-full inline-block mr-1';
                     dynamicText.textContent = 'No Movement Detected';
+                    console.log(`❌ Dynamic status: No Movement Detected`);
                 }
+            } else {
+                console.warn('⚠️ Dynamic status elements not found:', { indicator: !!dynamicIndicator, text: !!dynamicText });
             }
         }
         
@@ -2207,13 +2261,35 @@
                     ctx.fillText('POSE', 5, 20);
                     console.log('🟢 Test draw on canvas completed');
                     
-                    // Start pose detection with lower frame rate for stability
+                    // Start pose detection with enhanced debugging
+                    let frameCount = 0;
                     poseDetectionInterval = setInterval(async () => {
+                        frameCount++;
+                        const timestamp = new Date().toISOString().slice(11, 23);
+                        
                         if (pose && video.videoWidth > 0 && video.readyState >= video.HAVE_CURRENT_DATA) {
                             try {
+                                // Log every 10th frame to avoid spam
+                                if (frameCount % 10 === 0) {
+                                    console.log(`📹 [${timestamp}] Sending frame ${frameCount} to MediaPipe:`, {
+                                        videoSize: `${video.videoWidth}x${video.videoHeight}`,
+                                        readyState: video.readyState,
+                                        poseReady: !!pose
+                                    });
+                                }
                                 await pose.send({ image: video });
                             } catch (error) {
-                                console.error('❌ Pose detection error:', error);
+                                console.error(`❌ [${timestamp}] Pose detection error on frame ${frameCount}:`, error);
+                            }
+                        } else {
+                            // Log issues with video or pose readiness
+                            if (frameCount % 20 === 0) { // Less frequent logging for issues
+                                console.warn(`⚠️ [${timestamp}] Skipping frame ${frameCount}:`, {
+                                    poseReady: !!pose,
+                                    videoSize: `${video.videoWidth}x${video.videoHeight}`,
+                                    readyState: video.readyState,
+                                    srcObject: !!video.srcObject
+                                });
                             }
                         }
                     }, 50); // ~20 FPS for better stability
