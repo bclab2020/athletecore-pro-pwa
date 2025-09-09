@@ -248,6 +248,66 @@
             overscroll-behavior-y: contain;
         }
         
+        /* Enhanced Countdown Animations */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+        }
+        
+        @keyframes countdownPulse {
+            0% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.1);
+                filter: brightness(1.3);
+            }
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+        }
+        
+        @keyframes progressGlow {
+            0%, 100% {
+                box-shadow: 0 0 5px rgba(16,185,129,0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(16,185,129,0.8), 0 0 30px rgba(16,185,129,0.4);
+            }
+        }
+        
+        @keyframes flashEffect {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        
+        /* Countdown Number Special Effects */
+        #staticCountdownNumber {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'Arial Black', Arial, sans-serif;
+            letter-spacing: -0.02em;
+        }
+        
+        #countdownProgress {
+            transition: all 0.5s ease-out;
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+        
         /* バッテリー効率のためのGPUアクセラレーション */
         .phone-frame, .app-screen, .fade-in, .slide-up {
             will-change: transform;
@@ -1164,8 +1224,9 @@
         // サービスワーカーの登録
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Initialize speech synthesis voices
+                // Initialize audio systems
                 initializeVoices();
+                initializeAudioContext();
                 
                 navigator.serviceWorker.register('/service-worker.js')
                     .then(registration => {
@@ -2571,6 +2632,72 @@
         // Initialize voices when available
         let speechEnabled = false;
         
+        // Web Audio API for reliable sound feedback (alternative to speech synthesis)
+        let audioContext = null;
+        let soundEnabled = false;
+        
+        function initializeAudioContext() {
+            try {
+                if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    soundEnabled = true;
+                    console.log('✅ Audio context initialized');
+                    return true;
+                }
+            } catch (error) {
+                console.warn('⚠️ Audio context initialization failed:', error);
+            }
+            return false;
+        }
+        
+        function playCountdownBeep(frequency = 800, duration = 200, isWarning = false) {
+            if (!soundEnabled || !audioContext) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Different frequencies and patterns for different countdown states
+                if (isWarning) {
+                    oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.1);
+                } else {
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                }
+                
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+                
+                console.log(`🔊 Played beep: ${frequency}Hz for ${duration}ms`);
+            } catch (error) {
+                console.warn('⚠️ Beep sound failed:', error);
+            }
+        }
+        
+        function playSuccessChime() {
+            if (!soundEnabled || !audioContext) return;
+            
+            try {
+                // Play a pleasant ascending chime
+                const frequencies = [523, 659, 784]; // C, E, G notes
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        playCountdownBeep(freq, 300, false);
+                    }, index * 150);
+                });
+                console.log('🎵 Played success chime');
+            } catch (error) {
+                console.warn('⚠️ Success chime failed:', error);
+            }
+        }
+        
         function initializeVoices() {
             if ('speechSynthesis' in window) {
                 const loadVoices = () => {
@@ -2611,10 +2738,10 @@
             }
         }
         
-        // Enable speech after user interaction
+        // Enable speech and audio after user interaction
         function enableSpeech() {
+            // Enable speech synthesis
             if (!speechEnabled && 'speechSynthesis' in window) {
-                // Test speech synthesis with a silent utterance
                 try {
                     const testUtterance = new SpeechSynthesisUtterance('');
                     testUtterance.volume = 0;
@@ -2623,6 +2750,16 @@
                     console.log('✅ Speech enabled after user interaction');
                 } catch (error) {
                     console.error('Failed to enable speech:', error);
+                }
+            }
+            
+            // Enable Web Audio API
+            if (!soundEnabled) {
+                initializeAudioContext();
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('✅ Audio context resumed after user interaction');
+                    });
                 }
             }
         }
@@ -2711,18 +2848,19 @@
             // Show countdown overlay
             const screenElement = document.getElementById('static-analysis');
             
-            // Create countdown overlay
+            // Create enhanced countdown overlay with dramatic animations
             const overlay = document.createElement('div');
             overlay.id = 'staticCountdownOverlay';
-            overlay.className = 'fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center';
+            overlay.className = 'fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-40 flex items-center justify-center';
             overlay.style.zIndex = '10001';
             overlay.innerHTML = `
-                <div class="text-center text-white bg-black bg-opacity-60 px-8 py-6 rounded-2xl shadow-2xl border border-white border-opacity-20">
-                    <div class="text-8xl font-bold mb-4 text-white drop-shadow-lg" id="staticCountdownNumber">10</div>
-                    <div class="text-xl mb-2 text-white drop-shadow-md">Get ready! / 準備してください！</div>
-                    <div class="text-sm opacity-90 drop-shadow-sm">Stand naturally with arms at sides</div>
-                    <div class="text-sm opacity-90 drop-shadow-sm">腕を体の横に自然に立ってください</div>
-                    ${isFrontCamera ? `<div class="text-xs opacity-75 mt-2">🔊 Voice countdown enabled ${speechEnabled ? '(✅ Ready)' : '(⚠️ Initializing...)'}</div>` : ''}
+                <div class="text-center text-white bg-gradient-to-br from-gray-900 to-black bg-opacity-80 px-12 py-8 rounded-3xl shadow-2xl border-2 border-white border-opacity-30 backdrop-blur-sm">
+                    <div class="text-9xl font-black mb-6 text-white drop-shadow-2xl transition-all duration-300 ease-out" id="staticCountdownNumber" style="text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(16,185,129,0.6);">10</div>
+                    <div class="text-2xl mb-3 text-white drop-shadow-lg font-semibold">Get ready! / 準備してください！</div>
+                    <div class="text-base opacity-90 drop-shadow-md mb-1">Stand naturally with arms at sides</div>
+                    <div class="text-base opacity-90 drop-shadow-md mb-4">腕を体の横に自然に立ってください</div>
+                    <div class="w-16 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mx-auto mb-2" id="countdownProgress"></div>
+                    ${isFrontCamera ? `<div class="text-sm opacity-75 mt-3 bg-green-500 bg-opacity-20 px-3 py-1 rounded-full border border-green-400 border-opacity-50">🔊 Enhanced Visual + Audio Countdown ${speechEnabled ? '(✅ Ready)' : '(⚠️ Initializing...)'}</div>` : '<div class="text-sm opacity-75 mt-3 bg-blue-500 bg-opacity-20 px-3 py-1 rounded-full border border-blue-400 border-opacity-50">🎯 Enhanced Visual Countdown Active</div>'}
                 </div>
             `;
             
@@ -2735,11 +2873,52 @@
                 currentCount--;
                 
                 if (currentCount > 0) {
+                    // Enhanced visual countdown with dramatic effects
                     countdownNumber.textContent = currentCount;
-                    countdownNumber.style.transform = 'scale(1.2)';
+                    
+                    // Dynamic color transitions based on countdown
+                    let color, shadowColor, pulseIntensity;
+                    if (currentCount > 7) {
+                        color = '#10B981'; // Green
+                        shadowColor = 'rgba(16,185,129,0.8)';
+                        pulseIntensity = '0 0 40px rgba(16,185,129,0.8)';
+                    } else if (currentCount > 3) {
+                        color = '#F59E0B'; // Amber
+                        shadowColor = 'rgba(245,158,11,0.8)';
+                        pulseIntensity = '0 0 50px rgba(245,158,11,0.8)';
+                    } else {
+                        color = '#EF4444'; // Red
+                        shadowColor = 'rgba(239,68,68,0.8)';
+                        pulseIntensity = '0 0 60px rgba(239,68,68,0.9)';
+                    }
+                    
+                    // Apply dynamic styling
+                    countdownNumber.style.color = color;
+                    countdownNumber.style.textShadow = `0 0 30px ${shadowColor}, ${pulseIntensity}, 0 0 80px rgba(255,255,255,0.4)`;
+                    countdownNumber.style.transform = 'scale(1.3)';
+                    countdownNumber.style.animation = 'none';
+                    
+                    // Add pulsing animation
                     setTimeout(() => {
-                        countdownNumber.style.transform = 'scale(1)';
+                        countdownNumber.style.transform = 'scale(1.0)';
+                        countdownNumber.style.animation = 'pulse 0.8s ease-in-out';
+                    }, 150);
+                    
+                    // Update progress bar
+                    const progressBar = document.getElementById('countdownProgress');
+                    if (progressBar) {
+                        const progressWidth = ((10 - currentCount) / 10) * 100;
+                        progressBar.style.width = `${progressWidth}%`;
+                        progressBar.style.background = `linear-gradient(90deg, ${color} 0%, rgba(255,255,255,0.5) 100%)`;
+                    }
+                    
+                    // Enhanced screen flash effect
+                    overlay.style.background = `radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%)`;
+                    setTimeout(() => {
+                        overlay.style.background = 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(30,30,30,0.4) 100%)';
                     }, 200);
+                    
+                    // Multi-modal feedback: Voice + Audio + Haptic
                     
                     // Voice countdown only for front camera with slight delay
                     if (isFrontCamera) {
@@ -2748,21 +2927,57 @@
                         }, 100);
                     }
                     
-                    // Haptic feedback for each count
+                    // Audio beep feedback (reliable alternative to speech)
+                    setTimeout(() => {
+                        if (currentCount <= 3) {
+                            playCountdownBeep(1000, 150, true); // Higher frequency, warning beep
+                        } else if (currentCount <= 5) {
+                            playCountdownBeep(800, 200, false); // Medium frequency
+                        } else {
+                            playCountdownBeep(600, 250, false); // Lower frequency
+                        }
+                    }, 50);
+                    
+                    // Enhanced haptic feedback pattern
                     if (navigator.vibrate) {
-                        navigator.vibrate(50);
+                        if (currentCount <= 3) {
+                            navigator.vibrate([100, 50, 100]); // Urgent pattern
+                        } else {
+                            navigator.vibrate(80); // Regular pulse
+                        }
                     }
                 } else {
-                    // Show "OK!" and trigger capture (changed from "GO!")
+                    // Dramatic "OK!" final sequence
                     countdownNumber.textContent = 'OK!';
-                    countdownNumber.style.transform = 'scale(1.5)';
-                    countdownNumber.style.color = '#10B981'; // Green color
+                    countdownNumber.style.transform = 'scale(1.8)';
+                    countdownNumber.style.color = '#10B981'; // Bright green
+                    countdownNumber.style.textShadow = '0 0 40px rgba(16,185,129,1), 0 0 80px rgba(16,185,129,0.8), 0 0 120px rgba(255,255,255,0.6)';
+                    countdownNumber.style.animation = 'pulse 0.5s ease-in-out 3';
                     
-                    // Voice "OK!" only for front camera with delay
+                    // Full progress bar
+                    const progressBar = document.getElementById('countdownProgress');
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                        progressBar.style.background = 'linear-gradient(90deg, #10B981 0%, #34D399 50%, #6EE7B7 100%)';
+                        progressBar.style.height = '6px';
+                    }
+                    
+                    // Dramatic screen flash
+                    overlay.style.background = 'radial-gradient(circle at center, rgba(16,185,129,0.3) 0%, rgba(255,255,255,0.1) 50%, transparent 100%)';
+                    
+                    // Final "OK!" multi-modal feedback
+                    
+                    // Voice "OK!" only for front camera
                     if (isFrontCamera) {
                         setTimeout(() => {
                             speakCountdown('OK!', true);
                         }, 100);
+                    }
+                    
+                    // Success audio chime (reliable for all users)
+                    setTimeout(() => {
+                        playSuccessChime();
+                    }, 200);
                     }
                     
                     // Strong haptic feedback for OK
