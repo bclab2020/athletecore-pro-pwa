@@ -1815,8 +1815,7 @@
                 let landmarksDrawn = 0;
                 
                 // Check if this is a front camera (mirrored) based on the current video element transform
-                const videoElement = document.getElementById('analysisCamera');
-                const isFrontCamera = videoElement && videoElement.style.transform.includes('scaleX(-1)');
+                const isFrontCamera = video && video.style.transform.includes('scaleX(-1)');
                 console.log(`📹 Drawing skeleton for ${isFrontCamera ? 'front (mirrored)' : 'back'} camera`);
                 
                 // Draw skeleton connections
