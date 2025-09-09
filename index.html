@@ -716,8 +716,8 @@
                             <p class="text-sm text-gray-600 mb-2">Stand naturally with arms at your sides</p>
                             <p class="text-xs text-gray-500">腕を体の横に自然に立ってください</p>
                         </div>
-                        <button onclick="startStaticCapture()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
-                            Start Capture / 撮影開始
+                        <button onclick="startStaticCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
+                            Start 5s Countdown / 5秒カウントダウン開始
                         </button>
                     </div>
                 </div>
@@ -789,8 +789,8 @@
                             <p class="text-sm brand-color font-medium mb-1">Current Exercise: Squat</p>
                             <p class="text-xs text-gray-600">現在のエクササイズ：スクワット</p>
                         </div>
-                        <button onclick="startDynamicCapture()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
-                            Start Recording / 録画開始
+                        <button onclick="startDynamicCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
+                            Start Auto Recording / 自動録画開始
                         </button>
                     </div>
                 </div>
@@ -1262,9 +1262,13 @@
             }
         }
         
-        // Global squat tracking variables
+        // Global movement tracking variables
         let currentSquatCount = 0;
         let lastSquatPhase = 'standing';
+        let movementAnalysisData = [];
+        let isWaitingForMovement = false;
+        let movementStartTime = null;
+        let lastMovementIntensity = 0;
         
         // Update squat counter display
         function updateSquatCounter(squatDetection) {
@@ -2337,132 +2341,116 @@
             event.target.classList.add('bg-blue-50', 'brand-color', 'font-medium');
         }
         
-        async function startStaticCapture() {
-            // Start analysis process
-            event.target.textContent = 'Analyzing... / 分析中...';
-            event.target.disabled = true;
-            isAnalyzing = true;
+        // Improved static capture with countdown\n        async function startStaticCaptureImproved() {\n            const button = event.target;\n            button.disabled = true;\n            \n            // Show countdown overlay\n            const screenElement = document.getElementById('static-analysis');\n            \n            // Create countdown overlay\n            const overlay = document.createElement('div');\n            overlay.id = 'staticCountdownOverlay';\n            overlay.className = 'absolute inset-0 bg-black bg-opacity-80 flex items-center justify-center z-30';\n            overlay.innerHTML = `\n                <div class=\"text-center text-white\">\n                    <div class=\"text-8xl font-bold mb-4\" id=\"staticCountdownNumber\">5</div>\n                    <div class=\"text-xl mb-2\">Get ready! / 準備してください！</div>\n                    <div class=\"text-sm opacity-75\">Stand naturally with arms at sides</div>\n                    <div class=\"text-sm opacity-75\">腕を体の横に自然に立ってください</div>\n                </div>\n            `;\n            \n            screenElement.appendChild(overlay);\n            \n            let currentCount = 5;\n            const countdownNumber = document.getElementById('staticCountdownNumber');\n            \n            const countdownInterval = setInterval(() => {\n                currentCount--;\n                \n                if (currentCount > 0) {\n                    countdownNumber.textContent = currentCount;\n                    countdownNumber.style.transform = 'scale(1.2)';\n                    setTimeout(() => {\n                        countdownNumber.style.transform = 'scale(1)';\n                    }, 200);\n                    \n                    // Haptic feedback for each count\n                    if (navigator.vibrate) {\n                        navigator.vibrate(50);\n                    }\n                } else {\n                    // Show \"GO!\" and trigger capture\n                    countdownNumber.textContent = 'GO!';\n                    countdownNumber.style.transform = 'scale(1.5)';\n                    countdownNumber.style.color = '#10B981'; // Green color\n                    \n                    // Strong haptic feedback for GO\n                    if (navigator.vibrate) {\n                        navigator.vibrate([100, 50, 100]);\n                    }\n                    \n                    setTimeout(() => {\n                        overlay.remove();\n                        \n                        // Add camera flash effect\n                        const flash = document.createElement('div');\n                        flash.className = 'absolute inset-0 bg-white z-25';\n                        flash.style.opacity = '0';\n                        screenElement.appendChild(flash);\n                        \n                        // Flash animation\n                        flash.style.transition = 'opacity 0.1s';\n                        flash.style.opacity = '0.8';\n                        \n                        setTimeout(() => {\n                            flash.style.opacity = '0';\n                            setTimeout(() => {\n                                flash.remove();\n                            }, 100);\n                        }, 100);\n                        \n                        // Start actual analysis\n                        startStaticCapture();\n                    }, 1000);\n                    \n                    clearInterval(countdownInterval);\n                }\n            }, 1000);\n        }\n        \n        async function startStaticCapture() {
+            // Start countdown process
+            const button = event.target;
+            button.disabled = true;
             
-            // Capture pose data for 3 seconds
-            let analysisResults = [];
-            const captureInterval = setInterval(() => {
-                if (currentPoseResults && currentPoseResults.poseLandmarks) {
-                    const analysis = performPoseAnalysis(currentPoseResults.poseLandmarks);
-                    if (analysis) {
-                        analysisResults.push(analysis);
-                    }
-                }
-            }, 100); // Capture every 100ms
-            
-            setTimeout(async () => {
-                clearInterval(captureInterval);
-                isAnalyzing = false;
+            // Show countdown overlay
+            showCountdownOverlay('static', 5, async () => {
+                // Start actual analysis after countdown
+                isAnalyzing = true;
+                button.textContent = 'Analyzing... / 分析中...';
                 
-                // Process captured analysis data
-                let analysisData;
-                if (analysisResults.length > 0) {
-                    analysisData = processStaticAnalysisResults(analysisResults);
-                } else {
-                    // Fallback to generated data if no pose detected
-                    analysisData = generateAnalysisData('static');
-                }
+                // Add camera flash effect for capture moment
+                showCameraFlash('static');
                 
-                if (currentUser) {
-                    const resultData = {
-                        id: generateUUID(),
-                        user_id: currentUser.id,
-                        analysis_type: 'static',
-                        sport: currentUser.primary_sport,
-                        analysis_date: new Date().toISOString(),
-                        ...analysisData
-                    };
-                    
-                    // ローカルに保存
-                    saveAnalysisResultLocal(resultData);
-                }
-                
-                updateResultsDisplay(analysisData);
-                
-                // 分析完了の振動フィードバック
-                if (navigator.vibrate) {
-                    navigator.vibrate([200, 100, 200]);
-                }
-                
-                showResults();
-            }, 3000);
-        }
-        
-        async function startDynamicCapture() {
-            // Start dynamic movement analysis
-            event.target.textContent = 'Recording... / 録画中...';
-            event.target.disabled = true;
-            isAnalyzing = true;
-            
-            // Initialize movement tracking
-            let movementData = [];
-            let squatCount = 0;
-            let movementPhase = 'standing';
-            
-            const recordingInterval = setInterval(() => {
-                if (currentPoseResults && currentPoseResults.poseLandmarks) {
-                    const analysis = performPoseAnalysis(currentPoseResults.poseLandmarks);
-                    const movement = detectMovement(currentPoseResults.poseLandmarks);
-                    
-                    if (analysis && movement) {
-                        movementData.push({
-                            ...analysis,
-                            movement: movement,
-                            timestamp: Date.now()
-                        });
-                        
-                        // Update squat count and phase
-                        const squatDetection = detectSquat(currentPoseResults.poseLandmarks);
-                        if (squatDetection.isSquat && squatDetection.phase !== movementPhase) {
-                            if (squatDetection.phase === 'bottom' && movementPhase === 'down') {
-                                squatCount++;
-                            }
-                            movementPhase = squatDetection.phase;
+                // Capture pose data for 3 seconds
+                let analysisResults = [];
+                const captureInterval = setInterval(() => {
+                    if (currentPoseResults && currentPoseResults.poseLandmarks) {
+                        const analysis = performPoseAnalysis(currentPoseResults.poseLandmarks);
+                        if (analysis) {
+                            analysisResults.push(analysis);
                         }
                     }
-                }
-            }, 50); // Higher frequency for movement tracking
-            
-            setTimeout(async () => {
-                clearInterval(recordingInterval);
-                isAnalyzing = false;
+                }, 100); // Capture every 100ms
                 
-                // Process movement analysis data
-                let analysisData;
-                if (movementData.length > 0) {
-                    analysisData = processDynamicAnalysisResults(movementData, squatCount);
-                } else {
-                    // Fallback to generated data
-                    analysisData = generateAnalysisData('dynamic');
-                }
-                
-                if (currentUser) {
-                    const resultData = {
-                        id: generateUUID(),
-                        user_id: currentUser.id,
-                        analysis_type: 'dynamic',
-                        sport: currentUser.primary_sport,
-                        analysis_date: new Date().toISOString(),
-                        ...analysisData
-                    };
+                setTimeout(async () => {
+                    clearInterval(captureInterval);
+                    isAnalyzing = false;
                     
-                    // ローカルに保存
-                    saveAnalysisResultLocal(resultData);
-                }
-                
-                updateResultsDisplay(analysisData);
-                
-                // 分析完了の振動フィードバック
-                if (navigator.vibrate) {
-                    navigator.vibrate([200, 100, 200]);
-                }
-                
-                showResults();
-            }, 5000);
+                    // Process captured analysis data
+                    let analysisData;
+                    if (analysisResults.length > 0) {
+                        analysisData = processStaticAnalysisResults(analysisResults);
+                    } else {
+                        // Fallback to generated data if no pose detected
+                        analysisData = generateAnalysisData('static');
+                    }
+                    
+                    if (currentUser) {
+                        const resultData = {
+                            id: generateUUID(),
+                            user_id: currentUser.id,
+                            analysis_type: 'static',
+                            sport: currentUser.primary_sport,
+                            analysis_date: new Date().toISOString(),
+                            ...analysisData
+                        };
+                        
+                        // ローカルに保存
+                        saveAnalysisResultLocal(resultData);
+                    }
+                    
+                    updateResultsDisplay(analysisData);
+                    
+                    // 分析完了の振動フィードバック
+                    if (navigator.vibrate) {
+                        navigator.vibrate([200, 100, 200]);
+                    }
+                    
+                    showResults();
+                }, 3000);
+            });
+        }
+        
+        // Improved dynamic capture with movement detection\n        async function startDynamicCaptureImproved() {\n            const button = event.target;\n            button.disabled = true;\n            button.textContent = 'Ready to move... / 動作準備中...';\n            \n            // Wait for movement to start\n            isWaitingForMovement = true;\n            movementAnalysisData = [];\n            isAnalyzing = true;\n            \n            // Show waiting indicator\n            const screenElement = document.getElementById('dynamic-analysis');\n            const waitingOverlay = document.createElement('div');\n            waitingOverlay.id = 'dynamicWaitingOverlay';\n            waitingOverlay.className = 'absolute top-20 left-4 right-4 text-center z-25';\n            waitingOverlay.innerHTML = `\n                <div class=\"bg-blue-600 bg-opacity-90 text-white px-4 py-3 rounded-lg\">\n                    <div class=\"text-lg font-medium mb-1\">🤸‍♂️ Ready to start!</div>\n                    <div class=\"text-sm\">Start moving to begin recording</div>\n                    <div class=\"text-xs opacity-75\">動き始めると録画が開始されます</div>\n                </div>\n            `;\n            screenElement.appendChild(waitingOverlay);\n            \n            let previousLandmarks = null;\n            const checkMovementInterval = setInterval(() => {\n                if (currentPoseResults && currentPoseResults.poseLandmarks) {\n                    const landmarks = currentPoseResults.poseLandmarks;\n                    \n                    if (previousLandmarks) {\n                        // Calculate movement intensity between frames\n                        let totalMovement = 0;\n                        const keyJoints = [11, 12, 23, 24, 25, 26]; // shoulders, hips, knees\n                        \n                        keyJoints.forEach(index => {\n                            const current = landmarks[index];\n                            const previous = previousLandmarks[index];\n                            if (current && previous && current.visibility > 0.5) {\n                                const movement = Math.abs(current.x - previous.x) + Math.abs(current.y - previous.y);\n                                totalMovement += movement;\n                            }\n                        });\n                        \n                        const movementIntensity = totalMovement / keyJoints.length;\n                        \n                        // Detect significant movement (threshold can be adjusted)\n                        if (movementIntensity > 0.01 && !movementStartTime) {\n                            movementStartTime = Date.now();\n                            isWaitingForMovement = false;\n                            clearInterval(checkMovementInterval);\n                            waitingOverlay.remove();\n                            \n                            // Strong haptic feedback for movement start\n                            if (navigator.vibrate) {\n                                navigator.vibrate([200, 100, 200]);\n                            }\n                            \n                            // Start 15-second recording timer\n                            startRecordingTimer(screenElement, 15, () => {\n                                // Recording complete\n                                isAnalyzing = false;\n                                \n                                // Process movement analysis data\n                                let analysisData;\n                                if (movementAnalysisData.length > 0) {\n                                    analysisData = processDynamicAnalysisResults(movementAnalysisData, currentSquatCount);\n                                } else {\n                                    analysisData = generateAnalysisData('dynamic');\n                                }\n                                \n                                if (currentUser) {\n                                    const resultData = {\n                                        id: generateUUID(),\n                                        user_id: currentUser.id,\n                                        analysis_type: 'dynamic',\n                                        sport: currentUser.primary_sport,\n                                        analysis_date: new Date().toISOString(),\n                                        ...analysisData\n                                    };\n                                    \n                                    saveAnalysisResultLocal(resultData);\n                                }\n                                \n                                updateResultsDisplay(analysisData);\n                                \n                                if (navigator.vibrate) {\n                                    navigator.vibrate([200, 100, 200]);\n                                }\n                                \n                                showResults();\n                            });\n                        }\n                    }\n                    \n                    previousLandmarks = landmarks;\n                }\n            }, 100);\n            \n            // Timeout after 30 seconds if no movement detected\n            setTimeout(() => {\n                if (isWaitingForMovement) {\n                    clearInterval(checkMovementInterval);\n                    isWaitingForMovement = false;\n                    movementStartTime = Date.now();\n                    waitingOverlay.remove();\n                    \n                    // Force start recording\n                    startRecordingTimer(screenElement, 15, () => {\n                        // Auto-complete logic same as above\n                        startDynamicCapture();\n                    });\n                }\n            }, 30000);\n        }\n        \n        // Recording timer function\n        function startRecordingTimer(screenElement, seconds, onComplete) {\n            const timerOverlay = document.createElement('div');\n            timerOverlay.id = 'dynamicTimerOverlay';\n            timerOverlay.className = 'absolute top-16 left-4 right-4 text-center z-25';\n            timerOverlay.innerHTML = `\n                <div class=\"bg-red-600 bg-opacity-90 text-white px-4 py-2 rounded-lg\">\n                    <div class=\"text-sm font-medium flex items-center justify-center\">\n                        <div class=\"w-2 h-2 bg-white rounded-full animate-pulse mr-2\"></div>\n                        REC\n                    </div>\n                    <div class=\"text-2xl font-bold\" id=\"dynamicTimer\">${seconds}</div>\n                    <div class=\"text-xs opacity-75\">Keep moving! / 動き続けてください！</div>\n                </div>\n            `;\n            \n            screenElement.appendChild(timerOverlay);\n            \n            let currentTime = seconds;\n            const timerElement = document.getElementById('dynamicTimer');\n            \n            // Start recording data collection\n            const recordingInterval = setInterval(() => {\n                if (currentPoseResults && currentPoseResults.poseLandmarks) {\n                    const analysis = performPoseAnalysis(currentPoseResults.poseLandmarks);\n                    const movement = detectMovement(currentPoseResults.poseLandmarks);\n                    \n                    if (analysis && movement) {\n                        movementAnalysisData.push({\n                            ...analysis,\n                            movement: movement,\n                            timestamp: Date.now()\n                        });\n                        \n                        // Update squat count and phase\n                        const squatDetection = detectSquat(currentPoseResults.poseLandmarks);\n                        if (squatDetection.isSquat && squatDetection.phase !== lastSquatPhase) {\n                            if (squatDetection.phase === 'bottom' && lastSquatPhase === 'down') {\n                                // Squat completed\n                            }\n                            lastSquatPhase = squatDetection.phase;\n                        }\n                    }\n                }\n            }, 50);\n            \n            const timerInterval = setInterval(() => {\n                currentTime--;\n                \n                if (currentTime > 0) {\n                    timerElement.textContent = currentTime;\n                    \n                    // Change color in last 5 seconds\n                    if (currentTime <= 5) {\n                        timerElement.style.color = '#FCD34D'; // Yellow\n                        timerElement.parentElement.classList.remove('bg-red-600');\n                        timerElement.parentElement.classList.add('bg-yellow-600');\n                        if (navigator.vibrate) {\n                            navigator.vibrate(30);\n                        }\n                    }\n                    \n                    // Pulsing effect in last 3 seconds\n                    if (currentTime <= 3) {\n                        timerElement.style.transform = 'scale(1.2)';\n                        setTimeout(() => {\n                            timerElement.style.transform = 'scale(1)';\n                        }, 300);\n                    }\n                } else {\n                    // Recording complete\n                    clearInterval(timerInterval);\n                    clearInterval(recordingInterval);\n                    timerOverlay.remove();\n                    \n                    // Strong completion haptic\n                    if (navigator.vibrate) {\n                        navigator.vibrate([300, 100, 300]);\n                    }\n                    \n                    onComplete();\n                }\n            }, 1000);\n        }\n        \n        async function startDynamicCapture() {
+            // Start movement detection and recording
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = 'Ready to move... / 動作準備中...';
+            
+            // Wait for movement to start
+            await waitForMovementStart(() => {
+                // Movement detected - start 15 second recording
+                button.textContent = 'Recording... / 録画中...';
+                showRecordingTimer('dynamic', 15, async () => {
+                    isAnalyzing = false;
+                    
+                    // Process movement analysis data
+                    let analysisData;
+                    if (movementAnalysisData.length > 0) {
+                        analysisData = processDynamicAnalysisResults(movementAnalysisData, currentSquatCount);
+                    } else {
+                        // Fallback to generated data
+                        analysisData = generateAnalysisData('dynamic');
+                    }
+                    
+                    if (currentUser) {
+                        const resultData = {
+                            id: generateUUID(),
+                            user_id: currentUser.id,
+                            analysis_type: 'dynamic',
+                            sport: currentUser.primary_sport,
+                            analysis_date: new Date().toISOString(),
+                            ...analysisData
+                        };
+                        
+                        // ローカルに保存
+                        saveAnalysisResultLocal(resultData);
+                    }
+                    
+                    updateResultsDisplay(analysisData);
+                    
+                    // 分析完了の振動フィードバック
+                    if (navigator.vibrate) {
+                        navigator.vibrate([200, 100, 200]);
+                    }
+                    
+                    showResults();
+                });
+            });
         }
         
         function generateAnalysisData(type) {
