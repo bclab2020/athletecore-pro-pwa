@@ -165,7 +165,7 @@
         /* Floating Capture Button */
         .floating-capture-btn {
             position: fixed;
-            bottom: env(safe-area-inset-bottom, 20px);
+            bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
             left: 50%;
             transform: translateX(-50%);
             z-index: 10000;
@@ -201,7 +201,7 @@
         /* Mobile Adjustments for Floating Button */
         @media (max-width: 767px) {
             .floating-capture-btn {
-                bottom: calc(env(safe-area-inset-bottom) + 30px);
+                bottom: calc(env(safe-area-inset-bottom) + 100px);
                 padding: 18px 36px;
                 font-size: 18px;
             }
@@ -1005,8 +1005,8 @@
                         container.style.height = '100vh';
                         container.style.minHeight = '100vh';
                         
-                        // Show floating button
-                        showFloatingButton('static');
+                        // Hide floating button during fullscreen operations
+                        hideFloatingButton('static');
                         console.log('✅ Static fullscreen mode activated');
                     } else {
                         console.error('❌ Static elements not found:', {header, controls, container});
@@ -1026,8 +1026,8 @@
                         container.style.height = '100vh';
                         container.style.minHeight = '100vh';
                         
-                        // Show floating button
-                        showFloatingButton('dynamic');
+                        // Hide floating button during fullscreen operations
+                        hideFloatingButton('dynamic');
                         console.log('✅ Dynamic fullscreen mode activated');
                     } else {
                         console.error('❌ Dynamic elements not found:', {header, controls, container});
@@ -2564,14 +2564,14 @@
             // Create countdown overlay
             const overlay = document.createElement('div');
             overlay.id = 'staticCountdownOverlay';
-            overlay.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center';
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center';
             overlay.style.zIndex = '10001';
             overlay.innerHTML = `
-                <div class="text-center text-white">
-                    <div class="text-8xl font-bold mb-4" id="staticCountdownNumber">5</div>
-                    <div class="text-xl mb-2">Get ready! / 準備してください！</div>
-                    <div class="text-sm opacity-75">Stand naturally with arms at sides</div>
-                    <div class="text-sm opacity-75">腕を体の横に自然に立ってください</div>
+                <div class="text-center text-white bg-black bg-opacity-60 px-8 py-6 rounded-2xl shadow-2xl border border-white border-opacity-20">
+                    <div class="text-8xl font-bold mb-4 text-white drop-shadow-lg" id="staticCountdownNumber">5</div>
+                    <div class="text-xl mb-2 text-white drop-shadow-md">Get ready! / 準備してください！</div>
+                    <div class="text-sm opacity-90 drop-shadow-sm">Stand naturally with arms at sides</div>
+                    <div class="text-sm opacity-90 drop-shadow-sm">腕を体の横に自然に立ってください</div>
                 </div>
             `;
             
@@ -2617,7 +2617,7 @@
                         
                         // Flash animation
                         flash.style.transition = 'opacity 0.1s';
-                        flash.style.opacity = '0.8';
+                        flash.style.opacity = '0.6';
                         
                         setTimeout(() => {
                             flash.style.opacity = '0';
@@ -2735,7 +2735,7 @@
             waitingOverlay.className = 'fixed top-20 left-4 right-4 text-center';
             waitingOverlay.style.zIndex = '10001';
             waitingOverlay.innerHTML = `
-                <div class="bg-blue-600 bg-opacity-90 text-white px-4 py-3 rounded-lg">
+                <div class="bg-blue-600 bg-opacity-80 text-white px-4 py-3 rounded-lg shadow-lg border border-white border-opacity-20">
                     <div class="text-lg font-medium mb-1">🤸‍♂️ Ready to start!</div>
                     <div class="text-sm">Start moving to begin recording</div>
                     <div class="text-xs opacity-75">動き始めると録画が開始されます</div>
@@ -2867,7 +2867,7 @@
             timerOverlay.className = 'fixed top-16 left-4 right-4 text-center';
             timerOverlay.style.zIndex = '10001';
             timerOverlay.innerHTML = `
-                <div class="bg-red-600 bg-opacity-90 text-white px-4 py-2 rounded-lg">
+                <div class="bg-red-600 bg-opacity-80 text-white px-4 py-2 rounded-lg shadow-lg border border-white border-opacity-20">
                     <div class="text-sm font-medium flex items-center justify-center">
                         <div class="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
                         REC
