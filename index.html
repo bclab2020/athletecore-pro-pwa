@@ -1446,6 +1446,60 @@
             };
         };
         
+        // Debug function to force create sample data with photos for immediate testing
+        window.debugCreatePhotoSample = function() {
+            if (!currentUser) {
+                console.error('❌ No current user found');
+                return;
+            }
+            
+            const testPhotoData = {
+                imageData: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzQzODVmNCIvPgogIDx0ZXh0IHg9IjE1MCIgeT0iODAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmZmZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+MhyBURVNUIFBIT1RPPC90ZXh0PgogIDx0ZXh0IHg9IjE1MCIgeT0iMTEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkF0aGxldGVDb3JlIFBybzwvdGV4dD4KICA8dGV4dCB4PSIxNTAiIHk9IjE0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5QaG90byBEaXNwbGF5IFRlc3Q8L3RleHQ+CiAgPGNpcmNsZSBjeD0iNzUiIGN5PSIxNjAiIHI9IjE1IiBmaWxsPSIjMDBmZjAwIi8+CiAgPGNpcmNsZSBjeD0iMjI1IiBjeT0iMTYwIiByPSIxNSIgZmlsbD0iI2ZmZmYwMCIvPgo8L3N2Zz4K",
+                width: 300,
+                height: 200,
+                timestamp: new Date().toISOString(),
+                hasPoseOverlay: true,
+                cameraType: 'front'
+            };
+            
+            const newTestResult = {
+                id: generateUUID(),
+                user_id: currentUser.id,
+                analysis_type: 'static',
+                sport: currentUser.primary_sport,
+                analysis_date: new Date().toISOString(),
+                overall_score: 88,
+                hip_flexibility: 90,
+                postural_stability: 85,
+                dynamic_balance: 89,
+                capturedPhoto: testPhotoData,
+                recommendations: [
+                    "🧪 This is a test photo sample / これはテスト写真サンプルです",
+                    "Photo display debugging / 写真表示デバッグ用"
+                ]
+            };
+            
+            // Save to localStorage
+            saveAnalysisResultLocal(newTestResult);
+            
+            console.log('🧪 Created test sample with photo:', {
+                id: newTestResult.id,
+                hasPhoto: !!newTestResult.capturedPhoto,
+                photoSize: (newTestResult.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB'
+            });
+            
+            // Refresh current screen to show new sample
+            if (currentScreen === 'dashboard') {
+                loadAnalysisHistory();
+            } else if (currentScreen === 'analysis-history') {
+                loadFullAnalysisHistory();
+            }
+            
+            alert('🧪 Test photo sample created! Check the analysis history. / テスト写真サンプルを作成しました！分析履歴を確認してください。');
+            
+            return newTestResult;
+        };
+        
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
@@ -3278,11 +3332,11 @@
                 { overall_score: 92, hip_flexibility: 95, postural_stability: 88, dynamic_balance: 93 }
             ];
             
-            // 🧪 Sample Base64 image (small blue square for testing)
+            // 🧪 Sample Base64 image (more visible test pattern for debugging)
             const samplePhotoData = {
-                imageData: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAAyADIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD+/iiiigD/2Q==",
-                width: 50,
-                height: 50,
+                imageData: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzQzODVmNCIvPgogIDx0ZXh0IHg9IjE1MCIgeT0iODAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmZmZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+8J+MhyBURVNUIFBIT1RPPC90ZXh0PgogIDx0ZXh0IHg9IjE1MCIgeT0iMTEwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkF0aGxldGVDb3JlIFBybzwvdGV4dD4KICA8dGV4dCB4PSIxNTAiIHk9IjE0MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5QaG90byBEaXNwbGF5IFRlc3Q8L3RleHQ+CiAgPGNpcmNsZSBjeD0iNzUiIGN5PSIxNjAiIHI9IjE1IiBmaWxsPSIjMDBmZjAwIi8+CiAgPGNpcmNsZSBjeD0iMjI1IiBjeT0iMTYwIiByPSIxNSIgZmlsbD0iI2ZmZmYwMCIvPgo8L3N2Zz4K",
+                width: 300,
+                height: 200,
                 timestamp: new Date().toISOString(),
                 hasPoseOverlay: true,
                 cameraType: 'front'
@@ -5442,24 +5496,29 @@
                 
                 ${analysis.capturedPhoto ? `
                 <!-- Captured Photo with Pose Analysis -->
-                <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
+                <div class="bg-white rounded-xl p-4 mb-6 shadow-sm border-2 border-green-200">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-semibold brand-color">📸 Analysis Photo / 分析写真</h3>
-                        <div class="text-xs text-gray-500">
-                            ${analysis.capturedPhoto.hasPoseOverlay ? '🦴 With pose overlay' : '📷 Original photo'}
+                        <div class="text-xs text-green-600 font-medium">
+                            ✅ Photo Available | ${analysis.capturedPhoto.hasPoseOverlay ? '🦴 With pose overlay' : '📷 Original photo'}
                         </div>
                     </div>
                     <div class="relative">
                         <img src="${analysis.capturedPhoto.imageData}" 
                              alt="Analysis Photo" 
-                             class="w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow"
+                             class="w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow border border-gray-200"
                              onclick="showPhotoModal('${analysis.id}')"
-                             style="max-height: 400px; object-fit: contain;">
+                             style="max-height: 400px; object-fit: contain; background: #f3f4f6;"
+                             onload="console.log('✅ Photo loaded successfully for analysis:', '${analysis.id}')"
+                             onerror="console.error('❌ Photo failed to load for analysis:', '${analysis.id}')">
                         <div class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                             ${analysis.capturedPhoto.cameraType === 'front' ? '🤳 Front Camera' : '📷 Back Camera'}
                         </div>
                         <div class="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                             ${analysis.capturedPhoto.width} × ${analysis.capturedPhoto.height}
+                        </div>
+                        <div class="absolute top-2 left-2 bg-green-500 bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+                            Photo ID: ${analysis.id.slice(-8)}
                         </div>
                     </div>
                     <div class="mt-3 text-center">
@@ -5472,8 +5531,35 @@
                             💾 Download Photo / 写真をダウンロード
                         </button>
                     </div>
+                    <!-- 🔍 Debug Info -->
+                    <div class="mt-2 p-2 bg-gray-50 rounded text-xs">
+                        <strong>Debug Info:</strong><br>
+                        Photo Data Length: ${analysis.capturedPhoto.imageData ? (analysis.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A'}<br>
+                        Timestamp: ${analysis.capturedPhoto.timestamp}<br>
+                        Has Pose Overlay: ${analysis.capturedPhoto.hasPoseOverlay ? 'Yes' : 'No'}
+                    </div>
                 </div>
-                ` : ''}
+                ` : `
+                <!-- No Photo Available -->
+                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="text-2xl mr-3">📷</div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-yellow-800">No Photo Available</h3>
+                            <p class="text-sm text-yellow-700">This analysis was performed without photo capture.</p>
+                            <p class="text-xs text-yellow-600">写真が撮影されていません。</p>
+                        </div>
+                    </div>
+                    <!-- 🔍 Debug Info -->
+                    <div class="mt-3 p-2 bg-yellow-100 rounded text-xs">
+                        <strong>Debug Info:</strong><br>
+                        Analysis ID: ${analysis.id}<br>
+                        Analysis Type: ${analysis.analysis_type}<br>
+                        Has capturedPhoto property: ${analysis.hasOwnProperty('capturedPhoto') ? 'Yes' : 'No'}<br>
+                        capturedPhoto value: ${JSON.stringify(analysis.capturedPhoto)}
+                    </div>
+                </div>
+                `}
                 
                 <!-- Detailed Chart -->
                 <div class="bg-white rounded-xl p-4 mb-6 shadow-sm">
