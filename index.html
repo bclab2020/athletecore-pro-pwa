@@ -1119,6 +1119,19 @@
             }, 3000);
         }
         
+        // Debug function to test voice
+        function testVoice() {
+            console.log('Testing voice synthesis...');
+            enableSpeech();
+            setTimeout(() => {
+                speakCountdown('Voice test successful', true);
+            }, 500);
+        }
+        
+        // Make test functions available globally for debugging
+        window.testVoice = testVoice;
+        window.testFullscreenMode = testFullscreenMode;
+        
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
@@ -1216,6 +1229,10 @@
         setTimeout(async () => {
             loadLocalUser();
             showWelcome();
+            
+            // Add click event listeners to enable speech on user interaction
+            document.addEventListener('click', enableSpeech, { once: false });
+            document.addEventListener('touchstart', enableSpeech, { once: false });
             
             // Initialize MediaPipe Pose detection (in background)
             initMediaPipe().then(initialized => {
@@ -2552,6 +2569,8 @@
         let preferredVoice = null;
         
         // Initialize voices when available
+        let speechEnabled = false;
+        
         function initializeVoices() {
             if ('speechSynthesis' in window) {
                 const loadVoices = () => {
@@ -2564,7 +2583,7 @@
                             (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Apple'))
                         ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
                         
-                        console.log('Voice initialized:', preferredVoice ? preferredVoice.name : 'Default voice');
+                        console.log('✅ Voice initialized:', preferredVoice ? preferredVoice.name : 'Default voice');
                         console.log('Available voices:', voices.length);
                         
                         // Test voice functionality
@@ -2586,53 +2605,96 @@
                 
                 // Force load voices after a delay
                 setTimeout(loadVoices, 1000);
+                setTimeout(loadVoices, 3000); // Additional retry
             } else {
                 console.warn('Speech synthesis not supported');
             }
         }
         
+        // Enable speech after user interaction
+        function enableSpeech() {
+            if (!speechEnabled && 'speechSynthesis' in window) {
+                // Test speech synthesis with a silent utterance
+                try {
+                    const testUtterance = new SpeechSynthesisUtterance('');
+                    testUtterance.volume = 0;
+                    speechSynthesis.speak(testUtterance);
+                    speechEnabled = true;
+                    console.log('✅ Speech enabled after user interaction');
+                } catch (error) {
+                    console.error('Failed to enable speech:', error);
+                }
+            }
+        }
+        
         function speakCountdown(text, shouldSpeak = true) {
             // Only speak if enabled and speech synthesis is available
-            if (shouldSpeak && 'speechSynthesis' in window) {
+            if (shouldSpeak && 'speechSynthesis' in window && speechEnabled) {
+                console.log('🔊 Attempting to speak:', text);
+                
                 // Cancel any ongoing speech
                 speechSynthesis.cancel();
                 
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-US';
-                utterance.rate = 0.9;
-                utterance.pitch = 1.0;
-                utterance.volume = 0.9;
-                
-                // Use preferred voice if available
-                if (preferredVoice) {
-                    utterance.voice = preferredVoice;
-                }
-                
-                // Add error handling
-                utterance.onerror = (event) => {
-                    console.log('Speech synthesis error:', event.error);
-                };
-                
-                utterance.onstart = () => {
-                    console.log('Speech started:', text);
-                };
-                
-                try {
-                    speechSynthesis.speak(utterance);
-                    console.log('Speaking:', text);
-                } catch (error) {
-                    console.error('Speech synthesis failed:', error);
-                }
+                // Small delay to ensure cancellation is processed
+                setTimeout(() => {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'en-US';
+                    utterance.rate = 0.8;  // Slightly slower for clarity
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0; // Maximum volume
+                    
+                    // Use preferred voice if available
+                    if (preferredVoice) {
+                        utterance.voice = preferredVoice;
+                        console.log('Using voice:', preferredVoice.name);
+                    }
+                    
+                    // Add comprehensive error handling
+                    utterance.onerror = (event) => {
+                        console.error('❌ Speech synthesis error:', event.error, 'for text:', text);
+                    };
+                    
+                    utterance.onstart = () => {
+                        console.log('✅ Speech started:', text);
+                    };
+                    
+                    utterance.onend = () => {
+                        console.log('✅ Speech ended:', text);
+                    };
+                    
+                    try {
+                        speechSynthesis.speak(utterance);
+                        console.log('🔊 Speech queued:', text);
+                    } catch (error) {
+                        console.error('❌ Speech synthesis failed:', error);
+                    }
+                }, 50);
             } else {
-                console.log('Speech not enabled or not available');
+                if (!speechEnabled) {
+                    console.warn('⚠️ Speech not enabled - user interaction required');
+                } else {
+                    console.log('Speech not available or disabled');
+                }
             }
         }
         
         // Improved static capture with countdown
         async function startStaticCaptureImproved() {
+            // Enable speech after user interaction
+            enableSpeech();
+            
             // Check if we're using front camera for voice enablement
             const isFrontCamera = currentFacingMode === 'user';
             console.log('Starting static capture, front camera:', isFrontCamera, 'facing mode:', currentFacingMode);
+            
+            // Test voice immediately if front camera
+            if (isFrontCamera) {
+                console.log('🗣️ Testing voice before countdown...');
+                // Wait a moment for speech to be fully enabled
+                setTimeout(() => {
+                    speakCountdown('Ready', true);
+                }, 200);
+            }
             
             // Enter fullscreen mode
             enterFullscreenMode('static');
@@ -2660,7 +2722,7 @@
                     <div class="text-xl mb-2 text-white drop-shadow-md">Get ready! / 準備してください！</div>
                     <div class="text-sm opacity-90 drop-shadow-sm">Stand naturally with arms at sides</div>
                     <div class="text-sm opacity-90 drop-shadow-sm">腕を体の横に自然に立ってください</div>
-                    ${isFrontCamera ? '<div class="text-xs opacity-75 mt-2">🔊 Voice countdown enabled</div>' : ''}
+                    ${isFrontCamera ? `<div class="text-xs opacity-75 mt-2">🔊 Voice countdown enabled ${speechEnabled ? '(✅ Ready)' : '(⚠️ Initializing...)'}</div>` : ''}
                 </div>
             `;
             
@@ -2679,9 +2741,11 @@
                         countdownNumber.style.transform = 'scale(1)';
                     }, 200);
                     
-                    // Voice countdown only for front camera
+                    // Voice countdown only for front camera with slight delay
                     if (isFrontCamera) {
-                        speakCountdown(currentCount.toString(), true);
+                        setTimeout(() => {
+                            speakCountdown(currentCount.toString(), true);
+                        }, 100);
                     }
                     
                     // Haptic feedback for each count
@@ -2694,9 +2758,11 @@
                     countdownNumber.style.transform = 'scale(1.5)';
                     countdownNumber.style.color = '#10B981'; // Green color
                     
-                    // Voice "OK!" only for front camera
+                    // Voice "OK!" only for front camera with delay
                     if (isFrontCamera) {
-                        speakCountdown('OK!', true);
+                        setTimeout(() => {
+                            speakCountdown('OK!', true);
+                        }, 100);
                     }
                     
                     // Strong haptic feedback for OK
