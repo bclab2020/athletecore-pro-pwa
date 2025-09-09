@@ -1814,9 +1814,14 @@
                 let connectionsDrawn = 0;
                 let landmarksDrawn = 0;
                 
-                // Draw thick bright connections first
-                ctx.strokeStyle = '#00FF00'; // Bright green
-                ctx.lineWidth = 6;
+                // Check if this is a front camera (mirrored) based on the current video element transform
+                const videoElement = document.getElementById('analysisCamera');
+                const isFrontCamera = videoElement && videoElement.style.transform.includes('scaleX(-1)');
+                console.log(`📹 Drawing skeleton for ${isFrontCamera ? 'front (mirrored)' : 'back'} camera`);
+                
+                // Draw skeleton connections
+                ctx.strokeStyle = '#F5F5DC'; // Beige color
+                ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 
@@ -1831,9 +1836,10 @@
                         
                         if (startVisible && endVisible) {
                             ctx.beginPath();
-                            const startX = start.x * canvas.width;
+                            // Mirror x coordinates for front camera to match video display
+                            const startX = isFrontCamera ? (1 - start.x) * canvas.width : start.x * canvas.width;
                             const startY = start.y * canvas.height;
-                            const endX = end.x * canvas.width;
+                            const endX = isFrontCamera ? (1 - end.x) * canvas.width : end.x * canvas.width;
                             const endY = end.y * canvas.height;
                             
                             ctx.moveTo(startX, startY);
@@ -1849,17 +1855,18 @@
                     }
                 });
                 
-                // Draw large bright landmark points on top
-                ctx.fillStyle = '#FF0000'; // Bright red
+                // Draw landmark points on top
+                ctx.fillStyle = '#9ACD32'; // Khaki/YellowGreen color
                 results.poseLandmarks.forEach((landmark, index) => {
                     const visible = !landmark.visibility || landmark.visibility > 0.3;
                     
                     if (visible) {
-                        const x = landmark.x * canvas.width;
+                        // Mirror x coordinates for front camera to match video display
+                        const x = isFrontCamera ? (1 - landmark.x) * canvas.width : landmark.x * canvas.width;
                         const y = landmark.y * canvas.height;
                         
                         ctx.beginPath();
-                        ctx.arc(x, y, 8, 0, 2 * Math.PI); // Large radius for visibility
+                        ctx.arc(x, y, 4, 0, 2 * Math.PI); // 8px diameter (4px radius)
                         ctx.fill();
                         landmarksDrawn++;
                         
@@ -1871,7 +1878,7 @@
                             ctx.lineWidth = 3;
                             ctx.strokeText(index.toString(), x + 10, y + 5);
                             ctx.fillText(index.toString(), x + 10, y + 5);
-                            ctx.fillStyle = '#FF0000';
+                            ctx.fillStyle = '#9ACD32'; // Reset to khaki after text drawing
                         }
                         
                         // Debug: log first few landmarks
