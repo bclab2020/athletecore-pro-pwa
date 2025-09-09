@@ -296,11 +296,12 @@
             }
         }
         
-        /* Countdown Number Special Effects */
+        /* Countdown Number Special Effects - Compact Version */
         #staticCountdownNumber {
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Arial Black', Arial, sans-serif;
             letter-spacing: -0.02em;
+            line-height: 1;
         }
         
         #countdownProgress {
@@ -2854,13 +2855,21 @@
             overlay.className = 'fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black bg-opacity-40 flex items-center justify-center';
             overlay.style.zIndex = '10001';
             overlay.innerHTML = `
-                <div class="text-center text-white bg-gradient-to-br from-gray-900 to-black bg-opacity-80 px-12 py-8 rounded-3xl shadow-2xl border-2 border-white border-opacity-30 backdrop-blur-sm">
-                    <div class="text-9xl font-black mb-6 text-white drop-shadow-2xl transition-all duration-300 ease-out" id="staticCountdownNumber" style="text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(16,185,129,0.6);">10</div>
-                    <div class="text-2xl mb-3 text-white drop-shadow-lg font-semibold">Get ready! / 準備してください！</div>
-                    <div class="text-base opacity-90 drop-shadow-md mb-1">Stand naturally with arms at sides</div>
-                    <div class="text-base opacity-90 drop-shadow-md mb-4">腕を体の横に自然に立ってください</div>
-                    <div class="w-16 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mx-auto mb-2" id="countdownProgress"></div>
-                    ${isFrontCamera ? `<div class="text-sm opacity-75 mt-3 bg-green-500 bg-opacity-20 px-3 py-1 rounded-full border border-green-400 border-opacity-50">🔊 Enhanced Visual + Audio Countdown ${speechEnabled ? '(✅ Ready)' : '(⚠️ Initializing...)'}</div>` : '<div class="text-sm opacity-75 mt-3 bg-blue-500 bg-opacity-20 px-3 py-1 rounded-full border border-blue-400 border-opacity-50">🎯 Enhanced Visual Countdown Active</div>'}
+                <!-- Compact Top-Right Counter -->
+                <div class="absolute top-4 right-4 text-center text-white bg-gradient-to-br from-gray-900 to-black bg-opacity-90 px-6 py-4 rounded-2xl shadow-2xl border-2 border-white border-opacity-30 backdrop-blur-sm max-w-xs">
+                    <div class="text-5xl font-black mb-2 text-white drop-shadow-2xl transition-all duration-300 ease-out" id="staticCountdownNumber" style="text-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 40px rgba(16,185,129,0.6);">10</div>
+                    <div class="text-sm mb-2 text-white drop-shadow-md font-medium">Get ready!</div>
+                    <div class="text-xs opacity-75 mb-2">準備してください</div>
+                    <div class="w-12 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mx-auto mb-2" id="countdownProgress"></div>
+                    ${isFrontCamera ? `<div class="text-xs opacity-75 bg-green-500 bg-opacity-20 px-2 py-1 rounded-full border border-green-400 border-opacity-50">🔊 Audio ON</div>` : '<div class="text-xs opacity-75 bg-blue-500 bg-opacity-20 px-2 py-1 rounded-full border border-blue-400 border-opacity-50">🎯 Visual</div>'}
+                </div>
+                
+                <!-- Bottom Instructions - Non-blocking -->
+                <div class="absolute bottom-4 left-4 right-4 text-center">
+                    <div class="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <div class="text-sm opacity-90">Stand naturally with arms at sides</div>
+                        <div class="text-xs opacity-75">腕を体の横に自然に立ってください</div>
+                    </div>
                 </div>
             `;
             
@@ -2892,16 +2901,16 @@
                         pulseIntensity = '0 0 60px rgba(239,68,68,0.9)';
                     }
                     
-                    // Apply dynamic styling
+                    // Apply dynamic styling - more subtle for compact display
                     countdownNumber.style.color = color;
-                    countdownNumber.style.textShadow = `0 0 30px ${shadowColor}, ${pulseIntensity}, 0 0 80px rgba(255,255,255,0.4)`;
-                    countdownNumber.style.transform = 'scale(1.3)';
+                    countdownNumber.style.textShadow = `0 0 20px ${shadowColor}, ${pulseIntensity}, 0 0 40px rgba(255,255,255,0.4)`;
+                    countdownNumber.style.transform = 'scale(1.1)';
                     countdownNumber.style.animation = 'none';
                     
-                    // Add pulsing animation
+                    // Add subtle pulsing animation
                     setTimeout(() => {
                         countdownNumber.style.transform = 'scale(1.0)';
-                        countdownNumber.style.animation = 'pulse 0.8s ease-in-out';
+                        countdownNumber.style.animation = 'pulse 0.6s ease-in-out';
                     }, 150);
                     
                     // Update progress bar
@@ -2912,10 +2921,10 @@
                         progressBar.style.background = `linear-gradient(90deg, ${color} 0%, rgba(255,255,255,0.5) 100%)`;
                     }
                     
-                    // Enhanced screen flash effect
-                    overlay.style.background = `radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%)`;
+                    // Subtle screen flash effect - less intrusive
+                    overlay.style.background = `radial-gradient(circle at top right, rgba(255,255,255,0.05) 0%, transparent 50%)`;
                     setTimeout(() => {
-                        overlay.style.background = 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(30,30,30,0.4) 100%)';
+                        overlay.style.background = 'transparent';
                     }, 200);
                     
                     // Multi-modal feedback: Voice + Audio + Haptic
@@ -2947,11 +2956,11 @@
                         }
                     }
                 } else {
-                    // Dramatic "OK!" final sequence
+                    // "OK!" final sequence - compact version
                     countdownNumber.textContent = 'OK!';
-                    countdownNumber.style.transform = 'scale(1.8)';
+                    countdownNumber.style.transform = 'scale(1.3)';
                     countdownNumber.style.color = '#10B981'; // Bright green
-                    countdownNumber.style.textShadow = '0 0 40px rgba(16,185,129,1), 0 0 80px rgba(16,185,129,0.8), 0 0 120px rgba(255,255,255,0.6)';
+                    countdownNumber.style.textShadow = '0 0 20px rgba(16,185,129,1), 0 0 40px rgba(16,185,129,0.8), 0 0 60px rgba(255,255,255,0.6)';
                     countdownNumber.style.animation = 'pulse 0.5s ease-in-out 3';
                     
                     // Full progress bar
@@ -2959,11 +2968,11 @@
                     if (progressBar) {
                         progressBar.style.width = '100%';
                         progressBar.style.background = 'linear-gradient(90deg, #10B981 0%, #34D399 50%, #6EE7B7 100%)';
-                        progressBar.style.height = '6px';
+                        progressBar.style.height = '4px';
                     }
                     
-                    // Dramatic screen flash
-                    overlay.style.background = 'radial-gradient(circle at center, rgba(16,185,129,0.3) 0%, rgba(255,255,255,0.1) 50%, transparent 100%)';
+                    // Subtle success flash
+                    overlay.style.background = 'radial-gradient(circle at top right, rgba(16,185,129,0.2) 0%, transparent 60%)';
                     
                     // Final "OK!" multi-modal feedback
                     
