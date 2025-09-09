@@ -1403,12 +1403,30 @@
                 // Update camera label with actual facing mode
                 updateCameraLabel(videoElementId, actualFacingMode);
                 
-                // Start pose detection when camera is ready
+                // Start pose detection when camera is ready - with multiple triggers
                 videoElement.onloadedmetadata = () => {
                     console.log('📹 Video metadata loaded - dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
                     const canvasElementId = videoElementId.replace('CameraFeed', 'PoseCanvas');
                     const statusElementId = videoElementId.includes('static') ? 'staticPoseStatus' : 'dynamicPoseStatus';
-                    startPoseDetection(videoElementId, canvasElementId, statusElementId);
+                    
+                    // Start pose detection with a small delay to ensure video is fully ready
+                    setTimeout(() => {
+                        startPoseDetection(videoElementId, canvasElementId, statusElementId);
+                    }, 500);
+                };
+                
+                // Additional trigger when video can play
+                videoElement.oncanplay = () => {
+                    console.log('▶️ Video can play - ensuring pose detection is running');
+                    const canvasElementId = videoElementId.replace('CameraFeed', 'PoseCanvas');
+                    const statusElementId = videoElementId.includes('static') ? 'staticPoseStatus' : 'dynamicPoseStatus';
+                    
+                    // Only start if not already running
+                    if (!poseDetectionInterval) {
+                        setTimeout(() => {
+                            startPoseDetection(videoElementId, canvasElementId, statusElementId);
+                        }, 200);
+                    }
                 };
                 
                 // Add additional debug event listeners
@@ -1707,9 +1725,18 @@
         function drawPoseLandmarks(results) {
             console.log('🎨 Starting pose landmark drawing...', !!results.poseLandmarks);
             
-            // Find active screen more reliably
-            const activeScreen = document.querySelector('.app-screen.active') || 
-                               document.querySelector('.app-screen:not(.hidden)');
+            // Find active screen - check both active class and visibility
+            const activeScreens = document.querySelectorAll('.app-screen.active');
+            let activeScreen = null;
+            
+            // Prioritize the current screen that's actually visible
+            if (currentScreen === 'static-analysis') {
+                activeScreen = document.getElementById('static-analysis');
+            } else if (currentScreen === 'dynamic-analysis') {
+                activeScreen = document.getElementById('dynamic-analysis');
+            } else {
+                activeScreen = activeScreens[0];
+            }
             
             let canvas, ctx, video;
             
@@ -1722,17 +1749,17 @@
                 video = document.getElementById('dynamicCameraFeed');
                 console.log('📍 Using dynamic analysis canvas');
             } else {
-                console.log('❌ No active analysis screen found:', activeScreen?.id);
+                console.log('❌ No active analysis screen found:', activeScreen?.id, 'currentScreen:', currentScreen);
                 return;
             }
             
             if (!canvas) {
-                console.log('❌ Canvas not found');
+                console.log('❌ Canvas not found for screen:', activeScreen?.id);
                 return;
             }
             
             if (!video) {
-                console.log('❌ Video not found');
+                console.log('❌ Video not found for screen:', activeScreen?.id);
                 return;
             }
             
@@ -1741,9 +1768,15 @@
                 return;
             }
             
+            // Ensure video is actually playing and has content
+            if (video.videoWidth === 0 || video.videoHeight === 0) {
+                console.log('❌ Video not ready - dimensions:', video.videoWidth, 'x', video.videoHeight);
+                return;
+            }
+            
             ctx = canvas.getContext('2d');
             
-            // Force canvas to be absolutely visible
+            // Force canvas to be absolutely visible and above video
             canvas.style.display = 'block';
             canvas.style.visibility = 'visible';
             canvas.style.opacity = '1';
@@ -1751,36 +1784,39 @@
             canvas.style.top = '0';
             canvas.style.left = '0';
             canvas.style.pointerEvents = 'none';
-            canvas.style.zIndex = '10';
+            canvas.style.zIndex = '15'; // Higher than video (zIndex: 5)
             
-            // Get video dimensions for canvas sizing
-            const videoRect = video.getBoundingClientRect();
-            console.log('📐 Video dimensions:', videoRect.width, 'x', videoRect.height);
+            // Get video container dimensions (not video element itself)
+            const videoContainer = video.parentElement;
+            const containerRect = videoContainer.getBoundingClientRect();
             
-            // Set canvas size to match video exactly
-            canvas.width = videoRect.width;
-            canvas.height = videoRect.height;
-            canvas.style.width = videoRect.width + 'px';
-            canvas.style.height = videoRect.height + 'px';
+            console.log('📐 Container dimensions:', containerRect.width, 'x', containerRect.height);
+            console.log('📐 Video actual dimensions:', video.videoWidth, 'x', video.videoHeight);
             
-            // Clear canvas with a semi-transparent background for debugging
+            // Set canvas size to match video container exactly
+            canvas.width = containerRect.width;
+            canvas.height = containerRect.height;
+            canvas.style.width = containerRect.width + 'px';
+            canvas.style.height = containerRect.height + 'px';
+            
+            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Optional: Add a debug background to see if canvas is working
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.1)'; // Very faint red background
+            // Add a subtle debug indicator to ensure canvas is working
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.1)'; // Very faint green background
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            console.log('🎨 Drawing on canvas:', canvas.width, 'x', canvas.height, 'Landmarks:', results.poseLandmarks.length);
+            console.log('🎨 Canvas setup - Size:', canvas.width, 'x', canvas.height, 'Landmarks:', results.poseLandmarks.length);
             
-            // Draw pose connections with maximum visibility
+            // Draw pose connections and landmarks with maximum visibility
             if (results.poseLandmarks && results.poseLandmarks.length > 0) {
                 
                 let connectionsDrawn = 0;
                 let landmarksDrawn = 0;
                 
-                // Draw super thick bright green connections first
-                ctx.strokeStyle = '#00FF00';
-                ctx.lineWidth = 8;
+                // Draw thick bright connections first
+                ctx.strokeStyle = '#00FF00'; // Bright green
+                ctx.lineWidth = 6;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
                 
@@ -1789,9 +1825,9 @@
                     const end = results.poseLandmarks[connection[1]];
                     
                     if (start && end) {
-                        // Lower visibility threshold for more visible skeleton
-                        const startVisible = !start.visibility || start.visibility > 0.1;
-                        const endVisible = !end.visibility || end.visibility > 0.1;
+                        // Lower visibility threshold for more connections
+                        const startVisible = !start.visibility || start.visibility > 0.3;
+                        const endVisible = !end.visibility || end.visibility > 0.3;
                         
                         if (startVisible && endVisible) {
                             ctx.beginPath();
@@ -1813,28 +1849,28 @@
                     }
                 });
                 
-                // Draw very large bright red joint points on top
-                ctx.fillStyle = '#FF0000';
+                // Draw large bright landmark points on top
+                ctx.fillStyle = '#FF0000'; // Bright red
                 results.poseLandmarks.forEach((landmark, index) => {
-                    const visible = !landmark.visibility || landmark.visibility > 0.1;
+                    const visible = !landmark.visibility || landmark.visibility > 0.3;
                     
                     if (visible) {
                         const x = landmark.x * canvas.width;
                         const y = landmark.y * canvas.height;
                         
                         ctx.beginPath();
-                        ctx.arc(x, y, 10, 0, 2 * Math.PI); // Larger radius
+                        ctx.arc(x, y, 8, 0, 2 * Math.PI); // Large radius for visibility
                         ctx.fill();
                         landmarksDrawn++;
                         
-                        // Draw landmark index for key points
-                        if (index % 8 === 0) {
+                        // Draw landmark index for key points (nose, shoulders, hips)
+                        if ([0, 11, 12, 23, 24].includes(index)) {
                             ctx.fillStyle = '#FFFFFF';
-                            ctx.font = 'bold 14px Arial';
+                            ctx.font = 'bold 12px Arial';
                             ctx.strokeStyle = '#000000';
-                            ctx.lineWidth = 2;
-                            ctx.strokeText(index.toString(), x + 12, y + 5);
-                            ctx.fillText(index.toString(), x + 12, y + 5);
+                            ctx.lineWidth = 3;
+                            ctx.strokeText(index.toString(), x + 10, y + 5);
+                            ctx.fillText(index.toString(), x + 10, y + 5);
                             ctx.fillStyle = '#FF0000';
                         }
                         
@@ -1847,10 +1883,13 @@
                 
                 console.log(`✅ Drawing complete! Connections: ${connectionsDrawn}/${POSE_CONNECTIONS.length}, Landmarks: ${landmarksDrawn}/${results.poseLandmarks.length}`);
                 
-                // Force canvas to show by drawing a test shape in corner
+                // Draw a visible test indicator in corner to confirm canvas is working
                 ctx.fillStyle = '#FFFF00';
-                ctx.fillRect(10, 10, 20, 20);
-                console.log('🟨 Debug square drawn at (10,10)');
+                ctx.fillRect(5, 5, 15, 15);
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText('OK', 25, 15);
+                console.log('🟨 Debug indicator drawn');
                 
             } else {
                 console.log('❌ No pose landmarks to draw');
@@ -2079,78 +2118,106 @@
         let poseDetectionInterval = null;
         
         function startPoseDetection(videoElementId, canvasElementId, statusElementId) {
-            console.log('Starting pose detection...', { videoElementId, canvasElementId, statusElementId });
+            console.log('🎬 Starting pose detection...', { videoElementId, canvasElementId, statusElementId });
             
             const video = document.getElementById(videoElementId);
             const canvas = document.getElementById(canvasElementId);
             const status = document.getElementById(statusElementId);
             
             if (!video || !canvas || !pose) {
-                console.error('Missing elements:', { video: !!video, canvas: !!canvas, pose: !!pose });
+                console.error('❌ Missing elements:', { video: !!video, canvas: !!canvas, pose: !!pose });
                 return;
             }
             
-            // Ensure canvas is visible and properly positioned
+            console.log('✅ All elements found for pose detection');
+            
+            // Force canvas to be visible and properly positioned ABOVE video
             canvas.style.display = 'block';
+            canvas.style.visibility = 'visible';
+            canvas.style.opacity = '1';
             canvas.style.position = 'absolute';
             canvas.style.top = '0';
             canvas.style.left = '0';
             canvas.style.width = '100%';
             canvas.style.height = '100%';
-            canvas.style.zIndex = '10';
+            canvas.style.zIndex = '15'; // Higher than video (zIndex: 5)
             canvas.style.pointerEvents = 'none';
             
             // Remove hidden class
             canvas.classList.remove('hidden');
             status.classList.remove('hidden');
             
-            console.log('Canvas setup complete');
+            console.log('🎨 Canvas setup complete - zIndex:', canvas.style.zIndex);
             
             // Stop any existing detection
             if (poseDetectionInterval) {
+                console.log('🔄 Stopping existing pose detection');
                 clearInterval(poseDetectionInterval);
+                poseDetectionInterval = null;
             }
             
-            // Wait for video to be ready
+            // Wait for video to be ready with enhanced checking
             const waitForVideo = () => {
-                if (video.videoWidth > 0 && video.videoHeight > 0) {
-                    console.log('Video ready:', video.videoWidth, 'x', video.videoHeight);
+                const videoReady = video.videoWidth > 0 && video.videoHeight > 0 && video.readyState >= video.HAVE_CURRENT_DATA;
+                
+                console.log('📹 Video status check:', {
+                    videoWidth: video.videoWidth,
+                    videoHeight: video.videoHeight,
+                    readyState: video.readyState,
+                    srcObject: !!video.srcObject,
+                    ready: videoReady
+                });
+                
+                if (videoReady) {
+                    console.log('✅ Video ready for pose detection:', video.videoWidth, 'x', video.videoHeight);
                     
-                    // Set canvas size to match video container
+                    // Set canvas size to match video container exactly
                     const container = canvas.parentElement;
                     const rect = container.getBoundingClientRect();
                     canvas.width = rect.width;
                     canvas.height = rect.height;
                     
-                    console.log('Canvas size set to:', rect.width, 'x', rect.height);
+                    console.log('📐 Canvas resized to container:', rect.width, 'x', rect.height);
                     
-                    // Start direct frame processing (30 FPS)
+                    // Test draw something immediately to verify canvas works
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#00FF00';
+                    ctx.fillRect(0, 0, 30, 30);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillText('POSE', 5, 20);
+                    console.log('🟢 Test draw on canvas completed');
+                    
+                    // Start pose detection with lower frame rate for stability
                     poseDetectionInterval = setInterval(async () => {
                         if (pose && video.videoWidth > 0 && video.readyState >= video.HAVE_CURRENT_DATA) {
                             try {
                                 await pose.send({ image: video });
                             } catch (error) {
-                                console.error('Pose detection error:', error);
+                                console.error('❌ Pose detection error:', error);
                             }
                         }
-                    }, 33); // ~30 FPS
+                    }, 50); // ~20 FPS for better stability
                     
-                    console.log('Direct pose detection started successfully');
+                    console.log('🚀 Pose detection interval started successfully');
                     
                     // Show additional UI elements for dynamic analysis
                     if (videoElementId === 'dynamicCameraFeed') {
                         const counter = document.getElementById('movementCounter');
-                        if (counter) counter.classList.remove('hidden');
+                        if (counter) {
+                            counter.classList.remove('hidden');
+                            console.log('📊 Movement counter made visible');
+                        }
                     }
                     
                 } else {
-                    console.log('Waiting for video to be ready...');
-                    setTimeout(waitForVideo, 100);
+                    console.log('⏳ Waiting for video to be ready... (attempt)', Date.now());
+                    setTimeout(waitForVideo, 200); // Slightly longer wait
                 }
             };
             
-            // Start checking for video readiness
-            setTimeout(waitForVideo, 100);
+            // Start checking for video readiness with a small delay
+            setTimeout(waitForVideo, 300);
         }
         
         // Stop pose detection
