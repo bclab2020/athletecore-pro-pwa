@@ -65,7 +65,14 @@ AI MediaPipeを活用したリアルタイム姿勢分析PWA（Progressive Web A
 - **段階的ハプティックフィードバック**（振動パターン）
 - **ビジュアルカウントダウン効果**
 
-### 8. **⚽ 競技特化分析**
+### 8. **📏 精密mm測定システム** ✅ **NEW!**
+- **実寸法測定** - 骨格点12,13（肩）と23,24（腰）の水平傾斜をmm単位で測定
+- **3重校正システム** - 肩幅・腰幅・胴体高による多点校正で高精度変換
+- **写真オーバーレイ** - 撮影画像に測定値と評価を自動表記
+- **5段階評価** - 理想的(<5mm)〜高度傾斜(50mm+)の詳細評価
+- **信頼性表示** - 校正品質と信頼度をパーセンテージで表示
+
+### 9. **⚽ 競技特化分析**
 - **5競技対応**（サッカー、バスケ、野球、卓球、バレー）
 - **競技別スコア基準・推奨事項**
 - **パフォーマンス指標の競技特化**
@@ -92,7 +99,30 @@ AI MediaPipeを活用したリアルタイム姿勢分析PWA（Progressive Web A
   height: 480,                                     // 画像高さ
   timestamp: "2025-01-09T12:34:56.789Z",         // 撮影時刻
   hasPoseOverlay: true,                           // 姿勢オーバーレイ有無
-  cameraType: "front"                             // カメラタイプ
+  cameraType: "front",                            // カメラタイプ
+  mmMeasurements: {                               // mm測定データ（NEW!）
+    calibration: {
+      pixelToMmRatio: 2.847,                      // ピクセル→mm変換係数
+      calibrationQuality: "excellent",            // 校正品質
+      confidence: 0.89                            // 信頼度
+    },
+    measurements: {
+      shoulderAlignment: {
+        deviationMm: 12.4,                        // 肩の傾斜(mm)
+        higherShoulder: "right",                  // 高い肩
+        assessment: {
+          level: "moderate",                      // 評価レベル
+          text: "軽度傾斜",                       // 評価テキスト
+          color: "#F59E0B"                        // 表示色
+        }
+      },
+      hipAlignment: {
+        deviationMm: 8.7,                         // 腰の傾斜(mm)
+        higherHip: "left",                        // 高い腰
+        assessment: { /* 同様の評価構造 */ }
+      }
+    }
+  }
 }
 ```
 
@@ -130,6 +160,14 @@ debugCameraState()
 // 🧪 特定分析の詳細表示テスト
 testAnalysisDetail('analysis_id_here')
 // → 指定IDの分析詳細を強制表示
+
+// 📏 mm測定システムテスト（NEW!）
+debugMmMeasurements()
+// → 現在の姿勢でmm測定の校正・精度・結果を確認
+
+// 📸 mm測定付き写真撮影テスト（NEW!）
+debugPhotoWithMm()
+// → mm測定データ付きで写真撮影・オーバーレイ確認
 
 // 🎯 テスト用写真サンプルの即座作成
 debugCreatePhotoSample()
