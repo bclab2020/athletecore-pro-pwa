@@ -2151,6 +2151,84 @@
             }
         };
         
+        // Debug function to test overlay alignment
+        window.debugOverlayAlignment = function() {
+            console.log('🎯 === OVERLAY ALIGNMENT DEBUG ===');
+            
+            if (!currentPoseResults || !currentPoseResults.poseLandmarks) {
+                console.error('❌ No pose results available. Please start analysis mode first.');
+                return null;
+            }
+            
+            const activeVideo = document.getElementById('staticVideo') || document.getElementById('dynamicVideo');
+            if (!activeVideo) {
+                console.error('❌ No active video element found');
+                return null;
+            }
+            
+            const isFrontCamera = activeVideo.style.transform.includes('scaleX(-1)');
+            const landmarks = currentPoseResults.poseLandmarks;
+            
+            console.log('📹 Video info:', {
+                id: activeVideo.id,
+                videoWidth: activeVideo.videoWidth,
+                videoHeight: activeVideo.videoHeight,
+                isFrontCamera: isFrontCamera,
+                transform: activeVideo.style.transform
+            });
+            
+            // Test key landmark positions
+            console.log('🎯 Key landmark positions (normalized):');
+            [0, 11, 12, 23, 24].forEach(index => {
+                const landmark = landmarks[index];
+                if (landmark) {
+                    const names = {0: 'nose', 11: 'leftShoulder', 12: 'rightShoulder', 23: 'leftHip', 24: 'rightHip'};
+                    
+                    // Calculate both display and photo coordinates
+                    const displayX = isFrontCamera ? (1 - landmark.x) : landmark.x;
+                    const photoX = isFrontCamera ? (1 - landmark.x) : landmark.x;
+                    
+                    console.log(`  ${names[index]} (${index}):`, {
+                        normalized: `(${landmark.x.toFixed(3)}, ${landmark.y.toFixed(3)})`,
+                        visibility: (landmark.visibility * 100).toFixed(0) + '%',
+                        displayX: (displayX * activeVideo.videoWidth).toFixed(1),
+                        photoX: (photoX * activeVideo.videoWidth).toFixed(1),
+                        sameCoords: displayX === photoX
+                    });
+                }
+            });
+            
+            // Test photo capture with overlay
+            console.log('📸 Testing photo capture with overlay...');
+            const photo = debugCaptureNow();
+            
+            if (photo) {
+                console.log('✅ Photo captured with overlay alignment test:', {
+                    size: (photo.imageData.length / 1024).toFixed(1) + 'KB',
+                    dimensions: `${photo.width}x${photo.height}`,
+                    cameraType: photo.cameraType,
+                    hasOverlay: photo.hasPoseOverlay,
+                    hasMmMeasurements: !!photo.mmMeasurements
+                });
+                
+                // Create test image element to verify
+                const img = new Image();
+                img.onload = function() {
+                    console.log('✅ Photo overlay test: Image loaded successfully');
+                    console.log('💡 Check the analysis history to verify overlay alignment');
+                };
+                img.onerror = function() {
+                    console.error('❌ Photo overlay test: Failed to load image');
+                };
+                img.src = photo.imageData;
+                
+                return photo;
+            } else {
+                console.error('❌ Photo capture failed during overlay alignment test');
+                return null;
+            }
+        };
+        
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
@@ -2691,7 +2769,8 @@
             if (includeOverlay && overlayCanvas && currentPoseResults && currentPoseResults.poseLandmarks) {
                 console.log('🎨 Adding pose overlay to captured photo');
                 try {
-                    drawPoseOverlayOnPhoto(ctx, currentPoseResults.poseLandmarks, captureCanvas, !isFrontCamera);
+                    // Pass correct camera type information for proper coordinate transformation
+                    drawPoseOverlayOnPhoto(ctx, currentPoseResults.poseLandmarks, captureCanvas, isFrontCamera);
                     console.log('✅ Pose overlay added successfully');
                 } catch (overlayError) {
                     console.error('❌ Error adding pose overlay:', overlayError);
@@ -2764,13 +2843,17 @@
         }
         
         // Draw pose overlay on captured photo
-        function drawPoseOverlayOnPhoto(ctx, landmarks, canvas, isBackCamera) {
-            console.log('🎨 Drawing pose overlay on photo');
+        function drawPoseOverlayOnPhoto(ctx, landmarks, canvas, isFrontCamera) {
+            console.log('🎨 Drawing pose overlay on photo', {
+                isFrontCamera: isFrontCamera,
+                canvasSize: `${canvas.width}x${canvas.height}`,
+                landmarkCount: landmarks.length
+            });
             
             // Save current context state
             ctx.save();
             
-            // Draw skeleton connections
+            // Draw skeleton connections - use same coordinate transformation as realtime display
             ctx.strokeStyle = '#00FF00'; // Bright green for photo
             ctx.lineWidth = 4;
             ctx.lineCap = 'round';
@@ -2782,10 +2865,12 @@
                 
                 if (start && end && start.visibility > 0.3 && end.visibility > 0.3) {
                     ctx.beginPath();
-                    // For back camera, use normal coordinates. For front camera in photo, coordinates are already corrected
-                    const startX = start.x * canvas.width;
+                    
+                    // Use same coordinate transformation as realtime display
+                    // For front camera photo: landmarks need to be mirrored to match the unmirrored photo
+                    const startX = isFrontCamera ? (1 - start.x) * canvas.width : start.x * canvas.width;
                     const startY = start.y * canvas.height;
-                    const endX = end.x * canvas.width;
+                    const endX = isFrontCamera ? (1 - end.x) * canvas.width : end.x * canvas.width;
                     const endY = end.y * canvas.height;
                     
                     ctx.moveTo(startX, startY);
@@ -2798,7 +2883,8 @@
             ctx.fillStyle = '#FFFF00'; // Bright yellow for photo points
             landmarks.forEach((landmark, index) => {
                 if (landmark.visibility > 0.3) {
-                    const x = landmark.x * canvas.width;
+                    // Use same coordinate transformation as realtime display
+                    const x = isFrontCamera ? (1 - landmark.x) * canvas.width : landmark.x * canvas.width;
                     const y = landmark.y * canvas.height;
                     
                     ctx.beginPath();
@@ -2819,10 +2905,10 @@
             });
             
             // Draw vertical reference lines from hip center
-            drawVerticalReferenceLinesOnPhoto(ctx, landmarks, canvas);
+            drawVerticalReferenceLinesOnPhoto(ctx, landmarks, canvas, isFrontCamera);
             
             // Draw MM measurements overlay
-            drawMmMeasurementsOnPhoto(ctx, landmarks, canvas);
+            drawMmMeasurementsOnPhoto(ctx, landmarks, canvas, isFrontCamera);
             
             // Restore context state
             ctx.restore();
@@ -2831,13 +2917,16 @@
         }
         
         // Draw vertical reference lines on photo
-        function drawVerticalReferenceLinesOnPhoto(ctx, landmarks, canvas) {
+        function drawVerticalReferenceLinesOnPhoto(ctx, landmarks, canvas, isFrontCamera) {
             const leftHip = landmarks[23];
             const rightHip = landmarks[24];
             const nose = landmarks[0];
             
             if (leftHip && rightHip && leftHip.visibility > 0.3 && rightHip.visibility > 0.3) {
-                const hipCenterX = ((leftHip.x + rightHip.x) / 2) * canvas.width;
+                // Calculate hip center using same coordinate transformation as overlay
+                const leftHipX = isFrontCamera ? (1 - leftHip.x) * canvas.width : leftHip.x * canvas.width;
+                const rightHipX = isFrontCamera ? (1 - rightHip.x) * canvas.width : rightHip.x * canvas.width;
+                const hipCenterX = (leftHipX + rightHipX) / 2;
                 const hipCenterY = ((leftHip.y + rightHip.y) / 2) * canvas.height;
                 
                 // Vertical reference line style for photo
@@ -2868,7 +2957,7 @@
                 
                 // Draw deviation line if nose is visible
                 if (nose && nose.visibility > 0.3) {
-                    const noseX = nose.x * canvas.width;
+                    const noseX = isFrontCamera ? (1 - nose.x) * canvas.width : nose.x * canvas.width;
                     const noseY = nose.y * canvas.height;
                     
                     ctx.strokeStyle = '#00FFFF'; // Cyan for deviation line
@@ -2903,7 +2992,7 @@
         }
         
         // Draw MM measurements on photo
-        function drawMmMeasurementsOnPhoto(ctx, landmarks, canvas) {
+        function drawMmMeasurementsOnPhoto(ctx, landmarks, canvas, isFrontCamera) {
             console.log('📐 Drawing MM measurements on photo');
             
             // Calculate mm measurements
@@ -2933,10 +3022,10 @@
                 const shoulder = measurements.shoulderAlignment;
                 
                 if (leftShoulder && rightShoulder) {
-                    // Calculate display positions
-                    const leftX = leftShoulder.x * canvas.width;
+                    // Calculate display positions using same coordinate transformation
+                    const leftX = isFrontCamera ? (1 - leftShoulder.x) * canvas.width : leftShoulder.x * canvas.width;
                     const leftY = leftShoulder.y * canvas.height;
-                    const rightX = rightShoulder.x * canvas.width;
+                    const rightX = isFrontCamera ? (1 - rightShoulder.x) * canvas.width : rightShoulder.x * canvas.width;
                     const rightY = rightShoulder.y * canvas.height;
                     const centerX = (leftX + rightX) / 2;
                     
@@ -2978,10 +3067,10 @@
                 const hip = measurements.hipAlignment;
                 
                 if (leftHip && rightHip) {
-                    // Calculate display positions
-                    const leftX = leftHip.x * canvas.width;
+                    // Calculate display positions using same coordinate transformation
+                    const leftX = isFrontCamera ? (1 - leftHip.x) * canvas.width : leftHip.x * canvas.width;
                     const leftY = leftHip.y * canvas.height;
-                    const rightX = rightHip.x * canvas.width;
+                    const rightX = isFrontCamera ? (1 - rightHip.x) * canvas.width : rightHip.x * canvas.width;
                     const rightY = rightHip.y * canvas.height;
                     const centerX = (leftX + rightX) / 2;
                     
