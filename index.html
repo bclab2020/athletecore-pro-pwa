@@ -809,14 +809,24 @@
                                 <span id="staticPoseText">Starting Camera...</span>
                             </div>
                             
-                            <!-- Camera Switch Button - Top Right -->
-                            <div class="absolute top-4 right-4 z-20">
+                            <!-- Camera Controls - Top Right -->
+                            <div class="absolute top-4 right-4 z-20 flex flex-col items-center space-y-2">
+                                <!-- Reload Button for MediaPipe Fix -->
+                                <button id="staticReloadBtn" onclick="smartReload()" class="bg-red-600 bg-opacity-80 text-white p-2.5 rounded-full hover:bg-opacity-100 transition-all" title="Reload app if pose detection stops / 骨格認識が停止したらリロード">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Camera Switch Button -->
                                 <button id="staticCameraSwitch" onclick="switchCamera('static')" class="bg-black bg-opacity-70 text-white p-3 rounded-full hover:bg-opacity-90 transition-all">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                                     </svg>
                                 </button>
-                                <div class="text-center mt-1">
+                                
+                                <!-- Camera Label -->
+                                <div class="text-center">
                                     <span id="staticCameraLabel" class="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">インカメラ</span>
                                 </div>
                             </div>
@@ -888,10 +898,20 @@
                                 </div>
                             </div>
                             
-                            <!-- Movement Counter - Top Right -->
-                            <div id="movementCounter" class="absolute top-4 right-4 bg-black bg-opacity-70 text-white text-lg px-4 py-2 rounded-lg z-20">
-                                <span class="font-bold">Squats: </span>
-                                <span id="squatCount" class="text-2xl font-bold text-green-400">0</span>
+                            <!-- Top Right Controls Area -->
+                            <div class="absolute top-4 right-4 z-20 flex flex-col items-end space-y-2">
+                                <!-- Reload Button for MediaPipe Fix -->
+                                <button id="dynamicReloadBtn" onclick="smartReload()" class="bg-red-600 bg-opacity-80 text-white p-2 rounded-full hover:bg-opacity-100 transition-all" title="Reload app if pose detection stops / 骨格認識が停止したらリロード">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Movement Counter -->
+                                <div id="movementCounter" class="bg-black bg-opacity-70 text-white text-lg px-4 py-2 rounded-lg">
+                                    <span class="font-bold">Squats: </span>
+                                    <span id="squatCount" class="text-2xl font-bold text-green-400">0</span>
+                                </div>
                             </div>
                             
                             <!-- Current Exercise Info - Bottom -->
@@ -1614,6 +1634,172 @@
                 hasLandmarks: !!(currentPoseResults && currentPoseResults.poseLandmarks)
             });
         };
+        
+        // Smart reload function to fix MediaPipe issues while preserving user data
+        function smartReload() {
+            console.log('🔄 Starting smart reload to fix MediaPipe issues...');
+            
+            // Show loading indicator
+            const loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'smartReloadOverlay';
+            loadingOverlay.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50';
+            loadingOverlay.innerHTML = `
+                <div class="bg-white rounded-lg p-6 mx-4 text-center max-w-sm">
+                    <div class="text-4xl mb-4">🔄</div>
+                    <h3 class="text-lg font-semibold mb-2">Reloading MediaPipe</h3>
+                    <p class="text-sm text-gray-600 mb-4">骨格認識を再起動しています</p>
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                </div>
+            `;
+            document.body.appendChild(loadingOverlay);
+            
+            // Save current state before reload
+            const currentState = {
+                user: currentUser,
+                screen: currentScreen,
+                facingMode: currentFacingMode,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Store state temporarily
+            try {
+                sessionStorage.setItem('athletecore_reload_state', JSON.stringify(currentState));
+                console.log('✅ Current state saved for smart reload');
+            } catch (error) {
+                console.warn('⚠️ Could not save state:', error);
+            }
+            
+            // Add reload reason to localStorage for debugging
+            try {
+                localStorage.setItem('athletecore_reload_reason', 'MediaPipe pose detection stopped');
+                localStorage.setItem('athletecore_reload_timestamp', new Date().toISOString());
+            } catch (error) {
+                console.warn('⚠️ Could not save reload info:', error);
+            }
+            
+            // Perform the reload after a short delay to show the UI
+            setTimeout(() => {
+                console.log('🔄 Performing page reload...');
+                window.location.reload();
+            }, 1000);
+        }
+        
+        // Function to restore state after smart reload
+        function restoreAfterSmartReload() {
+            try {
+                const savedState = sessionStorage.getItem('athletecore_reload_state');
+                if (savedState) {
+                    console.log('🔄 Restoring state after smart reload...');
+                    const state = JSON.parse(savedState);
+                    
+                    // Clear the saved state
+                    sessionStorage.removeItem('athletecore_reload_state');
+                    
+                    // Restore user if it exists
+                    if (state.user && state.user.id) {
+                        console.log('👤 Restoring user:', state.user.name);
+                        currentUser = state.user;
+                        
+                        // Wait for app to be ready, then navigate to the previous screen
+                        setTimeout(() => {
+                            if (state.screen === 'static-analysis') {
+                                showScreen('static-analysis');
+                                initializeStaticAnalysis();
+                            } else if (state.screen === 'dynamic-analysis') {
+                                showScreen('dynamic-analysis');
+                                initializeDynamicAnalysis();
+                            } else if (state.screen === 'dashboard') {
+                                showDashboard();
+                            }
+                            
+                            // Restore camera facing mode if available
+                            if (state.facingMode) {
+                                currentFacingMode = state.facingMode;
+                                console.log('📷 Restored camera facing mode:', currentFacingMode);
+                            }
+                            
+                            // Show success message
+                            setTimeout(() => {
+                                console.log('✅ Smart reload completed successfully');
+                                // Could add a toast notification here
+                            }, 1000);
+                            
+                        }, 500);
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not restore state after reload:', error);
+                // Fall back to normal app initialization
+                initializeApp();
+            }
+        }
+        
+        // Auto-detection of MediaPipe issues
+        let lastPoseDetectionTime = Date.now();
+        let poseDetectionTimeoutId = null;
+        
+        function monitorPoseDetection() {
+            // Update last detection time when we have pose results
+            if (currentPoseResults && currentPoseResults.poseLandmarks) {
+                lastPoseDetectionTime = Date.now();
+                
+                // Clear any existing timeout
+                if (poseDetectionTimeoutId) {
+                    clearTimeout(poseDetectionTimeoutId);
+                    poseDetectionTimeoutId = null;
+                }
+            } else {
+                // If no pose results for a while, set up a timeout to detect issues
+                if (!poseDetectionTimeoutId) {
+                    poseDetectionTimeoutId = setTimeout(() => {
+                        const timeSinceLastDetection = Date.now() - lastPoseDetectionTime;
+                        
+                        // If more than 10 seconds without detection and camera is active
+                        if (timeSinceLastDetection > 10000) {
+                            const activeVideo = document.getElementById('staticVideo') || document.getElementById('dynamicVideo');
+                            if (activeVideo && activeVideo.srcObject && activeVideo.videoWidth > 0) {
+                                console.warn('⚠️ MediaPipe may have stopped - no pose detection for', timeSinceLastDetection, 'ms');
+                                
+                                // Show subtle notification about reload option
+                                showPoseDetectionWarning();
+                            }
+                        }
+                    }, 5000); // Check after 5 seconds of no detection
+                }
+            }
+        }
+        
+        function showPoseDetectionWarning() {
+            // Check if warning is already shown
+            if (document.getElementById('poseDetectionWarning')) return;
+            
+            const warning = document.createElement('div');
+            warning.id = 'poseDetectionWarning';
+            warning.className = 'fixed bottom-20 left-4 right-4 bg-orange-500 text-white p-3 rounded-lg shadow-lg z-40 animate-bounce';
+            warning.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="text-lg mr-2">⚠️</span>
+                        <div>
+                            <p class="text-sm font-medium">Pose detection may have stopped</p>
+                            <p class="text-xs opacity-90">骨格認識が停止している可能性があります</p>
+                        </div>
+                    </div>
+                    <button onclick="smartReload()" class="bg-white text-orange-500 px-3 py-1 rounded text-sm font-medium hover:bg-gray-100">
+                        Reload
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(warning);
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (document.getElementById('poseDetectionWarning')) {
+                    document.getElementById('poseDetectionWarning').remove();
+                }
+            }, 10000);
+        }
         
         function showWelcome() {
             console.log('Showing welcome screen');
@@ -2417,6 +2603,9 @@
         // Handle pose detection results
         function onPoseResults(results) {
             currentPoseResults = results;
+            
+            // Monitor pose detection for smart reload feature
+            monitorPoseDetection();
             
             // Enhanced debugging for pose results
             const landmarks = results.poseLandmarks;
@@ -6107,7 +6296,12 @@
         }
 
         // ページ読み込み時とオンライン状態変更時に実行
-        window.addEventListener('load', updateOnlineStatus);
+        window.addEventListener('load', function() {
+            updateOnlineStatus();
+            
+            // Check for smart reload state restoration
+            restoreAfterSmartReload();
+        });
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
 
