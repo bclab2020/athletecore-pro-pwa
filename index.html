@@ -1696,16 +1696,13 @@
             try {
                 const savedState = sessionStorage.getItem('athletecore_reload_state');
                 if (savedState) {
-                    console.log('🔄 Restoring state after smart reload...');
+                    console.log('🔄 Starting smart reload state restoration...');
                     const state = JSON.parse(savedState);
                     
-                    // Clear the saved state
-                    sessionStorage.removeItem('athletecore_reload_state');
-                    
-                    console.log('🔄 Saved state found:', {
-                        user: state.user?.name,
-                        screen: state.screen,
-                        facingMode: state.facingMode,
+                    console.log('🔄 Saved state details:', {
+                        user: state.user?.name || 'No user',
+                        screen: state.screen || 'No screen',
+                        facingMode: state.facingMode || 'No camera mode',
                         timestamp: state.timestamp
                     });
                     
@@ -1721,55 +1718,73 @@
                         console.log('📷 Restored camera facing mode:', currentFacingMode);
                     }
                     
-                    // Wait for app to be ready, then navigate to the previous screen
+                    // IMPORTANT: Set current screen immediately to prevent welcome screen override
+                    if (state.screen) {
+                        currentScreen = state.screen;
+                        console.log('🎯 Current screen set to:', currentScreen);
+                    }
+                    
+                    // Wait for DOM to be ready, then restore the screen
                     setTimeout(() => {
-                        console.log('🔄 Attempting to restore screen:', state.screen);
+                        console.log('🔄 Executing screen restoration for:', state.screen);
                         
                         if (state.screen === 'static-analysis') {
                             console.log('🎯 Restoring Static Analysis screen...');
                             showScreen('static-analysis');
+                            // Clear the saved state after successful restoration
+                            sessionStorage.removeItem('athletecore_reload_state');
                             setTimeout(() => {
                                 initializeStaticAnalysis();
                                 console.log('✅ Static analysis initialized after smart reload');
-                            }, 100);
+                            }, 200);
                         } else if (state.screen === 'dynamic-analysis') {
                             console.log('🎯 Restoring Dynamic Analysis screen...');
                             showScreen('dynamic-analysis');
+                            // Clear the saved state after successful restoration
+                            sessionStorage.removeItem('athletecore_reload_state');
                             setTimeout(() => {
                                 initializeDynamicAnalysis();
                                 console.log('✅ Dynamic analysis initialized after smart reload');
-                            }, 100);
+                            }, 200);
                         } else if (state.screen === 'dashboard') {
                             console.log('🎯 Restoring Dashboard screen...');
                             showDashboard();
+                            // Clear the saved state after successful restoration
+                            sessionStorage.removeItem('athletecore_reload_state');
                         } else {
-                            console.log('⚠️ Unknown screen type, defaulting to current behavior');
+                            console.log('⚠️ Unknown screen type, clearing saved state');
+                            sessionStorage.removeItem('athletecore_reload_state');
+                            return false;
                         }
                         
-                        // Show success message
+                        // Show success message after successful restoration
                         setTimeout(() => {
-                            console.log('✅ Smart reload completed successfully');
+                            console.log('✅ Smart reload restoration completed successfully');
                             
                             // Show a brief success toast
                             const toast = document.createElement('div');
+                            toast.id = 'smartReloadSuccessToast';
                             toast.className = 'fixed top-4 left-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-lg z-50 text-center';
                             toast.innerHTML = '✅ 骨格認識が復旧しました';
                             document.body.appendChild(toast);
                             
                             setTimeout(() => {
-                                if (toast && toast.parentNode) {
-                                    toast.parentNode.removeChild(toast);
+                                const existingToast = document.getElementById('smartReloadSuccessToast');
+                                if (existingToast && existingToast.parentNode) {
+                                    existingToast.parentNode.removeChild(existingToast);
                                 }
                             }, 3000);
                             
-                        }, 1000);
+                        }, 500);
                         
-                    }, 800); // Increased delay to ensure proper initialization
+                    }, 100); // Reduced delay to beat the normal initialization
                     
                     return true; // Indicate successful restoration
                 }
             } catch (error) {
                 console.warn('⚠️ Could not restore state after reload:', error);
+                // Clear any corrupted state data
+                sessionStorage.removeItem('athletecore_reload_state');
             }
             
             return false; // Indicate no restoration occurred
@@ -2195,23 +2210,45 @@
         // Debug function to test smart reload functionality
         window.debugSmartReload = function() {
             console.log('🔄 === SMART RELOAD DEBUG ===');
-            console.log('Current State:');
-            console.log('- Current User:', currentUser);
+            console.log('Current Application State:');
+            console.log('- Current User:', currentUser ? currentUser.name || currentUser.id : 'None');
             console.log('- Current Screen:', currentScreen);
             console.log('- Current Facing Mode:', currentFacingMode);
+            console.log('- Active Screen Elements:', document.querySelector('.app-screen.active')?.id || 'None');
             
             // Check sessionStorage
             const savedState = sessionStorage.getItem('athletecore_reload_state');
-            console.log('- Saved State in sessionStorage:', savedState ? JSON.parse(savedState) : 'None');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    console.log('- Saved State in sessionStorage:', parsed);
+                    console.log('  * Saved User:', parsed.user?.name || parsed.user?.id || 'None');
+                    console.log('  * Saved Screen:', parsed.screen);
+                    console.log('  * Saved Camera Mode:', parsed.facingMode);
+                    console.log('  * Timestamp:', parsed.timestamp);
+                } catch (error) {
+                    console.log('- Saved State ERROR:', error.message);
+                }
+            } else {
+                console.log('- Saved State in sessionStorage: None');
+            }
             
-            // Simulate smart reload without actually reloading
-            console.log('💡 To test actual reload, call smartReload() from camera analysis screen');
+            // Check if currently in analysis mode
+            const isInAnalysis = currentScreen === 'static-analysis' || currentScreen === 'dynamic-analysis';
+            console.log('- Currently in analysis mode:', isInAnalysis);
+            
+            console.log('💡 Commands:');
+            console.log('  - debugTriggerSmartReload() : Execute smart reload');
+            console.log('  - debugTestStateRestore() : Test restoration without reload');
             
             return {
-                currentUser,
+                currentUser: currentUser?.name || currentUser?.id || null,
                 currentScreen,
                 currentFacingMode,
-                hasSavedState: !!savedState
+                activeScreenElement: document.querySelector('.app-screen.active')?.id || null,
+                hasSavedState: !!savedState,
+                savedStateValid: savedState ? true : false,
+                isInAnalysisMode: isInAnalysis
             };
         };
         
@@ -2401,8 +2438,18 @@
         
         // Initialize app
         setTimeout(async () => {
-            loadLocalUser();
-            showWelcome();
+            // Check if smart reload restoration is in progress
+            const isSmartReloadInProgress = sessionStorage.getItem('athletecore_reload_state');
+            
+            if (!isSmartReloadInProgress) {
+                console.log('🔄 Normal app initialization - no smart reload detected');
+                loadLocalUser();
+                showWelcome();
+            } else {
+                console.log('🔄 Smart reload detected - skipping normal welcome flow');
+                // Still initialize essential components
+                loadLocalUser();
+            }
             
             // Add click event listeners to enable speech on user interaction
             document.addEventListener('click', enableSpeech, { once: false });
@@ -6997,16 +7044,16 @@
 
         // ページ読み込み時とオンライン状態変更時に実行
         window.addEventListener('load', function() {
+            console.log('🔄 Page loaded, checking for smart reload state...');
             updateOnlineStatus();
             
-            // Check for smart reload state restoration
+            // Check for smart reload state restoration IMMEDIATELY
             const restored = restoreAfterSmartReload();
             
-            // If no state restoration occurred, proceed with normal initialization
-            if (!restored) {
-                console.log('🔄 No smart reload state found, proceeding with normal initialization');
-                // Note: Normal app initialization happens through other event listeners
-                // This ensures we don't interfere with the regular startup process
+            if (restored) {
+                console.log('✅ Smart reload state restoration initiated successfully');
+            } else {
+                console.log('🔄 No smart reload state found, normal initialization will proceed');
             }
         });
         window.addEventListener('online', updateOnlineStatus);
