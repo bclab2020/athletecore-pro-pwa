@@ -782,10 +782,10 @@
             <div id="static-analysis" class="app-screen bg-white">
                 <div class="flex-1 flex flex-col min-h-screen">
                     <!-- Header -->
-                    <div id="staticHeader" class="flex-shrink-0 px-6 py-4 border-b bg-white transition-all duration-300">
+                    <div id="staticHeader" class="flex-shrink-0 px-6 py-4 border-b border-white border-opacity-20 bg-black bg-opacity-20 backdrop-filter backdrop-blur-md transition-all duration-300">
                         <div class="flex items-center">
-                            <button onclick="showDashboard()" class="mr-4 text-gray-600">←</button>
-                            <h2 class="text-lg font-semibold brand-color">Static Posture Analysis</h2>
+                            <button onclick="showDashboard()" class="mr-4 text-white hover:text-gray-200 transition-colors duration-200 drop-shadow-lg">←</button>
+                            <h2 class="text-lg font-semibold text-white drop-shadow-lg">Static Posture Analysis</h2>
                         </div>
                     </div>
                     
@@ -843,12 +843,12 @@
                     </div>
                     
                     <!-- Controls - Sticky Bottom -->
-                    <div id="staticControlsBottom" class="flex-shrink-0 px-6 py-6 bg-white border-t space-y-4 transition-all duration-300">
+                    <div id="staticControlsBottom" class="flex-shrink-0 px-6 py-6 bg-black bg-opacity-20 backdrop-filter backdrop-blur-md border-t border-white border-opacity-20 space-y-4 transition-all duration-300">
                         <div class="text-center">
-                            <p class="text-sm text-gray-600 mb-2">Stand naturally with arms at your sides</p>
-                            <p class="text-xs text-gray-500">腕を体の横に自然に立ってください</p>
+                            <p class="text-sm text-white mb-2 drop-shadow-lg">Stand naturally with arms at your sides</p>
+                            <p class="text-xs text-gray-200 drop-shadow-lg">腕を体の横に自然に立ってください</p>
                         </div>
-                        <button id="staticCaptureBtn" onclick="startStaticCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
+                        <button id="staticCaptureBtn" onclick="startStaticCaptureImproved()" class="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 font-medium py-4 px-8 rounded-xl text-lg w-full backdrop-filter backdrop-blur-sm transition-all duration-200 shadow-lg">
                             <span id="staticCaptureText">Start 10s Countdown / 10秒カウントダウン開始</span>
                         </button>
                     </div>
@@ -859,10 +859,10 @@
             <div id="dynamic-analysis" class="app-screen bg-white">
                 <div class="flex-1 flex flex-col min-h-screen">
                     <!-- Header -->
-                    <div id="dynamicHeader" class="flex-shrink-0 px-6 py-4 border-b bg-white transition-all duration-300">
+                    <div id="dynamicHeader" class="flex-shrink-0 px-6 py-4 border-b border-white border-opacity-20 bg-black bg-opacity-20 backdrop-filter backdrop-blur-md transition-all duration-300">
                         <div class="flex items-center">
-                            <button onclick="showDashboard()" class="mr-4 text-gray-600">←</button>
-                            <h2 class="text-lg font-semibold brand-color">Dynamic Movement Analysis</h2>
+                            <button onclick="showDashboard()" class="mr-4 text-white hover:text-gray-200 transition-colors duration-200 drop-shadow-lg">←</button>
+                            <h2 class="text-lg font-semibold text-white drop-shadow-lg">Dynamic Movement Analysis</h2>
                         </div>
                     </div>
                     
@@ -926,12 +926,12 @@
                     </div>
                     
                     <!-- Controls - Sticky Bottom -->
-                    <div id="dynamicControlsBottom" class="flex-shrink-0 px-6 py-6 bg-white border-t space-y-4 transition-all duration-300">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <p class="text-sm brand-color font-medium mb-1">Current Exercise: Squat</p>
-                            <p class="text-xs text-gray-600">現在のエクササイズ：スクワット</p>
+                    <div id="dynamicControlsBottom" class="flex-shrink-0 px-6 py-6 bg-black bg-opacity-20 backdrop-filter backdrop-blur-md border-t border-white border-opacity-20 space-y-4 transition-all duration-300">
+                        <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-sm p-4 rounded-lg border border-white border-opacity-30">
+                            <p class="text-sm text-white font-medium mb-1 drop-shadow-lg">Current Exercise: Squat</p>
+                            <p class="text-xs text-gray-200 drop-shadow-lg">現在のエクササイズ：スクワット</p>
                         </div>
-                        <button id="dynamicCaptureBtn" onclick="startDynamicCaptureImproved()" class="brand-bg text-white font-medium py-4 px-8 rounded-xl text-lg w-full">
+                        <button id="dynamicCaptureBtn" onclick="startDynamicCaptureImproved()" class="bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-900 font-medium py-4 px-8 rounded-xl text-lg w-full backdrop-filter backdrop-blur-sm transition-all duration-200 shadow-lg">
                             Start Auto Recording / 自動録画開始
                         </button>
                     </div>
@@ -1339,6 +1339,305 @@
         function hideAllFloatingButtons() {
             document.getElementById('floatingStaticBtn').classList.remove('visible');
             document.getElementById('floatingDynamicBtn').classList.remove('visible');
+        }
+        
+        // Create full-screen transparent camera overlay
+        function createFullScreenCameraOverlay(type) {
+            console.log('🎬 Creating full-screen camera overlay for:', type);
+            
+            // Get video and canvas elements
+            const videoElementId = type === 'static' ? 'staticCameraFeed' : 'dynamicCameraFeed';
+            const canvasElementId = type === 'static' ? 'staticPoseCanvas' : 'dynamicPoseCanvas';
+            const video = document.getElementById(videoElementId);
+            const canvas = document.getElementById(canvasElementId);
+            
+            if (!video || !canvas) {
+                console.error('❌ Video or canvas not found for overlay');
+                return;
+            }
+            
+            // Create fullscreen overlay container
+            const overlay = document.createElement('div');
+            overlay.id = `${type}FullscreenOverlay`;
+            overlay.className = 'fixed inset-0 bg-black';
+            overlay.style.zIndex = '9999';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            
+            // Create video container within overlay
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'relative w-full h-full flex items-center justify-center';
+            
+            // Clone and setup video element for fullscreen
+            const fullscreenVideo = video.cloneNode(true);
+            fullscreenVideo.id = `${type}FullscreenVideo`;
+            fullscreenVideo.className = 'w-full h-full object-cover';
+            fullscreenVideo.style.maxWidth = '100vw';
+            fullscreenVideo.style.maxHeight = '100vh';
+            fullscreenVideo.autoplay = true;
+            fullscreenVideo.muted = true;
+            fullscreenVideo.playsInline = true;
+            
+            // Transfer the video stream to fullscreen video
+            if (video.srcObject) {
+                fullscreenVideo.srcObject = video.srcObject;
+            }
+            
+            // Apply camera mirroring if front camera
+            if (currentFacingMode === 'user') {
+                fullscreenVideo.style.transform = 'scaleX(-1)';
+            }
+            
+            // Create pose canvas for fullscreen
+            const fullscreenCanvas = document.createElement('canvas');
+            fullscreenCanvas.id = `${type}FullscreenCanvas`;
+            fullscreenCanvas.className = 'absolute inset-0 w-full h-full pointer-events-none';
+            fullscreenCanvas.style.zIndex = '10';
+            
+            // Create control overlay (transparent layer for buttons)
+            const controlOverlay = document.createElement('div');
+            controlOverlay.className = 'absolute inset-0 w-full h-full';
+            controlOverlay.style.zIndex = '20';
+            controlOverlay.style.background = 'transparent';
+            
+            // Add exit button (small X in top-right corner)
+            const exitButton = document.createElement('button');
+            exitButton.innerHTML = '×';
+            exitButton.className = 'absolute top-4 right-4 w-10 h-10 bg-black bg-opacity-50 text-white text-2xl rounded-full hover:bg-opacity-70 transition-all';
+            exitButton.onclick = () => removeFullScreenCameraOverlay(type);
+            
+            // Add camera controls overlay
+            const cameraControls = createFullscreenCameraControls(type);
+            
+            // Assemble the overlay
+            videoContainer.appendChild(fullscreenVideo);
+            videoContainer.appendChild(fullscreenCanvas);
+            controlOverlay.appendChild(exitButton);
+            controlOverlay.appendChild(cameraControls);
+            overlay.appendChild(videoContainer);
+            overlay.appendChild(controlOverlay);
+            
+            // Add to document
+            document.body.appendChild(overlay);
+            
+            // Setup fullscreen pose detection
+            setupFullscreenPoseDetection(type, fullscreenVideo, fullscreenCanvas);
+            
+            console.log('✅ Fullscreen camera overlay created');
+        }
+        
+        // Create camera controls for fullscreen mode
+        function createFullscreenCameraControls(type) {
+            const controls = document.createElement('div');
+            controls.className = 'absolute inset-0 flex flex-col justify-between p-4';
+            
+            // Top controls (pose status, camera switch)
+            const topControls = document.createElement('div');
+            topControls.className = 'flex justify-between items-start';
+            
+            // Pose detection status
+            const poseStatus = document.createElement('div');
+            poseStatus.id = `${type}FullscreenPoseStatus`;
+            poseStatus.className = 'bg-green-600 bg-opacity-80 text-white text-sm px-3 py-2 rounded-lg';
+            poseStatus.innerHTML = `
+                <span id="${type}FullscreenPoseIndicator" class="w-3 h-3 bg-red-500 rounded-full inline-block mr-2 animate-pulse"></span>
+                <span id="${type}FullscreenPoseText">Starting Camera...</span>
+            `;
+            
+            // Camera switch button
+            const cameraSwitch = document.createElement('button');
+            cameraSwitch.className = 'bg-black bg-opacity-70 text-white p-3 rounded-full hover:bg-opacity-90 transition-all';
+            cameraSwitch.innerHTML = `
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                </svg>
+            `;
+            cameraSwitch.onclick = () => switchFullscreenCamera(type);
+            
+            topControls.appendChild(poseStatus);
+            topControls.appendChild(cameraSwitch);
+            
+            // Center area (transparent - user can see full camera view)
+            const centerArea = document.createElement('div');
+            centerArea.className = 'flex-1 flex items-center justify-center';
+            
+            // Instruction text (minimal, semi-transparent)
+            const instruction = document.createElement('div');
+            instruction.className = 'text-center text-white bg-black bg-opacity-40 px-4 py-2 rounded-lg';
+            if (type === 'static') {
+                instruction.innerHTML = `
+                    <p class="text-sm mb-1">Stand naturally / 自然に立ってください</p>
+                    <p class="text-xs opacity-75">Tap anywhere to start countdown / どこでもタップでカウントダウン開始</p>
+                `;
+            } else {
+                instruction.innerHTML = `
+                    <p class="text-sm mb-1">Get ready to move / 動く準備をしてください</p>
+                    <p class="text-xs opacity-75">Tap anywhere to start recording / どこでもタップで録画開始</p>
+                `;
+            }
+            
+            centerArea.appendChild(instruction);
+            
+            // Bottom controls (camera label)
+            const bottomControls = document.createElement('div');
+            bottomControls.className = 'text-center';
+            
+            const cameraLabel = document.createElement('div');
+            cameraLabel.id = `${type}FullscreenCameraLabel`;
+            cameraLabel.className = 'text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded inline-block';
+            cameraLabel.textContent = currentFacingMode === 'user' ? 'インカメラ' : 'アウトカメラ';
+            
+            bottomControls.appendChild(cameraLabel);
+            
+            // Assemble controls
+            controls.appendChild(topControls);
+            controls.appendChild(centerArea);
+            controls.appendChild(bottomControls);
+            
+            // Make entire overlay clickable to start capture
+            controls.onclick = (e) => {
+                // Prevent clicks on buttons from triggering capture
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                    return;
+                }
+                startFullscreenCapture(type);
+            };
+            
+            return controls;
+        }
+        
+        // Setup pose detection for fullscreen mode
+        function setupFullscreenPoseDetection(type, video, canvas) {
+            // Wait for video to be ready
+            const checkVideoReady = () => {
+                if (video.videoWidth > 0 && video.videoHeight > 0) {
+                    console.log('📹 Fullscreen video ready, starting pose detection');
+                    
+                    // Set canvas size to match screen
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                    
+                    // Store reference for pose drawing
+                    window[`${type}FullscreenVideo`] = video;
+                    window[`${type}FullscreenCanvas`] = canvas;
+                    
+                    console.log('✅ Fullscreen pose detection setup complete');
+                } else {
+                    setTimeout(checkVideoReady, 100);
+                }
+            };
+            
+            setTimeout(checkVideoReady, 500);
+        }
+        
+        // Switch camera in fullscreen mode
+        async function switchFullscreenCamera(type) {
+            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            
+            try {
+                // Get new camera stream
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: newFacingMode },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Update fullscreen video
+                const fullscreenVideo = document.getElementById(`${type}FullscreenVideo`);
+                if (fullscreenVideo) {
+                    fullscreenVideo.srcObject = stream;
+                    
+                    // Update mirroring
+                    if (newFacingMode === 'user') {
+                        fullscreenVideo.style.transform = 'scaleX(-1)';
+                    } else {
+                        fullscreenVideo.style.transform = 'scaleX(1)';
+                    }
+                }
+                
+                // Update original video too
+                const originalVideo = document.getElementById(type === 'static' ? 'staticCameraFeed' : 'dynamicCameraFeed');
+                if (originalVideo) {
+                    originalVideo.srcObject = stream;
+                }
+                
+                // Update global state
+                currentFacingMode = newFacingMode;
+                updateFullscreenCameraLabel(type, newFacingMode);
+                
+                // Stop old stream
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+                cameraStream = stream;
+                
+                console.log('✅ Fullscreen camera switched to:', newFacingMode);
+                
+            } catch (error) {
+                console.error('❌ Failed to switch fullscreen camera:', error);
+            }
+        }
+        
+        // Update camera label in fullscreen mode
+        function updateFullscreenCameraLabel(type, facingMode) {
+            const label = document.getElementById(`${type}FullscreenCameraLabel`);
+            if (label) {
+                label.textContent = facingMode === 'user' ? 'インカメラ' : 'アウトカメラ';
+            }
+        }
+        
+        // Start capture in fullscreen mode
+        function startFullscreenCapture(type) {
+            console.log('🎬 Starting fullscreen capture for:', type);
+            
+            // Hide the instruction
+            const instruction = document.querySelector(`#${type}FullscreenOverlay .text-center.text-white`);
+            if (instruction) {
+                instruction.style.display = 'none';
+            }
+            
+            // Start the appropriate capture sequence
+            if (type === 'static') {
+                startFullscreenStaticCountdown();
+            } else {
+                startFullscreenDynamicRecording();
+            }
+        }
+        
+        // Remove fullscreen overlay and return to normal mode
+        function removeFullScreenCameraOverlay(type) {
+            console.log('🚪 Removing fullscreen overlay for:', type);
+            
+            const overlay = document.getElementById(`${type}FullscreenOverlay`);
+            if (overlay) {
+                overlay.remove();
+            }
+            
+            // Clean up references
+            delete window[`${type}FullscreenVideo`];
+            delete window[`${type}FullscreenCanvas`];
+            
+            // Re-enable original buttons
+            const bottomButton = document.getElementById(type === 'static' ? 'staticCaptureBtn' : 'dynamicCaptureBtn');
+            const floatingButton = document.getElementById(type === 'static' ? 'floatingStaticBtn' : 'floatingDynamicBtn');
+            
+            if (bottomButton) {
+                bottomButton.disabled = false;
+                bottomButton.textContent = type === 'static' ? 
+                    'Start 10s Countdown / 10秒カウントダウン開始' : 
+                    'Start Auto Recording / 自動録画開始';
+            }
+            if (floatingButton) {
+                floatingButton.disabled = false;
+            }
+            
+            console.log('✅ Fullscreen overlay removed');
         }
         
         // Debug function to test fullscreen mode
@@ -5540,8 +5839,8 @@
                 }, 200);
             }
             
-            // Enter fullscreen mode
-            enterFullscreenMode('static');
+            // Create full-screen transparent camera overlay
+            createFullScreenCameraOverlay('static');
             
             // Disable and hide floating button during countdown
             const bottomButton = document.getElementById('staticCaptureBtn');
@@ -5848,8 +6147,8 @@
         
         // Improved dynamic capture with movement detection
         async function startDynamicCaptureImproved() {
-            // Enter fullscreen mode
-            enterFullscreenMode('dynamic');
+            // Create full-screen transparent camera overlay
+            createFullScreenCameraOverlay('dynamic');
             
             // Disable and hide floating button during recording
             const bottomButton = document.getElementById('dynamicCaptureBtn');
