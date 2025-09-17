@@ -6026,6 +6026,10 @@
                 }, 200);
             }
             
+            // Enter fullscreen mode at the start of countdown for better positioning
+            console.log('📱 Entering fullscreen mode for static capture');
+            enterFullscreenMode('static');
+            
             // Keep existing camera view active (no fullscreen overlay to preserve MediaPipe)
             
             // Disable and hide floating button during countdown
@@ -6327,12 +6331,20 @@
                         navigator.vibrate([200, 100, 200]);
                     }
                     
+                    // Exit fullscreen mode after static capture is completed
+                    console.log('📱 Exiting fullscreen mode after static capture completion');
+                    exitFullscreenMode('static');
+                    
                     showResults();
                 }, 3000);
         }
         
         // Improved dynamic capture with movement detection
         async function startDynamicCaptureImproved() {
+            // Enter fullscreen mode at the start of capture for better positioning
+            console.log('📱 Entering fullscreen mode for dynamic capture');
+            enterFullscreenMode('dynamic');
+            
             // Keep existing camera view active (no fullscreen overlay to preserve MediaPipe)
             
             // Disable and hide floating button during recording
@@ -6475,6 +6487,10 @@
                                 if (navigator.vibrate) {
                                     navigator.vibrate([200, 100, 200]);
                                 }
+                                
+                                // Exit fullscreen mode after dynamic capture is completed
+                                console.log('📱 Exiting fullscreen mode after dynamic capture completion');
+                                exitFullscreenMode('dynamic');
                                 
                                 showResults();
                             });
@@ -6647,6 +6663,10 @@
                     if (navigator.vibrate) {
                         navigator.vibrate([200, 100, 200]);
                     }
+                    
+                    // Exit fullscreen mode after dynamic capture is completed (fallback path)
+                    console.log('📱 Exiting fullscreen mode after dynamic capture completion (fallback)');
+                    exitFullscreenMode('dynamic');
                     
                     showResults();
                 });
