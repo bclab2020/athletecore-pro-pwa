@@ -1893,6 +1893,48 @@
             };
         };
         
+        // Debug function to test the accurate 10-second countdown timing
+        window.debugCountdownTiming = function() {
+            console.log('🕐 Testing accurate 10-second countdown timing...');
+            console.log('================================================');
+            
+            // Show detailed timing information
+            console.log('📋 Accurate Timing Table:');
+            console.log('Time 0s: Start countdown, display "10"');
+            console.log('Time 1s: Display "9"');
+            console.log('Time 2s: Display "8"');
+            console.log('Time 3s: Display "7"');
+            console.log('Time 4s: Display "6"');
+            console.log('Time 5s: Display "5"');
+            console.log('Time 6s: Display "4"');
+            console.log('Time 7s: Display "3"');
+            console.log('Time 8s: Display "2"');
+            console.log('Time 9s: Display "1" + 📸 PHOTO CAPTURE');
+            console.log('Time 10s: Display "GO!" + Flash effects');
+            console.log('');
+            console.log('🎯 Photo capture occurs at exactly 9 seconds after countdown start');
+            
+            // Simulate the actual timing for testing
+            let testCount = 10;
+            let elapsedSeconds = 0;
+            console.log(`\n🚀 Starting simulation from count ${testCount}...`);
+            
+            const testInterval = setInterval(() => {
+                elapsedSeconds++;
+                testCount--;
+                console.log(`Time ${elapsedSeconds}s: Count ${testCount}${testCount === 1 ? ' + 📸 CAPTURE!' : ''}${testCount === 0 ? ' + 🎉 GO!' : ''}`);
+                
+                if (testCount === 0) {
+                    clearInterval(testInterval);
+                    console.log('✅ 10-second countdown simulation completed!');
+                    console.log(`📸 Photo captured at ${elapsedSeconds - 1}s (count=1)`);
+                    console.log(`🎉 Effects displayed at ${elapsedSeconds}s (count=0)`);
+                }
+            }, 1000);
+            
+            return 'Accurate countdown timing test started - check console for 10-second simulation';
+        };
+        
         // Auto-monitor function for stability (can be called periodically)
         window.autoMonitorMediaPipeHealth = function() {
             const health = debugMediaPipeStability();
@@ -6289,8 +6331,22 @@
             
             document.body.appendChild(overlay);
             
-            let currentCount = 10; // Changed from 5 to 10
+            let currentCount = 10; // Start at 10 for 10-second countdown
             const countdownNumber = document.getElementById('staticCountdownNumber');
+            
+            /* 
+            Timing Table:
+            Time 0s: currentCount=10, first setInterval call → currentCount=9 (display "9")
+            Time 1s: currentCount=9, second call → currentCount=8 (display "8") 
+            Time 2s: currentCount=8 → currentCount=7 (display "7")
+            Time 3s: currentCount=7 → currentCount=6 (display "6")
+            Time 4s: currentCount=6 → currentCount=5 (display "5")
+            Time 5s: currentCount=5 → currentCount=4 (display "4")
+            Time 6s: currentCount=4 → currentCount=3 (display "3")
+            Time 7s: currentCount=3 → currentCount=2 (display "2")
+            Time 8s: currentCount=2 → currentCount=1 (display "1" + CAPTURE PHOTO)
+            Time 9s: currentCount=1 → currentCount=0 (display "GO!" + FLASH)
+            */
             
             const countdownInterval = setInterval(() => {
                 currentCount--;
@@ -6298,6 +6354,58 @@
                 if (currentCount > 0) {
                     // Enhanced visual countdown with dramatic effects
                     countdownNumber.textContent = currentCount;
+                    
+                    // CRITICAL: Execute photo capture at count=1 (9 seconds after countdown start) to eliminate timing lag
+                    if (currentCount === 1) {
+                        console.log('📸 Executing photo capture at count=1 (9 seconds after countdown start)');
+                        
+                        // Perform actual photo capture immediately 
+                        setTimeout(() => {
+                            // Capture photo with current pose data
+                            const analysisData = performPoseAnalysis(currentPoseResults ? currentPoseResults.poseLandmarks : null);
+                            
+                            let capturedPhoto = null;
+                            try {
+                                // Determine active video element for static analysis
+                                const activeVideo = document.getElementById('staticCameraFeed');
+                                if (activeVideo && activeVideo.videoWidth > 0) {
+                                    capturedPhoto = capturePhotoWithPoseOverlay(activeVideo, 'staticPoseCanvas', currentPoseResults);
+                                    console.log('✅ Photo captured at count=1:', capturedPhoto ? 'Success' : 'Failed');
+                                } else {
+                                    console.warn('⚠️ No active video for photo capture at count=1');
+                                }
+                            } catch (captureError) {
+                                console.error('❌ Photo capture error at count=1:', captureError);
+                            }
+                            
+                            // Store analysis data and photo immediately
+                            if (currentUser) {
+                                const resultData = {
+                                    id: generateUUID(),
+                                    user_id: currentUser.id,
+                                    analysis_type: 'static',
+                                    sport: currentUser.primary_sport,
+                                    analysis_date: new Date().toISOString(),
+                                    capturedPhoto: capturedPhoto,
+                                    repetitions_performed: 0,
+                                    ...analysisData
+                                };
+                                
+                                saveAnalysisResultLocal(resultData);
+                                
+                                if (capturedPhoto) {
+                                    console.log('✅ Static analysis with photo saved at count=1');
+                                    showPhotoCaptureFeedback();
+                                } else {
+                                    console.warn('⚠️ Static analysis saved without photo at count=1');
+                                }
+                            }
+                            
+                            // Update results display
+                            updateResultsDisplay(analysisData);
+                            
+                        }, 50); // Small delay to ensure pose detection is current
+                    }
                     
                     // Dynamic color transitions based on countdown
                     let color, shadowColor, pulseIntensity;
@@ -6370,7 +6478,7 @@
                         }
                     }
                 } else {
-                    // "GO!" final sequence - minimal version
+                    // Count=0: Final UI sequence only (photo already captured at count=1)
                     countdownNumber.textContent = 'GO!';
                     countdownNumber.style.transform = 'scale(1.1)';
                     countdownNumber.style.color = '#10B981'; // Bright green
@@ -6386,58 +6494,74 @@
                     // Update message
                     const messageElement = document.getElementById('countdownMessage');
                     if (messageElement) {
-                        messageElement.textContent = 'Capture!';
+                        messageElement.textContent = 'Captured!'; // Changed to past tense since capture already done
                     }
                     
-                    // Final "OK!" multi-modal feedback
+                    // Final "Captured!" multi-modal feedback - immediate since photo already taken
                     
-                    // Voice "GO!" only for front camera
+                    // Voice "Captured!" only for front camera - immediate feedback
                     if (isFrontCamera) {
                         setTimeout(() => {
-                            speakCountdown('GO!', true);
-                        }, 100);
+                            speakCountdown('Captured!', true);
+                        }, 50); // Faster feedback
                     }
                     
-                    // Success audio chime (reliable for all users)
+                    // Success audio chime (reliable for all users) - immediate
                     setTimeout(() => {
                         playSuccessChime();
-                    }, 200);
+                    }, 100); // Faster audio feedback
                     
-                    // Strong haptic feedback for OK
+                    // Strong haptic feedback for capture complete - immediate
                     if (navigator.vibrate) {
-                        navigator.vibrate([100, 50, 100]);
+                        navigator.vibrate([150, 30, 150, 30, 150]); // More distinctive pattern for success
                     }
+                    
+                    // Immediate flash effect at count=0 for better user experience
+                    const flash = document.createElement('div');
+                    flash.className = 'fixed inset-0 bg-white';
+                    flash.style.zIndex = '50'; // Highest priority for immediate visual feedback
+                    flash.style.opacity = '0';
+                    document.body.appendChild(flash);
+                    
+                    // Instant flash animation for immediate feedback
+                    flash.style.transition = 'opacity 0.1s';
+                    flash.style.opacity = '0.8'; // Stronger flash since photo is already taken
+                    
+                    setTimeout(() => {
+                        flash.style.opacity = '0';
+                        setTimeout(() => {
+                            flash.remove();
+                        }, 100);
+                    }, 150); // Slightly longer flash for better effect
                     
                     setTimeout(() => {
                         overlay.remove();
                         
-                        // Add camera flash effect
-                        const flash = document.createElement('div');
-                        flash.className = 'fixed inset-0 bg-white';
-                        flash.style.zIndex = '45'; // Above MediaPipe canvas but not blocking everything
-                        flash.style.opacity = '0';
-                        document.body.appendChild(flash);
+                        // Photo capture and analysis already completed at count=1
+                        // Just perform UI cleanup
+                        console.log('✅ Static capture UI sequence completed');
                         
-                        // Flash animation
-                        flash.style.transition = 'opacity 0.1s';
-                        flash.style.opacity = '0.6';
+                        // Re-enable buttons
+                        if (bottomButton) {
+                            bottomButton.disabled = false;
+                            bottomButton.textContent = 'Start 10s Countdown / 10秒カウントダウン開始';
+                        }
+                        if (floatingButton) {
+                            floatingButton.disabled = false;
+                        }
                         
-                        setTimeout(() => {
-                            flash.style.opacity = '0';
-                            setTimeout(() => {
-                                flash.remove();
-                                // Exit fullscreen after capture
-                                exitFullscreenMode('static');
-                                
-                                // Re-enable buttons
-                                if (bottomButton) bottomButton.disabled = false;
-                                if (floatingButton) floatingButton.disabled = false;
-                            }, 100);
-                        }, 100);
+                        // Exit fullscreen mode after capture
+                        console.log('📱 Exiting fullscreen mode after static capture completion');
+                        exitFullscreenMode('static');
                         
-                        // Start actual analysis
-                        startStaticCapture();
-                    }, 1000);
+                        // 分析完了の振動フィードバック
+                        if (navigator.vibrate) {
+                            navigator.vibrate([200, 100, 200]);
+                        }
+                        
+                        // Show results immediately since analysis is already done
+                        showResults();
+                    }, 800); // Reduced delay since processing is already complete
                     
                     clearInterval(countdownInterval);
                 }
