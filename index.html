@@ -2626,6 +2626,72 @@
             console.log('🔧 MediaPipe診断完了 - コンソールで結果を確認してください');
         };
         
+        window.debugCaptureProcess = function() {
+            console.log('🎬 撮影プロセス診断開始');
+            
+            // 現在のカウントダウンオーバーレイ確認
+            const staticOverlay = document.getElementById('staticCountdownOverlay');
+            const dynamicOverlay = document.getElementById('dynamicCountdownOverlay');
+            
+            console.log('📊 カウントダウンオーバーレイ状態:', {
+                staticOverlay: {
+                    exists: !!staticOverlay,
+                    zIndex: staticOverlay?.style.zIndex,
+                    visible: staticOverlay ? !staticOverlay.classList.contains('hidden') : false
+                },
+                dynamicOverlay: {
+                    exists: !!dynamicOverlay,
+                    zIndex: dynamicOverlay?.style.zIndex,
+                    visible: dynamicOverlay ? !dynamicOverlay.classList.contains('hidden') : false
+                }
+            });
+            
+            // フルスクリーンオーバーレイ確認
+            const staticFullscreen = document.getElementById('staticFullscreenOverlay');
+            const dynamicFullscreen = document.getElementById('dynamicFullscreenOverlay');
+            
+            console.log('🖥️ フルスクリーンオーバーレイ状態:', {
+                staticFullscreen: {
+                    exists: !!staticFullscreen,
+                    zIndex: staticFullscreen?.style.zIndex
+                },
+                dynamicFullscreen: {
+                    exists: !!dynamicFullscreen,
+                    zIndex: dynamicFullscreen?.style.zIndex
+                }
+            });
+            
+            // poseDetectionInterval状態
+            console.log('🤖 MediaPipe検出状態:', {
+                poseDetectionInterval: !!poseDetectionInterval,
+                pose: !!pose,
+                intervalActive: poseDetectionInterval ? 'ACTIVE' : 'STOPPED'
+            });
+            
+            // Canvas表示状態詳細
+            const staticCanvas = document.getElementById('staticPoseCanvas');
+            const dynamicCanvas = document.getElementById('dynamicPoseCanvas');
+            
+            console.log('🎨 Canvasリアルタイム状態:', {
+                static: {
+                    exists: !!staticCanvas,
+                    hidden: staticCanvas?.classList.contains('hidden'),
+                    zIndex: staticCanvas?.style.zIndex,
+                    display: staticCanvas?.style.display,
+                    visibility: staticCanvas?.style.visibility,
+                    opacity: staticCanvas?.style.opacity
+                },
+                dynamic: {
+                    exists: !!dynamicCanvas,
+                    hidden: dynamicCanvas?.classList.contains('hidden'),
+                    zIndex: dynamicCanvas?.style.zIndex,
+                    display: dynamicCanvas?.style.display,
+                    visibility: dynamicCanvas?.style.visibility,
+                    opacity: dynamicCanvas?.style.opacity
+                }
+            });
+        };
+        
         window.debugTestPoseCanvas = function() {
             console.log('🎨 MediaPipeキャンバステスト開始');
             
@@ -5960,8 +6026,7 @@
                 }, 200);
             }
             
-            // Create full-screen transparent camera overlay
-            createFullScreenCameraOverlay('static');
+            // Keep existing camera view active (no fullscreen overlay to preserve MediaPipe)
             
             // Disable and hide floating button during countdown
             const bottomButton = document.getElementById('staticCaptureBtn');
@@ -5979,7 +6044,7 @@
             const overlay = document.createElement('div');
             overlay.id = 'staticCountdownOverlay';
             overlay.className = 'fixed inset-0 bg-transparent flex items-center justify-center';
-            overlay.style.zIndex = '10001';
+            overlay.style.zIndex = '45'; // Above MediaPipe canvas (z-30) but not blocking everything
             overlay.innerHTML = `
                 <!-- Minimal Top-Right Counter -->
                 <div class="absolute top-4 right-4 text-center text-white bg-black bg-opacity-75 px-3 py-2 rounded-lg shadow-lg border border-white border-opacity-20 backdrop-blur-sm" style="min-width: 80px;">
@@ -6116,7 +6181,7 @@
                         // Add camera flash effect
                         const flash = document.createElement('div');
                         flash.className = 'fixed inset-0 bg-white';
-                        flash.style.zIndex = '10001';
+                        flash.style.zIndex = '45'; // Above MediaPipe canvas but not blocking everything
                         flash.style.opacity = '0';
                         document.body.appendChild(flash);
                         
@@ -6268,8 +6333,7 @@
         
         // Improved dynamic capture with movement detection
         async function startDynamicCaptureImproved() {
-            // Create full-screen transparent camera overlay
-            createFullScreenCameraOverlay('dynamic');
+            // Keep existing camera view active (no fullscreen overlay to preserve MediaPipe)
             
             // Disable and hide floating button during recording
             const bottomButton = document.getElementById('dynamicCaptureBtn');
@@ -6294,7 +6358,7 @@
             const waitingOverlay = document.createElement('div');
             waitingOverlay.id = 'dynamicWaitingOverlay';
             waitingOverlay.className = 'fixed top-20 left-4 right-4 text-center';
-            waitingOverlay.style.zIndex = '10001';
+            waitingOverlay.style.zIndex = '45'; // Above MediaPipe canvas but not blocking everything
             waitingOverlay.innerHTML = `
                 <div class="bg-blue-600 bg-opacity-80 text-white px-4 py-3 rounded-lg shadow-lg border border-white border-opacity-20">
                     <div class="text-lg font-medium mb-1">🤸‍♂️ Ready to start!</div>
@@ -6457,7 +6521,7 @@
             const timerOverlay = document.createElement('div');
             timerOverlay.id = 'dynamicTimerOverlay';
             timerOverlay.className = 'fixed top-16 left-4 right-4 text-center';
-            timerOverlay.style.zIndex = '10001';
+            timerOverlay.style.zIndex = '45'; // Above MediaPipe canvas but not blocking everything
             timerOverlay.innerHTML = `
                 <div class="bg-red-600 bg-opacity-80 text-white px-4 py-2 rounded-lg shadow-lg border border-white border-opacity-20">
                     <div class="text-sm font-medium flex items-center justify-center">
