@@ -1819,6 +1819,96 @@
             return newTestResult;
         };
         
+        // New debug function for MediaPipe stability monitoring
+        window.debugMediaPipeStability = function() {
+            console.log('🔧 MediaPipe Stability Debug Report:');
+            console.log('====================================');
+            
+            // Check MediaPipe object status
+            console.log('MediaPipe Object Status:', {
+                poseExists: !!pose,
+                poseType: typeof pose,
+                initializationFailed: !!window.mediaPipeInitializationFailed,
+                detectionInterval: !!poseDetectionInterval,
+                currentPoseResults: !!currentPoseResults,
+                hasLandmarks: currentPoseResults ? !!currentPoseResults.poseLandmarks : false,
+                landmarkCount: currentPoseResults && currentPoseResults.poseLandmarks ? currentPoseResults.poseLandmarks.length : 0
+            });
+            
+            // Check video elements
+            const staticVideo = document.getElementById('staticCameraFeed');
+            const dynamicVideo = document.getElementById('dynamicCameraFeed');
+            
+            console.log('Video Elements Status:', {
+                staticVideo: staticVideo ? {
+                    exists: true,
+                    srcObject: !!staticVideo.srcObject,
+                    dimensions: `${staticVideo.videoWidth}x${staticVideo.videoHeight}`,
+                    readyState: staticVideo.readyState,
+                    paused: staticVideo.paused
+                } : { exists: false },
+                dynamicVideo: dynamicVideo ? {
+                    exists: true,
+                    srcObject: !!dynamicVideo.srcObject,
+                    dimensions: `${dynamicVideo.videoWidth}x${dynamicVideo.videoHeight}`,
+                    readyState: dynamicVideo.readyState,
+                    paused: dynamicVideo.paused
+                } : { exists: false }
+            });
+            
+            // Check canvas elements
+            const staticCanvas = document.getElementById('staticPoseCanvas');
+            const dynamicCanvas = document.getElementById('dynamicPoseCanvas');
+            
+            console.log('Canvas Elements Status:', {
+                staticCanvas: staticCanvas ? {
+                    exists: true,
+                    dimensions: `${staticCanvas.width}x${staticCanvas.height}`,
+                    visible: staticCanvas.style.display !== 'none' && !staticCanvas.classList.contains('hidden'),
+                    zIndex: staticCanvas.style.zIndex
+                } : { exists: false },
+                dynamicCanvas: dynamicCanvas ? {
+                    exists: true,
+                    dimensions: `${dynamicCanvas.width}x${dynamicCanvas.height}`,
+                    visible: dynamicCanvas.style.display !== 'none' && !dynamicCanvas.classList.contains('hidden'),
+                    zIndex: dynamicCanvas.style.zIndex
+                } : { exists: false }
+            });
+            
+            // Check current screen and state
+            console.log('App State:', {
+                currentScreen: currentScreen,
+                currentUser: !!currentUser,
+                currentFacingMode: currentFacingMode,
+                isSmartReloadInProgress: !!sessionStorage.getItem('athletecore_reload_state')
+            });
+            
+            // Return summary for programmatic access
+            return {
+                mediaPipeHealthy: !!pose && !window.mediaPipeInitializationFailed,
+                videoReady: (staticVideo && staticVideo.videoWidth > 0) || (dynamicVideo && dynamicVideo.videoWidth > 0),
+                poseDetectionActive: !!poseDetectionInterval,
+                hasRecentResults: !!currentPoseResults,
+                overallHealth: !!pose && !window.mediaPipeInitializationFailed && !!poseDetectionInterval
+            };
+        };
+        
+        // Auto-monitor function for stability (can be called periodically)
+        window.autoMonitorMediaPipeHealth = function() {
+            const health = debugMediaPipeStability();
+            
+            if (!health.overallHealth) {
+                console.warn('⚠️ MediaPipe health issue detected:', health);
+                
+                // Show user notification about potential issues
+                showToast('⚠️ AI detection may be unstable - use 🔄 reload if needed / AI検出が不安定な可能性があります、必要に応じて🔄リロードをご利用ください', 'warning');
+                
+                return false;
+            }
+            
+            return true;
+        };
+        
         // New debug function to test current video capture immediately
         window.debugCaptureNow = function() {
             console.log('📸 DEBUG: Attempting immediate photo capture...');
@@ -2922,10 +3012,39 @@
             }
         }, 1000);
         
+        // Add global error handlers to prevent app crashes
+        window.addEventListener('error', (event) => {
+            console.error('🚨 Uncaught error detected:', event.error);
+            console.error('Error details:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                stack: event.error?.stack
+            });
+            
+            // Prevent default error handling that might cause page navigation
+            event.preventDefault();
+            
+            // Show user-friendly message
+            showToast('⚠️ An error occurred - app stability maintained / エラーが発生しましたが、アプリは安定動作を継続しています', 'warning');
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('🚨 Unhandled promise rejection:', event.reason);
+            
+            // Prevent default rejection handling
+            event.preventDefault();
+            
+            // Show user-friendly message for promise rejections
+            showToast('⚠️ Operation failed - please try again / 操作が失敗しました、再度お試しください', 'warning');
+        });
+        
         // Initialize app
         setTimeout(async () => {
-            // Check if smart reload restoration is in progress
-            const isSmartReloadInProgress = sessionStorage.getItem('athletecore_reload_state');
+            try {
+                // Check if smart reload restoration is in progress
+                const isSmartReloadInProgress = sessionStorage.getItem('athletecore_reload_state');
             
             if (!isSmartReloadInProgress) {
                 console.log('🔄 Normal app initialization - no smart reload detected');
@@ -2950,7 +3069,43 @@
                 }
             }).catch(error => {
                 console.error('Failed to initialize MediaPipe Pose:', error);
+                
+                // Show user-friendly error message and prevent app crash
+                showToast('⚠️ MediaPipe initialization failed - app may have limited functionality / MediaPipe初期化に失敗、機能制限の可能性があります', 'warning');
+                
+                // Set a flag to indicate MediaPipe is not available
+                window.mediaPipeInitializationFailed = true;
+                
+                // Don't crash the app - continue with limited functionality
+                console.log('🔄 Continuing app initialization without MediaPipe...');
             });
+            
+            } catch (initError) {
+                console.error('🚨 Critical error during app initialization:', initError);
+                
+                // Show critical error message but try to continue
+                showToast('🚨 App initialization error - some features may be unavailable / アプリ初期化エラー、一部機能が利用できない可能性があります', 'error');
+                
+                // Attempt basic fallback initialization
+                try {
+                    loadLocalUser();
+                    showWelcome();
+                    console.log('✅ Fallback initialization completed');
+                } catch (fallbackError) {
+                    console.error('❌ Even fallback initialization failed:', fallbackError);
+                    // Last resort - show a basic message
+                    document.body.innerHTML = `
+                        <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+                            <h1 style="color: #dc2626;">AthleteCore Pro</h1>
+                            <p style="color: #374151;">Sorry, the app encountered an initialization error. Please refresh the page.</p>
+                            <p style="color: #6b7280;">申し訳ございません、アプリの初期化エラーが発生しました。ページをリフレッシュしてください。</p>
+                            <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Refresh / リフレッシュ
+                            </button>
+                        </div>
+                    `;
+                }
+            }
         }, 2000);
         
         // Camera functions
@@ -4495,9 +4650,45 @@
             const canvas = document.getElementById(canvasElementId);
             const status = document.getElementById(statusElementId);
             
-            if (!video || !canvas || !pose) {
-                console.error('❌ Missing elements:', { video: !!video, canvas: !!canvas, pose: !!pose });
+            if (!video || !canvas) {
+                console.error('❌ Missing video or canvas elements:', { video: !!video, canvas: !!canvas });
                 return;
+            }
+            
+            // Check if MediaPipe is available and attempt recovery if needed
+            if (!pose || window.mediaPipeInitializationFailed) {
+                console.warn('⚠️ MediaPipe not available, attempting re-initialization...');
+                
+                // Show user feedback
+                if (status) {
+                    status.textContent = 'Initializing AI detection... / AI検出を初期化中...';
+                    status.className = 'text-yellow-400 text-sm font-medium';
+                }
+                
+                // Attempt to re-initialize MediaPipe
+                initMediaPipe().then(initialized => {
+                    if (initialized) {
+                        console.log('✅ MediaPipe re-initialization successful');
+                        window.mediaPipeInitializationFailed = false;
+                        // Restart pose detection with a delay
+                        setTimeout(() => startPoseDetection(videoElementId, canvasElementId, statusElementId), 500);
+                    } else {
+                        console.error('❌ MediaPipe re-initialization failed');
+                        if (status) {
+                            status.textContent = 'AI detection unavailable / AI検出が利用できません';
+                            status.className = 'text-red-400 text-sm font-medium';
+                        }
+                        showToast('❌ MediaPipe could not be initialized - some features may be limited / MediaPipeを初期化できません、一部機能が制限される可能性があります', 'error');
+                    }
+                }).catch(error => {
+                    console.error('❌ MediaPipe re-initialization error:', error);
+                    if (status) {
+                        status.textContent = 'AI detection error / AI検出エラー';
+                        status.className = 'text-red-400 text-sm font-medium';
+                    }
+                });
+                
+                return; // Exit early if MediaPipe is not ready
             }
             
             console.log('✅ All elements found for pose detection');
@@ -4559,8 +4750,9 @@
                     ctx.fillText('POSE', 5, 20);
                     console.log('🟢 Test draw on canvas completed');
                     
-                    // Start pose detection with enhanced debugging
+                    // Start pose detection with enhanced debugging and health monitoring
                     let frameCount = 0;
+                    let healthCheckCount = 0;
                     poseDetectionInterval = setInterval(async () => {
                         frameCount++;
                         const timestamp = new Date().toISOString().slice(11, 23);
@@ -4578,6 +4770,43 @@
                                 await pose.send({ image: video });
                             } catch (error) {
                                 console.error(`❌ [${timestamp}] Pose detection error on frame ${frameCount}:`, error);
+                                
+                                // Enhanced error recovery - prevent app crash
+                                if (error.name === 'InvalidStateError' || error.message.includes('InvalidState')) {
+                                    console.warn('🔄 MediaPipe InvalidState detected - attempting recovery...');
+                                    
+                                    // Stop current detection to prevent cascade failures
+                                    if (poseDetectionInterval) {
+                                        clearInterval(poseDetectionInterval);
+                                        poseDetectionInterval = null;
+                                    }
+                                    
+                                    // Trigger smart reload after a delay to allow current processes to complete
+                                    setTimeout(() => {
+                                        console.log('🚨 Critical MediaPipe error - triggering smart reload for recovery');
+                                        showToast('⚠️ MediaPipe error detected - reloading for stability / MediaPipeエラーを検出、安定性のためリロード中', 'warning');
+                                        smartReload();
+                                    }, 1000);
+                                    
+                                    return; // Exit the interval loop
+                                }
+                                
+                                // For other errors, continue but log the issue
+                                if (frameCount % 10 === 0) {
+                                    console.warn('⚠️ Non-critical MediaPipe error, continuing detection...');
+                                }
+                            }
+                            
+                            // Periodic health check every 5 seconds (100 frames at 20fps)
+                            healthCheckCount++;
+                            if (healthCheckCount >= 100) {
+                                healthCheckCount = 0;
+                                
+                                // Run automatic health check
+                                const isHealthy = autoMonitorMediaPipeHealth();
+                                if (!isHealthy) {
+                                    console.warn('🚨 MediaPipe health check failed during pose detection');
+                                }
                             }
                         } else {
                             // Log issues with video or pose readiness
