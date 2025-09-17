@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AthleteCore Pro">
@@ -37,7 +37,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        /* Dior Sport Elegant Animations */
+        /* Dior Sport Elegant Animations - Mobile Optimized */
         @keyframes dior-fade-in {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -60,8 +60,74 @@
         
         .dior-fade-in { animation: dior-fade-in 0.8s ease-out forwards; }
         .dior-slide-up { animation: dior-slide-up 0.6s ease-out forwards; }
-        .dior-geometric-float { animation: dior-geometric-float 4s ease-in-out infinite; }
+        .dior-geometric-float { 
+            animation: dior-geometric-float 4s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
         .dior-line-draw { animation: dior-line-draw 1.2s ease-out forwards; }
+        
+        /* Mobile Performance Optimization */
+        @media (max-width: 768px) {
+            .dior-geometric-float {
+                animation-duration: 6s; /* Slower on mobile for better performance */
+            }
+            * {
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+                -webkit-perspective: 1000;
+                perspective: 1000;
+            }
+            
+            /* Mobile-specific athlete welcome styles */
+            #athlete-welcome {
+                min-height: 100vh;
+                min-height: 100dvh; /* Dynamic viewport height for mobile */
+            }
+            
+            /* Optimize text rendering on mobile */
+            #athlete-welcome h1 {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                text-rendering: optimizeSpeed;
+            }
+            
+            /* Mobile button optimization */
+            #athlete-welcome button {
+                min-height: 44px; /* iOS touch target minimum */
+                -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+        }
+        
+        /* Mobile device class */
+        .mobile-device .app-screen {
+            transform: translateZ(0); /* Hardware acceleration */
+            -webkit-transform: translateZ(0);
+        }
+        
+        .mobile-device #athlete-welcome {
+            visibility: visible !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1000 !important;
+        }
+        
+        /* Fallback for problematic mobile browsers */
+        .mobile-fallback #athlete-welcome {
+            background: linear-gradient(to bottom, #000000, #1f2937, #000000) !important;
+            color: white !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
         
         .phone-frame {
             width: 100vw;
@@ -1353,7 +1419,7 @@
         
         // Core navigation functions - MUST be defined first
         function showScreen(screenId) {
-            console.log('Switching to screen:', screenId);
+            console.log(`📱 Switching to screen: ${screenId}`);
             
             try {
                 // Hide all screens first
@@ -1362,14 +1428,26 @@
                 
                 allScreens.forEach(screen => {
                     screen.classList.remove('active');
+                    screen.style.display = 'none'; // Force hide for mobile
                 });
                 
                 // Show target screen
                 const targetScreen = document.getElementById(screenId);
                 if (targetScreen) {
                     targetScreen.classList.add('active');
+                    targetScreen.style.display = 'flex'; // Force show for mobile
+                    targetScreen.style.flexDirection = 'column';
                     console.log(`✅ Screen '${screenId}' activated successfully`);
                     currentScreen = screenId;
+                    
+                    // Mobile-specific visibility fix
+                    if (/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                        setTimeout(() => {
+                            targetScreen.style.visibility = 'visible';
+                            targetScreen.style.opacity = '1';
+                            console.log(`📱 Mobile visibility fix applied to ${screenId}`);
+                        }, 50);
+                    }
                 } else {
                     console.error(`❌ Screen '${screenId}' not found`);
                     return false;
@@ -3130,7 +3208,8 @@
             
             console.log('🔍 Current screen state:');
             document.querySelectorAll('.app-screen').forEach(screen => {
-                console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'}`);
+                const computedStyle = getComputedStyle(screen);
+                console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'} (display: ${computedStyle.display})`);
             });
             
             console.log('🏆 Forcing Dior Sport Athlete Welcome...');
@@ -3139,9 +3218,33 @@
             setTimeout(() => {
                 console.log('🔍 After force display:');
                 document.querySelectorAll('.app-screen').forEach(screen => {
-                    console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'}`);
+                    const computedStyle = getComputedStyle(screen);
+                    console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'} (display: ${computedStyle.display})`);
                 });
             }, 1000);
+        };
+        
+        // Mobile-specific debug function
+        window.debugMobileStatus = function() {
+            console.log('📱 === MOBILE DEBUG STATUS ===');
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isSmallScreen = window.innerWidth <= 768;
+            const hasMobileClass = document.body.classList.contains('mobile-device');
+            
+            console.log(`📱 User Agent Mobile: ${isMobile}`);
+            console.log(`📱 Small Screen: ${isSmallScreen} (${window.innerWidth}px)`);
+            console.log(`📱 Mobile Class Applied: ${hasMobileClass}`);
+            console.log(`📱 Viewport: ${window.innerWidth} x ${window.innerHeight}`);
+            
+            const athleteScreen = document.getElementById('athlete-welcome');
+            if (athleteScreen) {
+                const rect = athleteScreen.getBoundingClientRect();
+                const style = getComputedStyle(athleteScreen);
+                console.log(`📱 Athlete Screen Dimensions: ${rect.width} x ${rect.height}`);
+                console.log(`📱 Athlete Screen Display: ${style.display}`);
+                console.log(`📱 Athlete Screen Visibility: ${style.visibility}`);
+            }
         };
 
         // Debug function to manually test continue button
@@ -3240,7 +3343,7 @@
         };
         
         function showAthleteWelcome() {
-            console.log('Showing athlete welcome screen');
+            console.log('📱 Showing athlete welcome screen (Mobile Optimized)');
             showScreen('athlete-welcome');
             const athleteScreen = document.getElementById('athlete-welcome');
             if (athleteScreen) {
@@ -3250,18 +3353,52 @@
                 // 自動遷移を防ぐため、現在の画面を明確に設定
                 currentScreen = 'athlete-welcome';
                 
-                // Dior Sport エレガントアニメーションの再適用
+                // Mobile-optimized animation application
+                const isMobile = window.innerWidth <= 768;
+                const animationDelay = isMobile ? 200 : 100;
+                
                 setTimeout(() => {
                     const elements = athleteScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw, .dior-geometric-float');
+                    console.log(`🎭 Applying Dior animations to ${elements.length} elements (Mobile: ${isMobile})`);
+                    
                     elements.forEach((el, index) => {
+                        // Force reflow for mobile browsers
                         el.style.animation = 'none';
+                        el.offsetHeight; // Force reflow
+                        
                         setTimeout(() => {
                             el.style.animation = '';
-                        }, 50 + index * 100);
+                            if (isMobile) {
+                                // Add hardware acceleration for mobile
+                                el.style.transform = 'translateZ(0)';
+                                el.style.webkitTransform = 'translateZ(0)';
+                            }
+                        }, 50 + index * (isMobile ? 150 : 100));
                     });
-                }, 100);
+                }, animationDelay);
+                
+                // Mobile touch event setup
+                if (isMobile) {
+                    setupMobileTouchEvents(athleteScreen);
+                }
             } else {
                 console.error('❌ Athlete welcome screen element not found');
+            }
+        }
+        
+        // Mobile touch event handler
+        function setupMobileTouchEvents(screen) {
+            const button = screen.querySelector('button[onclick*="showWelcome"]');
+            if (button) {
+                button.addEventListener('touchstart', function(e) {
+                    this.style.transform = 'scale(0.95)';
+                }, { passive: true });
+                
+                button.addEventListener('touchend', function(e) {
+                    this.style.transform = '';
+                }, { passive: true });
+                
+                console.log('📱 Mobile touch events setup for Begin Analysis button');
             }
         }
         
@@ -3453,9 +3590,24 @@
                 console.log('🔄 Normal app initialization - no smart reload detected');
                 loadLocalUser();
                 
-                // 確実にアスリートウェルカム画面を表示（遅延を短縮）
-                console.log('🏆 Displaying Dior Sport Athlete Welcome screen...');
-                showAthleteWelcome();
+                // Mobile device detection and optimized initialization
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                console.log(`📱 Device detected: ${isMobile ? 'Mobile' : 'Desktop'}`);
+                
+                if (isMobile) {
+                    // Mobile-specific initialization with delay for better rendering
+                    setTimeout(() => {
+                        console.log('📱 Mobile: Displaying Dior Sport Athlete Welcome screen...');
+                        showAthleteWelcome();
+                        
+                        // Add mobile-specific CSS class
+                        document.body.classList.add('mobile-device');
+                    }, 300);
+                } else {
+                    // Desktop initialization (immediate)
+                    console.log('🏆 Desktop: Displaying Dior Sport Athlete Welcome screen...');
+                    showAthleteWelcome();
+                }
             } else {
                 console.log('🔄 Smart reload detected - skipping normal welcome flow');
                 // Still initialize essential components
@@ -8271,6 +8423,24 @@
             }
         }
 
+        // DOM完全読み込み時の初期化（モバイル対応）
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 DOM Content Loaded - Mobile-optimized initialization');
+            
+            // Mobile debug information
+            if (window.debugMobileStatus) {
+                setTimeout(() => {
+                    window.debugMobileStatus();
+                }, 500);
+            }
+            
+            // Ensure mobile viewport is properly set
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport && /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                console.log('📱 Mobile viewport confirmed');
+            }
+        });
+        
         // ページ読み込み時とオンライン状態変更時に実行
         window.addEventListener('load', function() {
             console.log('🔄 Page loaded, checking for smart reload state...');
@@ -8285,29 +8455,65 @@
                 console.log('🔄 No smart reload state found, normal initialization will proceed');
             }
             
-            // Auto-test navigation after load (DISABLED for stable operation)
-            // setTimeout(() => {
-            //     // Force athlete welcome display first
-            //     if (window.debugForceAthleteWelcome) {
-            //         console.log('🏆 Forcing Dior Sport Athlete Welcome...');
-            //         window.debugForceAthleteWelcome();
-            //     }
-            //     
-            //     setTimeout(() => {
-            //         if (window.debugNavigation) {
-            //             console.log('🧪 Running automatic navigation debug...');
-            //             window.debugNavigation();
-            //             
-            //             // Test continue button after registration test
-            //             setTimeout(() => {
-            //                 if (window.debugContinueButton) {
-            //                     console.log('🧪 Testing Continue button...');
-            //                     window.debugContinueButton();
-            //                 }
-            //             }, 1000);
-            //         }
-            //     }, 1000);
-            // }, 1500);
+            // Mobile fallback check and forced display
+            setTimeout(() => {
+                const athleteScreen = document.getElementById('athlete-welcome');
+                const isActive = athleteScreen && athleteScreen.classList.contains('active');
+                const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+                
+                if (!isActive || isMobile) {
+                    console.log('📱 Mobile fallback: Forcing athlete welcome display...');
+                    
+                    if (isMobile) {
+                        document.body.classList.add('mobile-device', 'mobile-fallback');
+                    }
+                    
+                    // Force display with multiple methods
+                    if (athleteScreen) {
+                        athleteScreen.classList.add('active');
+                        athleteScreen.style.display = 'flex';
+                        athleteScreen.style.flexDirection = 'column';
+                        athleteScreen.style.visibility = 'visible';
+                        athleteScreen.style.opacity = '1';
+                        athleteScreen.style.position = 'fixed';
+                        athleteScreen.style.top = '0';
+                        athleteScreen.style.left = '0';
+                        athleteScreen.style.width = '100%';
+                        athleteScreen.style.height = '100%';
+                        athleteScreen.style.zIndex = '1000';
+                        
+                        console.log('📱 Athlete welcome screen force-displayed with inline styles');
+                    }
+                    
+                    showAthleteWelcome();
+                }
+            }, 2000);
+            
+            // Emergency fallback for mobile - show after 5 seconds if nothing visible
+            setTimeout(() => {
+                const visibleScreens = Array.from(document.querySelectorAll('.app-screen')).filter(screen => {
+                    const style = getComputedStyle(screen);
+                    return style.display !== 'none' && style.visibility !== 'hidden';
+                });
+                
+                if (visibleScreens.length === 0) {
+                    console.log('📱 EMERGENCY: No screens visible, forcing athlete welcome...');
+                    const athleteScreen = document.getElementById('athlete-welcome');
+                    if (athleteScreen) {
+                        athleteScreen.innerHTML = `
+                            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; padding: 20px; text-align: center; background: linear-gradient(to bottom, #000, #1f2937, #000); color: white;">
+                                <h1 style="font-size: 2rem; margin-bottom: 20px; font-weight: 300;">ATHLETECORE PRO</h1>
+                                <p style="font-size: 1rem; margin-bottom: 30px; opacity: 0.8;">Elite Performance Analysis</p>
+                                <button onclick="showWelcome();" style="background: white; color: black; padding: 15px 30px; border: none; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">Begin Analysis</button>
+                            </div>
+                        `;
+                        athleteScreen.style.display = 'block';
+                        athleteScreen.style.visibility = 'visible';
+                        athleteScreen.classList.add('active');
+                        console.log('📱 Emergency fallback screen created and displayed');
+                    }
+                }
+            }, 5000);
         });
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
