@@ -723,28 +723,28 @@
                     
                     <!-- Minimalist Features -->
                     <div class="flex-1 flex flex-col justify-center space-y-12 py-8">
-                        <div class="text-center">
-                            <div class="w-px h-16 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto mb-4"></div>
+                        <div class="text-center dior-fade-in" style="animation-delay: 1.3s;">
+                            <div class="w-px h-16 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto mb-4 dior-line-draw" style="animation-delay: 1.5s;"></div>
                             <p class="text-gray-700 text-sm font-light tracking-wide uppercase">Precision Movement Analysis</p>
                         </div>
-                        <div class="text-center">
-                            <div class="w-px h-16 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto mb-4"></div>
+                        <div class="text-center dior-fade-in" style="animation-delay: 1.6s;">
+                            <div class="w-px h-16 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto mb-4 dior-line-draw" style="animation-delay: 1.8s;"></div>
                             <p class="text-gray-700 text-sm font-light tracking-wide uppercase">Real-time AI Detection</p>
                         </div>
-                        <div class="text-center">
-                            <div class="w-px h-16 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto mb-4"></div>
+                        <div class="text-center dior-fade-in" style="animation-delay: 1.9s;">
+                            <div class="w-px h-16 bg-gradient-to-b from-transparent via-gray-300 to-transparent mx-auto mb-4 dior-line-draw" style="animation-delay: 2.1s;"></div>
                             <p class="text-gray-700 text-sm font-light tracking-wide uppercase">Professional Insights</p>
                         </div>
                     </div>
                     
                     <!-- Luxury CTA -->
-                    <div class="flex-none pb-12">
+                    <div class="flex-none pb-12 dior-slide-up" style="animation-delay: 2.3s;">
                         <div class="space-y-4">
                             <button onclick="console.log('Get Started clicked!'); showRegistration();" 
-                                    class="w-full bg-black text-white font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-300 hover:bg-gray-800 border border-black">
+                                    class="w-full bg-black text-white font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-300 hover:bg-gray-800 border border-black transform hover:scale-105">
                                 Continue
                             </button>
-                            <div class="text-center">
+                            <div class="text-center dior-fade-in" style="animation-delay: 2.5s;">
                                 <p class="text-xs text-gray-400 font-light tracking-wide">Begin your elite journey</p>
                             </div>
                         </div>
@@ -1354,14 +1354,37 @@
         // Core navigation functions - MUST be defined first
         function showScreen(screenId) {
             console.log('Switching to screen:', screenId);
-            document.querySelectorAll('.app-screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            document.getElementById(screenId).classList.add('active');
-            currentScreen = screenId;
             
-            // Hide all floating buttons when switching screens (they're only shown in fullscreen mode)
-            hideAllFloatingButtons();
+            try {
+                // Hide all screens first
+                const allScreens = document.querySelectorAll('.app-screen');
+                console.log(`🔍 Found ${allScreens.length} app screens`);
+                
+                allScreens.forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                
+                // Show target screen
+                const targetScreen = document.getElementById(screenId);
+                if (targetScreen) {
+                    targetScreen.classList.add('active');
+                    console.log(`✅ Screen '${screenId}' activated successfully`);
+                    currentScreen = screenId;
+                } else {
+                    console.error(`❌ Screen '${screenId}' not found`);
+                    return false;
+                }
+                
+                // Hide all floating buttons when switching screens
+                if (typeof hideAllFloatingButtons === 'function') {
+                    hideAllFloatingButtons();
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Error in showScreen:', error);
+                return false;
+            }
         }
         
         // Fullscreen camera control functions
@@ -3077,6 +3100,67 @@
             return restoreAfterSmartReload();
         };
         
+        // Debug function to test navigation
+        window.debugNavigation = function() {
+            console.log('🧪 === NAVIGATION DEBUG ===');
+            
+            console.log('🔍 Available screens:');
+            document.querySelectorAll('.app-screen').forEach(screen => {
+                console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'}`);
+            });
+            
+            console.log('🔍 Testing navigation functions:');
+            console.log('  - showWelcome exists:', typeof showWelcome === 'function');
+            console.log('  - showRegistration exists:', typeof showRegistration === 'function');
+            console.log('  - showDashboard exists:', typeof showDashboard === 'function');
+            
+            // Test registration screen
+            console.log('🧪 Testing showRegistration...');
+            try {
+                showRegistration();
+                console.log('✅ showRegistration executed');
+            } catch (error) {
+                console.error('❌ showRegistration failed:', error);
+            }
+        };
+        
+        // Debug function to force athlete welcome display
+        window.debugForceAthleteWelcome = function() {
+            console.log('🏆 === FORCE ATHLETE WELCOME ===');
+            
+            console.log('🔍 Current screen state:');
+            document.querySelectorAll('.app-screen').forEach(screen => {
+                console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'}`);
+            });
+            
+            console.log('🏆 Forcing Dior Sport Athlete Welcome...');
+            showAthleteWelcome();
+            
+            setTimeout(() => {
+                console.log('🔍 After force display:');
+                document.querySelectorAll('.app-screen').forEach(screen => {
+                    console.log(`  - ${screen.id}: ${screen.classList.contains('active') ? 'ACTIVE' : 'hidden'}`);
+                });
+            }, 1000);
+        };
+
+        // Debug function to manually test continue button
+        window.debugContinueButton = function() {
+            console.log('🧪 === CONTINUE BUTTON TEST ===');
+            
+            const button = document.querySelector('#welcome button[onclick*="showRegistration"]');
+            if (button) {
+                console.log('✅ Continue button found');
+                console.log('🔍 Button onclick:', button.getAttribute('onclick'));
+                
+                // Simulate click
+                console.log('🧪 Simulating button click...');
+                button.click();
+            } else {
+                console.error('❌ Continue button not found');
+            }
+        };
+
         // Debug function to test overlay alignment
         window.debugOverlayAlignment = function() {
             console.log('🎯 === OVERLAY ALIGNMENT DEBUG ===');
@@ -3158,36 +3242,112 @@
         function showAthleteWelcome() {
             console.log('Showing athlete welcome screen');
             showScreen('athlete-welcome');
-            document.getElementById('athlete-welcome').classList.add('fade-in');
+            const athleteScreen = document.getElementById('athlete-welcome');
+            if (athleteScreen) {
+                athleteScreen.classList.add('fade-in');
+                console.log('✅ Athlete welcome screen displayed successfully');
+                
+                // 自動遷移を防ぐため、現在の画面を明確に設定
+                currentScreen = 'athlete-welcome';
+                
+                // Dior Sport エレガントアニメーションの再適用
+                setTimeout(() => {
+                    const elements = athleteScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw, .dior-geometric-float');
+                    elements.forEach((el, index) => {
+                        el.style.animation = 'none';
+                        setTimeout(() => {
+                            el.style.animation = '';
+                        }, 50 + index * 100);
+                    });
+                }, 100);
+            } else {
+                console.error('❌ Athlete welcome screen element not found');
+            }
         }
         
         function showWelcome() {
             console.log('Showing welcome screen');
             showScreen('welcome');
-            document.getElementById('welcome').classList.add('fade-in');
+            const welcomeScreen = document.getElementById('welcome');
+            welcomeScreen.classList.add('fade-in');
+            // Dior Sport エレガントアニメーションの再適用
+            setTimeout(() => {
+                const elements = welcomeScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw');
+                elements.forEach((el, index) => {
+                    el.style.animation = 'none';
+                    setTimeout(() => {
+                        el.style.animation = '';
+                    }, 50 + index * 100);
+                });
+            }, 100);
         }
         
         function showRegistration() {
             console.log('Showing registration screen');
-            showScreen('registration');
-            document.getElementById('registration').classList.add('slide-up');
+            try {
+                showScreen('registration');
+                const regScreen = document.getElementById('registration');
+                if (regScreen) {
+                    regScreen.classList.add('slide-up');
+                    console.log('✅ Registration screen displayed successfully');
+                    // Dior Sport エレガントアニメーションの再適用
+                    setTimeout(() => {
+                        const elements = regScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw');
+                        elements.forEach((el, index) => {
+                            el.style.animation = 'none';
+                            setTimeout(() => {
+                                el.style.animation = '';
+                            }, 50 + index * 100);
+                        });
+                    }, 100);
+                } else {
+                    console.error('❌ Registration screen element not found');
+                }
+            } catch (error) {
+                console.error('❌ Error showing registration screen:', error);
+            }
         }
         
         function showDashboard() {
             console.log('Showing dashboard screen');
             
-            // Exit any fullscreen mode first
-            exitFullscreenMode('static');
-            exitFullscreenMode('dynamic');
-            
-            // Stop camera and pose detection if running
-            if (typeof stopCamera === 'function') stopCamera();
-            if (typeof stopPoseDetection === 'function') stopPoseDetection();
-            if (typeof isAnalyzing !== 'undefined') isAnalyzing = false;
-            
-            showScreen('dashboard');
-            document.getElementById('dashboard').classList.add('fade-in');
-            if (typeof updateDashboardContent === 'function') updateDashboardContent();
+            try {
+                // Exit any fullscreen mode first
+                exitFullscreenMode('static');
+                exitFullscreenMode('dynamic');
+                
+                // Stop camera and pose detection if running
+                if (typeof stopCamera === 'function') stopCamera();
+                if (typeof stopPoseDetection === 'function') stopPoseDetection();
+                if (typeof isAnalyzing !== 'undefined') isAnalyzing = false;
+                
+                showScreen('dashboard');
+                const dashScreen = document.getElementById('dashboard');
+                if (dashScreen) {
+                    dashScreen.classList.add('fade-in');
+                    console.log('✅ Dashboard screen displayed successfully');
+                    // Dior Sport エレガントアニメーションの再適用
+                    setTimeout(() => {
+                        const elements = dashScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw');
+                        elements.forEach((el, index) => {
+                            el.style.animation = 'none';
+                            setTimeout(() => {
+                                el.style.animation = '';
+                            }, 50 + index * 100);
+                        });
+                    }, 100);
+                } else {
+                    console.error('❌ Dashboard screen element not found');
+                }
+                
+                if (typeof updateDashboardContent === 'function') {
+                    updateDashboardContent();
+                } else {
+                    console.warn('⚠️ updateDashboardContent function not found');
+                }
+            } catch (error) {
+                console.error('❌ Error showing dashboard screen:', error);
+            }
         }
 
         // サービスワーカーの登録
@@ -3292,6 +3452,9 @@
             if (!isSmartReloadInProgress) {
                 console.log('🔄 Normal app initialization - no smart reload detected');
                 loadLocalUser();
+                
+                // 確実にアスリートウェルカム画面を表示（遅延を短縮）
+                console.log('🏆 Displaying Dior Sport Athlete Welcome screen...');
                 showAthleteWelcome();
             } else {
                 console.log('🔄 Smart reload detected - skipping normal welcome flow');
@@ -5542,6 +5705,13 @@
         // showDashboard function moved to top
         
         async function updateDashboardContent() {
+            // Only perform user check if we're actually on the dashboard screen
+            const currentScreen = document.querySelector('.app-screen.active');
+            if (!currentScreen || currentScreen.id !== 'dashboard') {
+                console.log('🔍 updateDashboardContent called but not on dashboard screen, skipping...');
+                return;
+            }
+            
             if (currentUser) {
                 // Update greeting with user name
                 const greetingElement = document.querySelector('#dashboard h1');
@@ -5554,7 +5724,8 @@
                 await loadAnalysisHistory();
             } else {
                 console.warn('⚠️ No current user found in updateDashboardContent');
-                // Redirect to registration if no user
+                // Only redirect to registration if we're actually trying to show dashboard
+                console.log('🔄 Redirecting to registration from dashboard...');
                 setTimeout(() => {
                     showRegistration();
                 }, 1000);
@@ -8113,6 +8284,30 @@
             } else {
                 console.log('🔄 No smart reload state found, normal initialization will proceed');
             }
+            
+            // Auto-test navigation after load (DISABLED for stable operation)
+            // setTimeout(() => {
+            //     // Force athlete welcome display first
+            //     if (window.debugForceAthleteWelcome) {
+            //         console.log('🏆 Forcing Dior Sport Athlete Welcome...');
+            //         window.debugForceAthleteWelcome();
+            //     }
+            //     
+            //     setTimeout(() => {
+            //         if (window.debugNavigation) {
+            //             console.log('🧪 Running automatic navigation debug...');
+            //             window.debugNavigation();
+            //             
+            //             // Test continue button after registration test
+            //             setTimeout(() => {
+            //                 if (window.debugContinueButton) {
+            //                     console.log('🧪 Testing Continue button...');
+            //                     window.debugContinueButton();
+            //                 }
+            //             }, 1000);
+            //         }
+            //     }, 1000);
+            // }, 1500);
         });
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
