@@ -195,6 +195,14 @@ debugTriggerSmartReload()
 // 🔄 状態復元ロジックテスト（NEW!）
 debugTestStateRestore()
 // → リロード後の復元処理をテスト実行
+
+// 🔧 MediaPipe診断（NEW!）
+debugMediaPipe()
+// → MediaPipe要素とオブジェクトの状態を詳細確認
+
+// 🎨 MediaPipeキャンバステスト（NEW!）
+debugTestPoseCanvas()
+// → 姿勢検出キャンバスに直接テスト描画
 ```
 
 ### **ビジュアルデバッグ機能**
