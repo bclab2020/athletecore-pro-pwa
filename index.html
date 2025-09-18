@@ -476,7 +476,6 @@
         #welcome, #registration, #dashboard, #static-analysis, #dynamic-analysis, #results, #history, #splash {
             display: none;
         }
-        }
         
         .app-screen.active {
             display: flex;
@@ -936,7 +935,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen m-0 p-0 overflow-hidden" style="visibility: hidden;">
+<body class="bg-gray-100 min-h-screen m-0 p-0 overflow-hidden" style="visibility: visible;">
     
     <div class="phone-frame">
         <div class="phone-screen">
@@ -1023,11 +1022,11 @@
                         <!-- Elegant Call to Action -->
                         <div class="space-y-6 w-full max-w-xs dior-slide-up relative z-20" style="animation-delay: 2.6s;">
                             <!-- メインの Begin Analysis ボタン -->
-                            <button type="button"
-                                    onclick="console.log('🔥 Button clicked!'); try { showWelcome(); } catch(e) { console.error('Button click error:', e); }" 
+                            <button type="button" id="beginAnalysisButton"
+                                    onclick="console.log('🔥 Button clicked!'); document.body.style.visibility='visible'; try { showWelcome(); } catch(e) { console.error('Button click error:', e); }" 
                                     onmousedown="console.log('🖱️ Button mouse down');"
                                     onmouseup="console.log('🖱️ Button mouse up');"
-                                    ontouchstart="console.log('👆 Button touch start'); this.style.transform='scale(0.95)'; this.style.backgroundColor='#f3f4f6';"
+                                    ontouchstart="console.log('👆 Button touch start'); document.body.style.visibility='visible'; this.style.transform='scale(0.95)'; this.style.backgroundColor='#f3f4f6';"
                                     ontouchend="console.log('👆 Button touch end - calling showWelcome'); this.style.transform='scale(1)'; this.style.backgroundColor='white'; try { showWelcome(); } catch(e) { console.error('Touch end error:', e); }"
                                     ontouchcancel="console.log('👆 Button touch cancel'); this.style.transform='scale(1)'; this.style.backgroundColor='white';"
                                     style="position: relative; z-index: 1000; cursor: pointer; pointer-events: auto; width: 100%; border: none; outline: none;"
@@ -1745,6 +1744,46 @@
     </div>
 
     <script>
+        // 🚨 緊急修正：bodyを即座に可視化（複数の方法で確実に実行）
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚨 Emergency fix: Making body visible immediately');
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = '1';
+        });
+        
+        // さらに早い段階でも実行
+        setTimeout(function() {
+            console.log('🚨 Emergency fix: Early visibility set');
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = '1';
+            
+            // 緊急フォールバック：5秒後に何も表示されていない場合
+            setTimeout(function() {
+                const athleteScreen = document.getElementById('athlete-welcome');
+                if (athleteScreen && !athleteScreen.offsetParent) {
+                    console.log('🚨 EMERGENCY: Forcing basic display');
+                    athleteScreen.style.display = 'block';
+                    athleteScreen.style.visibility = 'visible';
+                    athleteScreen.style.position = 'fixed';
+                    athleteScreen.style.top = '0';
+                    athleteScreen.style.left = '0';
+                    athleteScreen.style.width = '100%';
+                    athleteScreen.style.height = '100%';
+                    athleteScreen.style.zIndex = '9999';
+                    athleteScreen.style.background = 'linear-gradient(to bottom, #000, #1f2937, #000)';
+                    athleteScreen.innerHTML = `
+                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; color: white; text-align: center; padding: 20px;">
+                            <h1 style="font-size: 2.5rem; margin-bottom: 20px; font-weight: 300; letter-spacing: 3px;">ATHLETECORE PRO</h1>
+                            <p style="font-size: 1rem; margin-bottom: 40px; opacity: 0.8;">Elite Performance Analysis</p>
+                            <button onclick="showWelcome();" style="background: white; color: black; padding: 15px 40px; border: none; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer;">
+                                Begin Analysis
+                            </button>
+                        </div>
+                    `;
+                }
+            }, 5000);
+        }, 100);
+        
         let currentScreen = 'splash';
         let currentUser = null;
         
@@ -3771,6 +3810,11 @@
         function showWelcome() {
             console.log('🎯 showWelcome() function called successfully!');
             console.log('🔄 Switching from athlete-welcome to welcome screen');
+            
+            // 🚨 緊急修正：bodyの可視性を確実に設定
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = '1';
+            console.log('🚨 Body visibility forced in showWelcome()');
             
             try {
                 // showScreen関数を呼び出し
