@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AthleteCore Pro">
     <meta name="theme-color" content="#1E3A8A">
-    <title>AthleteCore Pro - Dior Sport Edition</title>
+    <title>AthleteCore Pro - AI姿勢分析システム</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -16,6 +16,15 @@
     <link rel="apple-touch-icon" href="https://cdn1.genspark.ai/user-upload-image/gpt_image_generated/1d48ae2f-e2df-4a7c-a800-832043efb262_wm">
     <link rel="apple-touch-icon" sizes="152x152" href="https://cdn1.genspark.ai/user-upload-image/gpt_image_generated/1d48ae2f-e2df-4a7c-a800-832043efb262_wm">
     <link rel="apple-touch-icon" sizes="180x180" href="https://cdn1.genspark.ai/user-upload-image/gpt_image_generated/1d48ae2f-e2df-4a7c-a800-832043efb262_wm">
+    
+    <!-- MediaPipe Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    
+    <!-- Chart.js for Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         /* Reset and Base Styles */
@@ -59,7 +68,7 @@
             opacity: 1;
         }
         
-        /* Athlete Welcome Screen - Mobile Optimized */
+        /* Dior Sport Athlete Welcome Screen - Luxury Elite Design */
         .athlete-welcome {
             flex-direction: column;
             justify-content: center;
@@ -72,12 +81,14 @@
             overflow: hidden;
         }
         
-        /* Dior Sport Elegant Background Elements */
+        /* Dior Sport Geometric Background Elements */
         .bg-element {
             position: absolute;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            animation: dior-float 8s infinite ease-in-out;
+            animation: dior-geometric-float 12s infinite ease-in-out;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+            backdrop-filter: blur(2px);
         }
         
         .bg-element:nth-child(1) {
@@ -86,6 +97,7 @@
             top: 10%;
             left: -50px;
             animation-delay: 0s;
+            animation-duration: 15s;
         }
         
         .bg-element:nth-child(2) {
@@ -93,7 +105,29 @@
             height: 150px;
             bottom: 10%;
             right: -30px;
-            animation-delay: 3s;
+            animation-delay: 5s;
+            animation-duration: 12s;
+        }
+        
+        /* Additional geometric elements for enhanced visual depth */
+        .bg-element:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            top: 50%;
+            right: 10%;
+            animation-delay: 8s;
+            animation-duration: 18s;
+            opacity: 0.3;
+        }
+        
+        .bg-element:nth-child(4) {
+            width: 80px;
+            height: 80px;
+            bottom: 30%;
+            left: 5%;
+            animation-delay: 12s;
+            animation-duration: 10s;
+            opacity: 0.2;
         }
         
         /* Dior Sport Typography */
@@ -104,26 +138,28 @@
         .brand-line {
             width: 60px;
             height: 1px;
-            background: rgba(255, 255, 255, 0.4);
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%);
             margin: 0 auto 20px;
-            animation: dior-line-draw 2s ease-out;
+            animation: dior-line-draw 2.5s ease-out 0.2s both;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
         
         .brand-text {
-            font-size: 11px;
-            letter-spacing: 3px;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.6);
             text-transform: uppercase;
             font-weight: 300;
+            animation: dior-fade-in 1.8s ease-out 0.3s both;
         }
         
-        /* Main Title */
+        /* Dior Sport Main Title */
         .main-title {
             margin-bottom: 50px;
         }
         
         .elite-text {
-            font-size: clamp(2rem, 8vw, 4rem);
+            font-size: clamp(2.5rem, 8vw, 4rem);
             font-weight: 100;
             letter-spacing: 8px;
             margin-bottom: 10px;
@@ -131,7 +167,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: dior-fade-in 1.5s ease-out;
+            animation: dior-fade-in 2s ease-out 0.5s both, dior-title-glow 4s ease-in-out 2s infinite;
         }
         
         .performance-text {
@@ -140,7 +176,7 @@
             letter-spacing: 4px;
             color: rgba(255, 255, 255, 0.8);
             margin-bottom: 20px;
-            animation: dior-fade-in 1.8s ease-out;
+            animation: dior-fade-in 2.2s ease-out 0.8s both, dior-performance-shimmer 3s ease-in-out 3s infinite;
         }
         
         .subtitle {
@@ -148,24 +184,27 @@
             color: rgba(255, 255, 255, 0.6);
             letter-spacing: 1px;
             margin-bottom: 8px;
-            animation: dior-fade-in 2.1s ease-out;
+            animation: dior-fade-in 2.4s ease-out 1.2s both;
         }
         
         .subtitle-jp {
             font-size: 13px;
             color: rgba(255, 255, 255, 0.5);
-            animation: dior-fade-in 2.4s ease-out;
+            animation: dior-fade-in 2.6s ease-out 1.5s both;
         }
         
-        /* Stats Section */
+        /* Dior Sport Stats Section */
         .stats-container {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             padding: 25px 30px;
             margin: 40px 0;
-            animation: dior-slide-up 2.7s ease-out;
+            animation: dior-stats-rise 3s ease-out 1.8s both;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
         
         .stats-grid {
@@ -202,17 +241,17 @@
             margin-top: 10px;
         }
         
-        /* Action Buttons */
+        /* Dior Sport Action Buttons */
         .action-buttons {
             display: flex;
             flex-direction: column;
             gap: 15px;
             width: 100%;
             max-width: 280px;
-            animation: dior-slide-up 3s ease-out;
+            animation: dior-button-entrance 3.2s ease-out 2.5s both;
         }
         
-        .dior-button {
+        .elite-button {
             background: transparent;
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: #ffffff;
@@ -223,27 +262,51 @@
             text-transform: uppercase;
             font-weight: 300;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
         
-        .dior-button:hover, .dior-button:active {
+        .elite-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+            transition: left 0.6s ease;
+        }
+        
+        .elite-button:hover::before, .elite-button:active::before {
+            left: 100%;
+        }
+        
+        .elite-button:hover, .elite-button:active {
             background: rgba(255, 255, 255, 0.1);
             border-color: rgba(255, 255, 255, 0.5);
-            transform: translateY(-1px);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         }
         
-        .dior-button.primary {
+        .elite-button.primary {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
             border-color: rgba(255, 255, 255, 0.4);
+            animation: dior-fade-in 2.8s ease-out 3s both;
         }
         
-        /* Simple Menu Screen */
+        .elite-button:not(.primary) {
+            animation: dior-fade-in 3s ease-out 3.3s both;
+        }
+        
+        /* Menu Screen */
         .menu-screen {
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #1a1b2e 0%, #16213e 50%, #0f3460 100%);
             color: #ffffff;
             text-align: center;
             padding: 20px;
@@ -266,8 +329,8 @@
         }
         
         .menu-button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: #ffffff;
             padding: 16px 24px;
             border-radius: 8px;
@@ -279,94 +342,328 @@
         }
         
         .menu-button:hover, .menu-button:active {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
         
         /* Analysis Screen */
         .analysis-screen {
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 50%, #000000 100%);
+            background: linear-gradient(135deg, #0f3460 0%, #1a1b2e 50%, #0a0a0a 100%);
             color: #ffffff;
-            text-align: center;
             padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .analysis-header {
+            text-align: center;
+            margin-bottom: 20px;
         }
         
         .analysis-title {
             font-size: clamp(1.2rem, 5vw, 2.5rem);
             font-weight: 200;
             letter-spacing: 3px;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             color: rgba(255, 255, 255, 0.9);
         }
         
-        .analysis-placeholder {
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            padding: 40px 20px;
-            margin: 30px 0;
+        .analysis-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+        }
+        
+        /* Camera Container */
+        .camera-container {
+            position: relative;
             width: 100%;
             max-width: 400px;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
         
-        .analysis-text {
-            color: rgba(255, 255, 255, 0.7);
+        #videoElement {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        #canvasElement {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .camera-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .status-indicator.active {
+            background: #22c55e;
+            animation: pulse-green 2s infinite;
+        }
+        
+        .status-indicator.inactive {
+            background: #ef4444;
+        }
+        
+        /* Analysis Results */
+        .analysis-results {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .pose-scores {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .score-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .score-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .score-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* History Screen */
+        .history-screen {
+            flex-direction: column;
+            background: linear-gradient(135deg, #16213e 0%, #1a1b2e 50%, #0a0a0a 100%);
+            color: #ffffff;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .history-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .history-title {
+            font-size: clamp(1.2rem, 5vw, 2.5rem);
+            font-weight: 200;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .history-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .history-date {
             font-size: 14px;
-            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
         }
         
-        /* Dior Sport Animations */
-        @keyframes dior-float {
-            0%, 100% {
-                transform: translateY(0px) rotate(0deg);
-                opacity: 0.1;
-            }
-            50% {
-                transform: translateY(-15px) rotate(2deg);
-                opacity: 0.3;
-            }
+        .history-score {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
         
+        .history-type {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+        }
+        
+        /* Dior Sport Elegant Animations - Enhanced */
         @keyframes dior-fade-in {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+            0% { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.95); 
+                filter: blur(2px);
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+                filter: blur(0);
             }
         }
         
         @keyframes dior-slide-up {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
+            0% { 
+                opacity: 0; 
+                transform: translateY(50px) scale(0.9); 
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            100% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        @keyframes dior-geometric-float {
+            0%, 100% { 
+                transform: translateY(0px) rotate(0deg) scale(1); 
+                opacity: 0.2; 
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+            25% {
+                transform: translateY(-8px) rotate(0.5deg) scale(1.02); 
+                opacity: 0.4; 
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                transform: translateY(-15px) rotate(1deg) scale(1.05); 
+                opacity: 0.6; 
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            75% {
+                transform: translateY(-8px) rotate(0.5deg) scale(1.02); 
+                opacity: 0.4; 
+                border-color: rgba(255, 255, 255, 0.2);
             }
         }
         
         @keyframes dior-line-draw {
-            from {
+            0% {
                 width: 0;
                 opacity: 0;
+                transform: scaleX(0);
             }
-            to {
+            50% {
+                opacity: 0.6;
+                transform: scaleX(0.5);
+            }
+            100% {
                 width: 60px;
                 opacity: 0.4;
+                transform: scaleX(1);
             }
         }
         
-        /* Mobile Specific Optimizations */
+        @keyframes dior-title-glow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+                transform: perspective(1000px) rotateX(0deg);
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(255, 255, 255, 0.2), 0 0 40px rgba(224, 231, 255, 0.1);
+                transform: perspective(1000px) rotateX(1deg);
+            }
+        }
+        
+        @keyframes dior-performance-shimmer {
+            0% {
+                opacity: 0.8;
+                transform: translateX(0px);
+            }
+            50% {
+                opacity: 1;
+                transform: translateX(2px);
+            }
+            100% {
+                opacity: 0.8;
+                transform: translateX(0px);
+            }
+        }
+        
+        @keyframes dior-stats-rise {
+            0% {
+                opacity: 0;
+                transform: translateY(40px) scale(0.9);
+                backdrop-filter: blur(0px);
+            }
+            60% {
+                opacity: 0.7;
+                transform: translateY(10px) scale(0.95);
+                backdrop-filter: blur(5px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                backdrop-filter: blur(10px);
+            }
+        }
+        
+        @keyframes dior-button-entrance {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) scale(0.8);
+            }
+            70% {
+                opacity: 0.8;
+                transform: translateY(5px) scale(1.02);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        @keyframes pulse-green {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        /* Dior Sport Mobile Optimizations */
         @media screen and (max-width: 480px) {
-            .athlete-welcome, .menu-screen, .analysis-screen {
+            .athlete-welcome, .menu-screen, .analysis-screen, .history-screen {
                 padding: 15px;
             }
             
@@ -385,6 +682,66 @@
             
             .action-buttons, .menu-buttons {
                 max-width: 100%;
+            }
+            
+            .pose-scores {
+                grid-template-columns: 1fr;
+            }
+            
+            /* Dior Sport Mobile Animation Optimization */
+            .bg-element {
+                animation-duration: 20s !important;
+            }
+            
+            .bg-element:nth-child(3), .bg-element:nth-child(4) {
+                display: none; /* Hide extra elements on small screens */
+            }
+            
+            .elite-text {
+                animation-delay: 0.3s !important;
+            }
+            
+            .performance-text {
+                animation-delay: 0.6s !important;
+            }
+            
+            .stats-container {
+                animation-delay: 1.2s !important;
+            }
+            
+            .action-buttons {
+                animation-delay: 1.8s !important;
+            }
+        }
+        
+        /* Reduce Motion Preference */
+        @media (prefers-reduced-motion: reduce) {
+            .particle,
+            .floating-element,
+            .geometric-overlay,
+            .elite-text,
+            .performance-text,
+            .stats-container {
+                animation: none !important;
+            }
+            
+            .elite-button {
+                transition: none !important;
+            }
+        }
+        
+        /* High Performance Mode for Older Devices */
+        @media screen and (max-width: 480px) and (max-resolution: 150dpi) {
+            .geometric-overlay {
+                display: none;
+            }
+            
+            .particle:nth-child(n+4) {
+                display: none;
+            }
+            
+            .floating-element:nth-child(n+8) {
+                display: none;
             }
         }
         
@@ -410,11 +767,255 @@
             cursor: pointer;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease;
+            z-index: 10;
         }
         
         .back-button:hover, .back-button:active {
             background: rgba(255, 255, 255, 0.15);
             border-color: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* User Setup Screen Styles */
+        .user-setup-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .setup-section {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .setup-section-title {
+            font-size: 16px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-label {
+            display: block;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .dior-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .dior-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        
+        .dior-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Sport Selection Grid */
+        .sport-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .sport-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 20px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .sport-button:hover, .sport-button.selected {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .sport-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .sport-name {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Dashboard Styles */
+        .dashboard-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            gap: 20px;
+        }
+        
+        .dashboard-card {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .user-info-display {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .user-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+        
+        .detail-value {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 400;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-overview-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        
+        .stat-overview-number {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-overview-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+        
+        .quick-action-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 20px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .quick-action-button:hover, .quick-action-button:active {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .action-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .action-text {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Control Buttons */
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .control-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .control-button:hover, .control-button:active {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .control-button.active {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.4);
         }
     </style>
 </head>
@@ -422,7 +1023,9 @@
     <div class="app-container">
         <!-- Athlete Welcome Screen -->
         <div id="athlete-welcome" class="app-screen athlete-welcome active">
-            <!-- Background Elements -->
+            <!-- Dior Sport Background Elements -->
+            <div class="bg-element"></div>
+            <div class="bg-element"></div>
             <div class="bg-element"></div>
             <div class="bg-element"></div>
             
@@ -445,15 +1048,15 @@
             <div class="stats-container">
                 <div class="stats-grid">
                     <div class="stat-item">
-                        <span class="stat-number">98.7%</span>
+                        <span class="stat-number" id="accuracy-stat">98.7%</span>
                         <span class="stat-label">Accuracy</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-number">0.05s</span>
+                        <span class="stat-number" id="response-stat">0.05s</span>
                         <span class="stat-label">Response</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-number">24/7</span>
+                        <span class="stat-number" id="analysis-stat">24/7</span>
                         <span class="stat-label">Analysis</span>
                     </div>
                 </div>
@@ -462,10 +1065,10 @@
             
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <button class="dior-button primary" onclick="showScreen('analysis')">
+                <button class="elite-button primary" onclick="showScreen('analysis')">
                     パフォーマンス分析開始
                 </button>
-                <button class="dior-button" onclick="showScreen('menu')">
+                <button class="elite-button" onclick="showScreen('menu')">
                     メインメニュー
                 </button>
             </div>
@@ -478,17 +1081,17 @@
             <h1 class="menu-title">MAIN MENU</h1>
             
             <div class="menu-buttons">
+                <button class="menu-button" onclick="showScreen('dashboard')">
+                    📊 ダッシュボード
+                </button>
                 <button class="menu-button" onclick="showScreen('analysis')">
-                    📊 パフォーマンス分析
+                    🎯 パフォーマンス分析
                 </button>
-                <button class="menu-button" onclick="alert('姿勢評価機能（開発中）')">
-                    🎯 姿勢評価
-                </button>
-                <button class="menu-button" onclick="alert('データ履歴機能（開発中）')">
+                <button class="menu-button" onclick="showScreen('history')">
                     📈 データ履歴
                 </button>
-                <button class="menu-button" onclick="alert('設定機能（開発中）')">
-                    ⚙️ 設定
+                <button class="menu-button" onclick="showScreen('user-setup')">
+                    👤 ユーザー設定
                 </button>
                 <button class="menu-button" onclick="showScreen('athlete-welcome')">
                     🏠 ホーム画面へ
@@ -496,33 +1099,240 @@
             </div>
         </div>
         
+        <!-- User Setup Screen -->
+        <div id="user-setup" class="app-screen menu-screen">
+            <button class="back-button" onclick="showScreen('menu')">← メニュー</button>
+            
+            <div class="analysis-header">
+                <h1 class="analysis-title">ユーザー設定</h1>
+                <p class="analysis-subtitle">プロフィール・スポーツ種目設定</p>
+            </div>
+            
+            <div class="user-setup-container">
+                <div class="setup-section">
+                    <h3 class="setup-section-title">基本情報</h3>
+                    <div class="input-group">
+                        <label class="input-label">ユーザー名</label>
+                        <input type="text" id="user-name" class="dior-input" placeholder="名前を入力" />
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">年齢</label>
+                        <input type="number" id="user-age" class="dior-input" placeholder="年齢" min="10" max="99" />
+                    </div>
+                </div>
+                
+                <div class="setup-section">
+                    <h3 class="setup-section-title">主要スポーツ</h3>
+                    <div class="sport-grid">
+                        <button class="sport-button" data-sport="general" onclick="selectSport('general')">
+                            <div class="sport-icon">🏃</div>
+                            <div class="sport-name">一般</div>
+                        </button>
+                        <button class="sport-button" data-sport="football" onclick="selectSport('football')">
+                            <div class="sport-icon">⚽</div>
+                            <div class="sport-name">サッカー</div>
+                        </button>
+                        <button class="sport-button" data-sport="basketball" onclick="selectSport('basketball')">
+                            <div class="sport-icon">🏀</div>
+                            <div class="sport-name">バスケ</div>
+                        </button>
+                        <button class="sport-button" data-sport="tennis" onclick="selectSport('tennis')">
+                            <div class="sport-icon">🎾</div>
+                            <div class="sport-name">テニス</div>
+                        </button>
+                        <button class="sport-button" data-sport="baseball" onclick="selectSport('baseball')">
+                            <div class="sport-icon">⚾</div>
+                            <div class="sport-name">野球</div>
+                        </button>
+                        <button class="sport-button" data-sport="swimming" onclick="selectSport('swimming')">
+                            <div class="sport-icon">🏊</div>
+                            <div class="sport-name">水泳</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="setup-section">
+                    <button class="elite-button primary" onclick="saveUserSettings()">
+                        設定を保存
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Screen -->
+        <div id="dashboard" class="app-screen analysis-screen">
+            <button class="back-button" onclick="showScreen('menu')">← メニュー</button>
+            
+            <div class="analysis-header">
+                <h1 class="analysis-title">ダッシュボード</h1>
+                <p class="analysis-subtitle">パフォーマンス統計・進捗確認</p>
+            </div>
+            
+            <div class="dashboard-container">
+                <!-- User Info Card -->
+                <div class="dashboard-card">
+                    <h3 class="card-title">ユーザー情報</h3>
+                    <div class="user-info-display">
+                        <div class="user-detail">
+                            <span class="detail-label">名前:</span>
+                            <span class="detail-value" id="display-user-name">未設定</span>
+                        </div>
+                        <div class="user-detail">
+                            <span class="detail-label">年齢:</span>
+                            <span class="detail-value" id="display-user-age">未設定</span>
+                        </div>
+                        <div class="user-detail">
+                            <span class="detail-label">スポーツ:</span>
+                            <span class="detail-value" id="display-user-sport">未選択</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics Card -->
+                <div class="dashboard-card">
+                    <h3 class="card-title">統計概要</h3>
+                    <div class="stats-overview">
+                        <div class="stat-overview-item">
+                            <div class="stat-overview-number" id="total-analyses">0</div>
+                            <div class="stat-overview-label">総分析回数</div>
+                        </div>
+                        <div class="stat-overview-item">
+                            <div class="stat-overview-number" id="average-score">--</div>
+                            <div class="stat-overview-label">平均スコア</div>
+                        </div>
+                        <div class="stat-overview-item">
+                            <div class="stat-overview-number" id="best-score">--</div>
+                            <div class="stat-overview-label">最高スコア</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="dashboard-card">
+                    <h3 class="card-title">クイックアクション</h3>
+                    <div class="quick-actions">
+                        <button class="quick-action-button" onclick="showScreen('analysis')">
+                            <div class="action-icon">🎯</div>
+                            <div class="action-text">分析開始</div>
+                        </button>
+                        <button class="quick-action-button" onclick="showScreen('history')">
+                            <div class="action-icon">📊</div>
+                            <div class="action-text">履歴確認</div>
+                        </button>
+                        <button class="quick-action-button" onclick="exportData()">
+                            <div class="action-icon">💾</div>
+                            <div class="action-text">データ出力</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Analysis Screen -->
         <div id="analysis" class="app-screen analysis-screen">
             <button class="back-button" onclick="showScreen('athlete-welcome')">← ホーム</button>
             
-            <h1 class="analysis-title">AI姿勢分析システム</h1>
+            <div class="analysis-header">
+                <h1 class="analysis-title">AI姿勢分析システム</h1>
+                <p class="analysis-subtitle">リアルタイム姿勢検出・分析</p>
+            </div>
             
-            <div class="analysis-placeholder">
-                <p class="analysis-text">
-                    🎯 AI姿勢分析システム準備中<br><br>
-                    このエリアにカメラビューと<br>
-                    リアルタイム分析結果が<br>
-                    表示されます
-                </p>
+            <!-- Camera Container -->
+            <div class="camera-container">
+                <video id="videoElement" autoplay muted playsinline></video>
+                <canvas id="canvasElement"></canvas>
+                <div class="camera-status">
+                    <span class="status-indicator inactive" id="status-indicator"></span>
+                    <span id="status-text">カメラ停止中</span>
+                </div>
+            </div>
+            
+            <!-- Control Buttons -->
+            <div class="control-buttons">
+                <button class="control-button" id="start-camera-btn" onclick="startCamera()">
+                    📹 カメラ開始
+                </button>
+                <button class="control-button" id="stop-camera-btn" onclick="stopCamera()" style="display: none;">
+                    ⏹️ 停止
+                </button>
+                <button class="control-button" id="capture-btn" onclick="captureAnalysis()" style="display: none;">
+                    📸 分析保存
+                </button>
+            </div>
+            
+            <!-- Real-time Analysis Results -->
+            <div class="analysis-results" id="analysis-results" style="display: none;">
+                <h3 style="margin-bottom: 15px; color: rgba(255, 255, 255, 0.9);">リアルタイム分析結果</h3>
+                <div class="pose-scores">
+                    <div class="score-item">
+                        <div class="score-value" id="posture-score">--</div>
+                        <div class="score-label">姿勢スコア</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value" id="balance-score">--</div>
+                        <div class="score-label">バランス</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value" id="alignment-score">--</div>
+                        <div class="score-label">アライメント</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value" id="stability-score">--</div>
+                        <div class="score-label">安定性</div>
+                    </div>
+                </div>
+                <div style="text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 12px;">
+                    <span id="detection-status">姿勢検出待機中...</span>
+                </div>
             </div>
             
             <div class="action-buttons">
-                <button class="dior-button primary" onclick="alert('カメラ開始機能（開発中）')">
-                    📹 カメラ開始
+                <button class="elite-button" onclick="showScreen('history')">
+                    📋 履歴を見る
                 </button>
-                <button class="dior-button" onclick="showScreen('menu')">
+                <button class="elite-button" onclick="showScreen('menu')">
                     📋 メニューへ
+                </button>
+            </div>
+        </div>
+        
+        <!-- History Screen -->
+        <div id="history" class="app-screen history-screen">
+            <button class="back-button" onclick="showScreen('athlete-welcome')">← ホーム</button>
+            
+            <div class="history-header">
+                <h1 class="history-title">分析履歴</h1>
+                <p class="analysis-subtitle">過去の分析結果</p>
+            </div>
+            
+            <div class="history-list" id="history-list">
+                <div style="text-align: center; color: rgba(255, 255, 255, 0.6); padding: 40px;">
+                    <p>分析データが保存されると、ここに履歴が表示されます。</p>
+                </div>
+            </div>
+            
+            <div class="control-buttons">
+                <button class="control-button" onclick="clearAnalysisHistory()">
+                    🗑️ 履歴クリア
+                </button>
+                <button class="control-button" onclick="showScreen('analysis')">
+                    📊 分析開始
                 </button>
             </div>
         </div>
     </div>
     
     <script>
+        // Global Variables
+        let currentScreen = 'athlete-welcome';
+        let cameraActive = false;
+        let videoElement = null;
+        let canvasElement = null;
+        let canvasCtx = null;
+        let pose = null;
+        let camera = null;
+        let currentPoseData = null;
+        
         // Viewport Handling for Mobile
         function adjustViewport() {
             const vh = window.innerHeight * 0.01;
@@ -533,9 +1343,7 @@
         window.addEventListener('orientationchange', adjustViewport);
         adjustViewport();
         
-        // Screen Navigation System - NO AUTO-NAVIGATION
-        let currentScreen = 'athlete-welcome';
-        
+        // Screen Navigation System
         function showScreen(screenId) {
             console.log(`📱 Navigating to: ${screenId}`);
             
@@ -552,6 +1360,17 @@
                     targetScreen.classList.add('active');
                     currentScreen = screenId;
                     console.log(`✅ Screen '${screenId}' activated`);
+                    
+                    // Initialize screen-specific functionality
+                    if (screenId === 'history') {
+                        loadAnalysisHistory();
+                    } else if (screenId === 'analysis') {
+                        initializeAnalysisScreen();
+                    } else if (screenId === 'dashboard') {
+                        updateDashboardDisplay();
+                    } else if (screenId === 'user-setup') {
+                        loadUserSettings();
+                    }
                 } else {
                     console.error(`❌ Screen '${screenId}' not found`);
                     return false;
@@ -564,9 +1383,698 @@
             }
         }
         
+        // Initialize Analysis Screen
+        function initializeAnalysisScreen() {
+            videoElement = document.getElementById('videoElement');
+            canvasElement = document.getElementById('canvasElement');
+            canvasCtx = canvasElement.getContext('2d');
+            
+            // Initialize MediaPipe Pose if available
+            if (typeof Pose !== 'undefined') {
+                initializeMediaPipe();
+            }
+        }
+        
+        // Initialize MediaPipe
+        function initializeMediaPipe() {
+            console.log('🎯 Initializing MediaPipe Pose...');
+            
+            pose = new Pose({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+                }
+            });
+            
+            pose.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                enableSegmentation: false,
+                smoothSegmentation: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            
+            pose.onResults(onPoseResults);
+            console.log('✅ MediaPipe Pose initialized');
+        }
+        
+        // Start Camera
+        async function startCamera() {
+            try {
+                console.log('📹 Starting camera...');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user', // front camera
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                
+                videoElement.srcObject = stream;
+                cameraActive = true;
+                
+                // Update UI
+                document.getElementById('start-camera-btn').style.display = 'none';
+                document.getElementById('stop-camera-btn').style.display = 'inline-block';
+                document.getElementById('capture-btn').style.display = 'inline-block';
+                document.getElementById('analysis-results').style.display = 'block';
+                
+                updateCameraStatus(true, 'カメラ起動中');
+                
+                // Start pose detection when video is ready
+                videoElement.addEventListener('loadeddata', () => {
+                    console.log('✅ Camera ready, starting pose detection');
+                    updateCameraStatus(true, 'AI姿勢分析中');
+                    startPoseDetection();
+                });
+                
+            } catch (error) {
+                console.error('❌ Camera error:', error);
+                updateCameraStatus(false, 'カメラエラー');
+                alert('カメラにアクセスできませんでした。ブラウザの設定でカメラの許可を確認してください。');
+            }
+        }
+        
+        // Stop Camera
+        function stopCamera() {
+            console.log('⏹️ Stopping camera...');
+            
+            if (videoElement.srcObject) {
+                const tracks = videoElement.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+            }
+            
+            if (camera) {
+                camera.stop();
+                camera = null;
+            }
+            
+            cameraActive = false;
+            
+            // Update UI
+            document.getElementById('start-camera-btn').style.display = 'inline-block';
+            document.getElementById('stop-camera-btn').style.display = 'none';
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('analysis-results').style.display = 'none';
+            
+            updateCameraStatus(false, 'カメラ停止中');
+            
+            // Clear canvas
+            if (canvasCtx) {
+                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            }
+        }
+        
+        // Start Pose Detection
+        function startPoseDetection() {
+            if (typeof Camera !== 'undefined' && pose) {
+                camera = new Camera(videoElement, {
+                    onFrame: async () => {
+                        if (cameraActive) {
+                            await pose.send({ image: videoElement });
+                        }
+                    },
+                    width: 640,
+                    height: 480
+                });
+                camera.start();
+            } else {
+                console.warn('⚠️ MediaPipe not available, using fallback');
+                startFallbackDetection();
+            }
+        }
+        
+        // Fallback Detection (when MediaPipe is not available)
+        function startFallbackDetection() {
+            setInterval(() => {
+                if (cameraActive) {
+                    // Generate mock pose analysis
+                    const mockResults = {
+                        postureBias: Math.random() * 10 - 5, // -5 to 5
+                        shoulderLevel: Math.random() * 20 - 10, // -10 to 10
+                        spineAlignment: 85 + Math.random() * 10, // 85-95
+                        balanceScore: 80 + Math.random() * 15 // 80-95
+                    };
+                    
+                    updateAnalysisDisplay(mockResults);
+                    updateDetectionStatus('姿勢検出中 (デモモード)');
+                }
+            }, 100);
+        }
+        
+        // Process Pose Results
+        function onPoseResults(results) {
+            if (!cameraActive) return;
+            
+            // Clear canvas
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            if (results.poseLandmarks) {
+                // Draw pose landmarks
+                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    lineWidth: 2
+                });
+                drawLandmarks(canvasCtx, results.poseLandmarks, {
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fillColor: 'rgba(255, 0, 0, 0.8)',
+                    radius: 3
+                });
+                
+                // Analyze pose
+                const analysis = analyzePose(results.poseLandmarks);
+                currentPoseData = {
+                    landmarks: results.poseLandmarks,
+                    analysis: analysis,
+                    timestamp: Date.now()
+                };
+                
+                updateAnalysisDisplay(analysis);
+                updateDetectionStatus('姿勢検出成功');
+            } else {
+                updateDetectionStatus('姿勢を検出できません');
+                resetAnalysisDisplay();
+            }
+        }
+        
+        // Analyze Pose Data
+        function analyzePose(landmarks) {
+            // Calculate key pose metrics
+            const leftShoulder = landmarks[11];
+            const rightShoulder = landmarks[12];
+            const leftHip = landmarks[23];
+            const rightHip = landmarks[24];
+            const nose = landmarks[0];
+            
+            // Calculate shoulder level (deviation from horizontal)
+            const shoulderLevel = Math.abs(leftShoulder.y - rightShoulder.y) * 100;
+            
+            // Calculate hip level
+            const hipLevel = Math.abs(leftHip.y - rightHip.y) * 100;
+            
+            // Calculate head position relative to shoulders
+            const shoulderMidpoint = {
+                x: (leftShoulder.x + rightShoulder.x) / 2,
+                y: (leftShoulder.y + rightShoulder.y) / 2
+            };
+            
+            const headAlignment = Math.abs(nose.x - shoulderMidpoint.x) * 100;
+            
+            // Calculate scores (0-100)
+            const postureScore = Math.max(0, 100 - (shoulderLevel * 2 + headAlignment * 3));
+            const balanceScore = Math.max(0, 100 - (hipLevel * 3 + shoulderLevel));
+            const alignmentScore = Math.max(0, 100 - headAlignment * 5);
+            const stabilityScore = Math.max(0, 90 + Math.random() * 10); // Mock stability
+            
+            return {
+                postureScore: Math.round(postureScore),
+                balanceScore: Math.round(balanceScore),
+                alignmentScore: Math.round(alignmentScore),
+                stabilityScore: Math.round(stabilityScore),
+                shoulderLevel: shoulderLevel,
+                hipLevel: hipLevel,
+                headAlignment: headAlignment
+            };
+        }
+        
+        // Update Analysis Display
+        function updateAnalysisDisplay(analysis) {
+            document.getElementById('posture-score').textContent = analysis.postureScore || '--';
+            document.getElementById('balance-score').textContent = analysis.balanceScore || '--';
+            document.getElementById('alignment-score').textContent = analysis.alignmentScore || '--';
+            document.getElementById('stability-score').textContent = analysis.stabilityScore || '--';
+        }
+        
+        // Reset Analysis Display
+        function resetAnalysisDisplay() {
+            document.getElementById('posture-score').textContent = '--';
+            document.getElementById('balance-score').textContent = '--';
+            document.getElementById('alignment-score').textContent = '--';
+            document.getElementById('stability-score').textContent = '--';
+        }
+        
+        // Update Camera Status
+        function updateCameraStatus(active, message) {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            
+            if (active) {
+                indicator.classList.remove('inactive');
+                indicator.classList.add('active');
+            } else {
+                indicator.classList.remove('active');
+                indicator.classList.add('inactive');
+            }
+            
+            text.textContent = message;
+        }
+        
+        // Update Detection Status
+        function updateDetectionStatus(message) {
+            document.getElementById('detection-status').textContent = message;
+        }
+        
+        // Capture Analysis with Photo
+        function captureAnalysis() {
+            if (!currentPoseData) {
+                alert('現在分析データがありません。カメラが起動していることを確認してください。');
+                return;
+            }
+            
+            try {
+                // Capture photo from video
+                const capturedPhoto = capturePhotoFromVideo();
+                
+                // Get current user
+                const currentUser = getCurrentUser();
+                
+                // Create detailed analysis record
+                const analysisRecord = {
+                    id: generateUUID(),
+                    user_id: currentUser.id,
+                    user_name: currentUser.name,
+                    user_sport: currentUser.primary_sport,
+                    timestamp: new Date().toISOString(),
+                    analysis_date: new Date().toISOString(),
+                    analysis_type: 'realtime_with_photo',
+                    sport: currentUser.primary_sport,
+                    analysis: currentPoseData.analysis,
+                    landmarks: currentPoseData.landmarks,
+                    overallScore: Math.round(
+                        (currentPoseData.analysis.postureScore + 
+                         currentPoseData.analysis.balanceScore + 
+                         currentPoseData.analysis.alignmentScore + 
+                         currentPoseData.analysis.stabilityScore) / 4
+                    ),
+                    overall_score: Math.round(
+                        (currentPoseData.analysis.postureScore + 
+                         currentPoseData.analysis.balanceScore + 
+                         currentPoseData.analysis.alignmentScore + 
+                         currentPoseData.analysis.stabilityScore) / 4
+                    ),
+                    capturedPhoto: capturedPhoto,
+                    recommendations: generateRecommendations(currentPoseData.analysis),
+                    session_duration: Date.now() - (window.sessionStartTime || Date.now()),
+                    device_info: {
+                        userAgent: navigator.userAgent,
+                        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+                        deviceMemory: navigator.deviceMemory || 'unknown'
+                    }
+                };
+                
+                // Save to local storage
+                saveAnalysisRecord(analysisRecord);
+                
+                // Update dashboard stats
+                updateDashboardStats();
+                
+                // Show success message with photo
+                showAnalysisResult(analysisRecord);
+                
+                console.log('✅ Enhanced analysis captured and saved', analysisRecord);
+            } catch (error) {
+                console.error('❌ Error capturing analysis:', error);
+                alert('分析の保存中にエラーが発生しました。');
+            }
+        }
+        
+        // Capture Photo from Video Element
+        function capturePhotoFromVideo() {
+            if (!videoElement || !cameraActive) {
+                return null;
+            }
+            
+            try {
+                // Create canvas for photo capture
+                const photoCanvas = document.createElement('canvas');
+                const photoCtx = photoCanvas.getContext('2d');
+                
+                // Set canvas dimensions to match video
+                photoCanvas.width = videoElement.videoWidth || 640;
+                photoCanvas.height = videoElement.videoHeight || 480;
+                
+                // Draw video frame to canvas
+                photoCtx.drawImage(videoElement, 0, 0, photoCanvas.width, photoCanvas.height);
+                
+                // Draw pose overlay if available
+                if (canvasElement && currentPoseData && currentPoseData.landmarks) {
+                    photoCtx.drawImage(canvasElement, 0, 0, photoCanvas.width, photoCanvas.height);
+                }
+                
+                // Convert to data URL
+                const imageData = photoCanvas.toDataURL('image/jpeg', 0.8);
+                
+                return {
+                    imageData: imageData,
+                    width: photoCanvas.width,
+                    height: photoCanvas.height,
+                    timestamp: new Date().toISOString(),
+                    hasPoseOverlay: !!(currentPoseData && currentPoseData.landmarks),
+                    cameraType: 'front',
+                    fileSize: Math.round(imageData.length * 0.75) // Approximate file size
+                };
+            } catch (error) {
+                console.error('❌ Error capturing photo:', error);
+                return null;
+            }
+        }
+        
+        // Generate Recommendations
+        function generateRecommendations(analysis) {
+            const recommendations = [];
+            
+            if (analysis.postureScore < 70) {
+                recommendations.push("姿勢の改善が必要です。背筋を伸ばし、肩をリラックスさせてください。");
+            }
+            
+            if (analysis.balanceScore < 70) {
+                recommendations.push("バランス感覚の向上が必要です。片足立ちなどの練習を行ってください。");
+            }
+            
+            if (analysis.alignmentScore < 70) {
+                recommendations.push("体の軸が傾いています。正中線を意識した練習を行ってください。");
+            }
+            
+            if (analysis.stabilityScore < 70) {
+                recommendations.push("安定性が不足しています。コアトレーニングを強化してください。");
+            }
+            
+            if (recommendations.length === 0) {
+                recommendations.push("素晴らしいパフォーマンスです！この調子で継続してください。");
+            }
+            
+            return recommendations;
+        }
+        
+        // Show Analysis Result
+        function showAnalysisResult(record) {
+            const message = `
+🎯 分析完了！
+
+総合スコア: ${record.overallScore}/100
+
+詳細スコア:
+• 姿勢: ${record.analysis.postureScore}/100
+• バランス: ${record.analysis.balanceScore}/100
+• アライメント: ${record.analysis.alignmentScore}/100
+• 安定性: ${record.analysis.stabilityScore}/100
+
+${record.capturedPhoto ? '📸 写真も保存されました' : ''}
+
+おすすめ: ${record.recommendations[0]}
+            `;
+            
+            alert(message);
+        }
+        
+        // Generate UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        // User Management Functions
+        function getCurrentUser() {
+            const userData = localStorage.getItem('athletecore_user_data');
+            if (userData) {
+                return JSON.parse(userData);
+            } else {
+                // Return default user
+                return {
+                    id: 'default_user_' + Date.now(),
+                    name: 'ゲストユーザー',
+                    age: null,
+                    primary_sport: 'general',
+                    created_at: new Date().toISOString()
+                };
+            }
+        }
+        
+        function saveUserData(userData) {
+            localStorage.setItem('athletecore_user_data', JSON.stringify(userData));
+            console.log('✅ User data saved:', userData);
+        }
+        
+        function selectSport(sport) {
+            // Update UI
+            document.querySelectorAll('.sport-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`[data-sport="${sport}"]`).classList.add('selected');
+            
+            // Store selected sport temporarily
+            window.selectedSport = sport;
+        }
+        
+        function saveUserSettings() {
+            const name = document.getElementById('user-name').value;
+            const age = document.getElementById('user-age').value;
+            const sport = window.selectedSport || 'general';
+            
+            if (!name.trim()) {
+                alert('名前を入力してください。');
+                return;
+            }
+            
+            const userData = {
+                id: getCurrentUser().id,
+                name: name.trim(),
+                age: age ? parseInt(age) : null,
+                primary_sport: sport,
+                created_at: getCurrentUser().created_at || new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+            
+            saveUserData(userData);
+            updateDashboardDisplay();
+            
+            alert('ユーザー設定を保存しました！');
+            showScreen('dashboard');
+        }
+        
+        function loadUserSettings() {
+            const user = getCurrentUser();
+            
+            if (document.getElementById('user-name')) {
+                document.getElementById('user-name').value = user.name || '';
+            }
+            if (document.getElementById('user-age')) {
+                document.getElementById('user-age').value = user.age || '';
+            }
+            
+            // Select sport button
+            if (user.primary_sport) {
+                selectSport(user.primary_sport);
+            }
+        }
+        
+        function updateDashboardDisplay() {
+            const user = getCurrentUser();
+            const records = getAnalysisRecords();
+            
+            // Update user info display
+            if (document.getElementById('display-user-name')) {
+                document.getElementById('display-user-name').textContent = user.name || '未設定';
+            }
+            if (document.getElementById('display-user-age')) {
+                document.getElementById('display-user-age').textContent = user.age || '未設定';
+            }
+            if (document.getElementById('display-user-sport')) {
+                const sportNames = {
+                    'general': '一般',
+                    'football': 'サッカー',
+                    'basketball': 'バスケットボール',
+                    'tennis': 'テニス',
+                    'baseball': '野球',
+                    'swimming': '水泳'
+                };
+                document.getElementById('display-user-sport').textContent = sportNames[user.primary_sport] || '未選択';
+            }
+            
+            updateDashboardStats();
+        }
+        
+        function updateDashboardStats() {
+            const records = getAnalysisRecords();
+            
+            if (document.getElementById('total-analyses')) {
+                document.getElementById('total-analyses').textContent = records.length;
+            }
+            
+            if (records.length > 0) {
+                const averageScore = records.reduce((sum, record) => sum + (record.overallScore || record.overall_score || 0), 0) / records.length;
+                const bestScore = Math.max(...records.map(record => record.overallScore || record.overall_score || 0));
+                
+                if (document.getElementById('average-score')) {
+                    document.getElementById('average-score').textContent = averageScore.toFixed(1);
+                }
+                if (document.getElementById('best-score')) {
+                    document.getElementById('best-score').textContent = bestScore;
+                }
+            } else {
+                if (document.getElementById('average-score')) {
+                    document.getElementById('average-score').textContent = '--';
+                }
+                if (document.getElementById('best-score')) {
+                    document.getElementById('best-score').textContent = '--';
+                }
+            }
+        }
+        
+        function exportData() {
+            const user = getCurrentUser();
+            const records = getAnalysisRecords();
+            
+            const exportData = {
+                user: user,
+                analyses: records,
+                exportDate: new Date().toISOString(),
+                totalRecords: records.length,
+                appVersion: 'AthleteCore Pro × Dior Sport v2.3.0'
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `athletecore_data_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            console.log('✅ Data exported successfully');
+        }
+        
+        // Save Analysis Record
+        function saveAnalysisRecord(record) {
+            const existingRecords = getAnalysisRecords();
+            existingRecords.unshift(record); // Add to beginning
+            
+            // Keep only last 50 records
+            if (existingRecords.length > 50) {
+                existingRecords.splice(50);
+            }
+            
+            localStorage.setItem('athletecore_analysis_records', JSON.stringify(existingRecords));
+        }
+        
+        // Get Analysis Records
+        function getAnalysisRecords() {
+            const records = localStorage.getItem('athletecore_analysis_records');
+            return records ? JSON.parse(records) : [];
+        }
+        
+        // Load Analysis History
+        function loadAnalysisHistory() {
+            const records = getAnalysisRecords();
+            const historyList = document.getElementById('history-list');
+            
+            if (records.length === 0) {
+                historyList.innerHTML = `
+                    <div style="text-align: center; color: rgba(255, 255, 255, 0.6); padding: 40px;">
+                        <p>分析データが保存されると、ここに履歴が表示されます。</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = '';
+            
+            records.forEach(record => {
+                const date = new Date(record.timestamp);
+                const dateString = date.toLocaleDateString('ja-JP');
+                const timeString = date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-date">${dateString} ${timeString}</div>
+                    <div class="history-score">総合スコア: ${record.overallScore}/100</div>
+                    <div class="history-type">${record.type} analysis</div>
+                `;
+                
+                historyItem.onclick = () => showAnalysisDetail(record);
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // Show Analysis Detail
+        function showAnalysisDetail(record) {
+            const analysis = record.analysis;
+            const date = new Date(record.timestamp || record.analysis_date);
+            
+            let detailMessage = `
+🎯 分析詳細レポート
+📅 ${date.toLocaleString('ja-JP')}
+
+👤 ユーザー情報:
+• 名前: ${record.user_name || '未設定'}
+• スポーツ: ${getSportName(record.user_sport || record.sport)}
+• 分析タイプ: ${getAnalysisTypeName(record.analysis_type || record.type)}
+
+📊 総合スコア: ${record.overallScore || record.overall_score}/100
+
+詳細スコア:
+• 姿勢スコア: ${analysis.postureScore}/100
+• バランス: ${analysis.balanceScore}/100  
+• アライメント: ${analysis.alignmentScore}/100
+• 安定性: ${analysis.stabilityScore}/100
+
+📏 測定値:
+• 肩の傾き: ${analysis.shoulderLevel?.toFixed(2) || '--'}
+• 腰の傾き: ${analysis.hipLevel?.toFixed(2) || '--'}
+• 頭部位置: ${analysis.headAlignment?.toFixed(2) || '--'}
+
+💡 おすすめ: ${(record.recommendations && record.recommendations[0]) || '継続して練習してください'}
+
+${record.capturedPhoto ? '📸 写真データあり' : '📷 写真データなし'}
+${record.session_duration ? `⏱️ セッション時間: ${Math.round(record.session_duration / 1000)}秒` : ''}
+            `;
+            
+            alert(detailMessage);
+        }
+        
+        function getSportName(sport) {
+            const sportNames = {
+                'general': '一般',
+                'football': 'サッカー',
+                'basketball': 'バスケットボール',
+                'tennis': 'テニス',
+                'baseball': '野球',
+                'swimming': '水泳'
+            };
+            return sportNames[sport] || sport || '未設定';
+        }
+        
+        function getAnalysisTypeName(type) {
+            const typeNames = {
+                'realtime': 'リアルタイム',
+                'realtime_with_photo': 'リアルタイム(写真付き)',
+                'static': '静的分析',
+                'dynamic': '動的分析'
+            };
+            return typeNames[type] || type || '標準';
+        }
+        
+        // Clear Analysis History
+        function clearAnalysisHistory() {
+            if (confirm('分析履歴をすべて削除しますか？この操作は取り消せません。')) {
+                localStorage.removeItem('athletecore_analysis_records');
+                loadAnalysisHistory();
+                alert('分析履歴をクリアしました。');
+                console.log('✅ Analysis history cleared');
+            }
+        }
+        
         // Prevent accidental navigation
         function preventAccidentalNavigation(event) {
-            // Prevent pull-to-refresh and other gestures
             if (event.touches.length > 1) {
                 event.preventDefault();
             }
@@ -574,11 +2082,50 @@
         
         document.addEventListener('touchmove', preventAccidentalNavigation, { passive: false });
         
+        // Dior Sport Device Optimizations
+        function applyDiorSportOptimizations() {
+            const userAgent = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+            const isAndroid = /Android/.test(userAgent);
+            const isLowEndDevice = window.deviceMemory && window.deviceMemory < 4;
+            
+            if (isLowEndDevice || (isAndroid && window.innerWidth < 480)) {
+                // Optimize animations for low-end devices
+                const elements = document.querySelectorAll('.bg-element');
+                elements.forEach(element => {
+                    element.style.animationDuration = '12s'; // Slower animation for performance
+                });
+                
+                console.log('📱 Applied Dior Sport low-end device optimizations');
+            }
+            
+            if (isIOS) {
+                // iOS-specific optimizations
+                document.documentElement.style.setProperty('--webkit-overflow-scrolling', 'touch');
+                console.log('📱 Applied Dior Sport iOS optimizations');
+            }
+        }
+        
+        // Initialize Dior Sport optimizations
+        applyDiorSportOptimizations();
+        
         // Initialize App
         console.log('🚀 AthleteCore Pro × Dior Sport Edition initialized');
         console.log('📱 User Agent:', navigator.userAgent);
         console.log('📐 Screen Size:', window.innerWidth + 'x' + window.innerHeight);
+        console.log('💾 Device Memory:', window.deviceMemory || 'Unknown');
         console.log('🎨 Current Screen:', currentScreen);
+        console.log('✨ Dior Sport luxury design system activated');
+        
+        // Initialize session
+        window.sessionStartTime = Date.now();
+        
+        // Initialize user system
+        const currentUser = getCurrentUser();
+        console.log('👤 Current User:', currentUser.name, '| Sport:', currentUser.primary_sport);
+        
+        // Update welcome screen stats on load
+        updateWelcomeStats();
         
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
@@ -601,7 +2148,35 @@
             console.log('📱 iOS detected - PWA install available');
         }
         
-        console.log('✨ AthleteCore Pro ready for mobile use');
+        // Update welcome screen stats with real data
+        function updateWelcomeStats() {
+            const records = getAnalysisRecords();
+            if (records.length > 0) {
+                const averageScore = records.reduce((sum, record) => sum + record.overallScore, 0) / records.length;
+                document.getElementById('accuracy-stat').textContent = averageScore.toFixed(1) + '%';
+                document.getElementById('analysis-stat').textContent = records.length;
+            }
+        }
+        
+        // Update stats when returning to welcome screen
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.id === 'athlete-welcome' && mutation.target.classList.contains('active')) {
+                    updateWelcomeStats();
+                }
+            });
+        });
+        
+        // Start observing
+        const welcomeScreen = document.getElementById('athlete-welcome');
+        if (welcomeScreen) {
+            observer.observe(welcomeScreen, { 
+                attributes: true, 
+                attributeFilter: ['class'] 
+            });
+        }
+        
+        console.log('✨ AthleteCore Pro ready for professional AI pose analysis');
     </script>
 </body>
 </html>
