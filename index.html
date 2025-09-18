@@ -466,8 +466,12 @@
             overflow-y: auto;
         }
         
-        /* 初期表示制御 - ウェルカム画面のみ表示 */
-        #athlete-welcome {
+        /* 初期表示制御 - 全画面を初期非表示にしてJavaScript制御 */
+        .app-screen {
+            display: none !important;
+        }
+        
+        .app-screen.active {
             display: flex !important;
             flex-direction: column;
         }
@@ -477,10 +481,7 @@
             display: none;
         }
         
-        .app-screen.active {
-            display: flex;
-            flex-direction: column;
-        }
+
         
         .fade-in {
             animation: fadeIn 0.5s ease-in-out;
@@ -962,7 +963,7 @@
             </div>
             
             <!-- Athlete Welcome Screen - Dior Sport Style -->
-            <div id="athlete-welcome" class="app-screen active bg-gradient-to-b from-black via-gray-900 to-black">
+            <div id="athlete-welcome" class="app-screen bg-gradient-to-b from-black via-gray-900 to-black">
                 <div class="h-screen flex flex-col relative overflow-hidden">
                     <!-- Elegant Geometric Background Elements -->
                     <div class="absolute inset-0" style="z-index: 1; pointer-events: none;">
@@ -3748,19 +3749,23 @@
         };
         
         function showAthleteWelcome() {
-            console.log('📱 Showing athlete welcome screen (Mobile Optimized)');
+            console.log('📱 Showing athlete welcome screen - no flash optimization');
             showScreen('athlete-welcome');
+            
+            // Begin Analysisボタンを即座にセットアップ（フラッシュ防止）
+            setupBeginAnalysisButton();
+            
             const athleteScreen = document.getElementById('athlete-welcome');
             if (athleteScreen) {
                 athleteScreen.classList.add('fade-in');
-                console.log('✅ Athlete welcome screen displayed successfully');
+                console.log('✅ Athlete welcome screen displayed successfully - no flash');
                 
                 // 自動遷移を防ぐため、現在の画面を明確に設定
                 currentScreen = 'athlete-welcome';
                 
                 // Mobile-optimized animation application
                 const isMobile = window.innerWidth <= 768;
-                const animationDelay = isMobile ? 200 : 100;
+                const animationDelay = isMobile ? 100 : 50; // より高速化
                 
                 setTimeout(() => {
                     const elements = athleteScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw, .dior-geometric-float');
@@ -3778,7 +3783,7 @@
                                 el.style.transform = 'translateZ(0)';
                                 el.style.webkitTransform = 'translateZ(0)';
                             }
-                        }, 50 + index * (isMobile ? 150 : 100));
+                        }, 25 + index * (isMobile ? 100 : 50)); // より高速化
                     });
                 }, animationDelay);
                 
@@ -3854,49 +3859,45 @@
         
         // Begin Analysisボタンに追加のイベントリスナーを設定
         function setupBeginAnalysisButton() {
-            setTimeout(() => {
-                const athleteScreen = document.getElementById('athlete-welcome');
-                const button = athleteScreen?.querySelector('button');
+            const athleteScreen = document.getElementById('athlete-welcome');
+            const button = athleteScreen?.querySelector('button');
+            
+            if (button) {
+                console.log('🔧 Setting up mobile-optimized event listeners - immediate setup (no delay)');
                 
-                if (button) {
-                    console.log('🔧 Setting up mobile-optimized event listeners for Begin Analysis button');
+                // モバイル専用のタッチイベント
+                button.addEventListener('touchstart', function(e) {
+                    console.log('👆 Touch start - mobile addEventListener');
+                    e.preventDefault();
+                    this.style.transform = 'scale(0.95)';
+                    this.style.backgroundColor = '#f3f4f6';
+                }, { passive: false });
+                
+                button.addEventListener('touchend', function(e) {
+                    console.log('👆 Touch end - mobile addEventListener - calling showWelcome()');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.style.transform = 'scale(1)';
+                    this.style.backgroundColor = 'white';
                     
-                    // モバイル専用のタッチイベント
-                    button.addEventListener('touchstart', function(e) {
-                        console.log('👆 Touch start - mobile addEventListener');
-                        e.preventDefault();
-                        this.style.transform = 'scale(0.95)';
-                        this.style.backgroundColor = '#f3f4f6';
-                    }, { passive: false });
-                    
-                    button.addEventListener('touchend', function(e) {
-                        console.log('👆 Touch end - mobile addEventListener - calling showWelcome()');
-                        e.preventDefault();
-                        e.stopPropagation();
-                        this.style.transform = 'scale(1)';
-                        this.style.backgroundColor = 'white';
-                        
-                        // 確実にshowWelcome()を呼び出し
-                        setTimeout(() => {
-                            showWelcome();
-                        }, 50);
-                    }, { passive: false });
-                    
-                    // クリックイベントも追加（PC互換性）
-                    button.addEventListener('click', function(e) {
-                        console.log('🖱️ Click - addEventListener - calling showWelcome()');
-                        e.preventDefault();
-                        e.stopPropagation();
-                        showWelcome();
-                    }, { passive: false });
-                    
-                    // モバイルデバイス検出とログ
-                    const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
-                    console.log(`✅ Additional event listeners setup complete (Mobile: ${isMobile})`);
-                } else {
-                    console.log('❌ Begin Analysis button not found for event listener setup');
-                }
-            }, 2000); // 2秒後に設定（アニメーション完了を待つ）
+                    // 確実にshowWelcome()を呼び出し
+                    showWelcome();
+                }, { passive: false });
+                
+                // クリックイベントも追加（PC互換性）
+                button.addEventListener('click', function(e) {
+                    console.log('🖱️ Click - addEventListener - calling showWelcome()');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showWelcome();
+                }, { passive: false });
+                
+                // モバイルデバイス検出とログ
+                const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                console.log(`✅ Event listeners setup complete - immediate (Mobile: ${isMobile})`);
+            } else {
+                console.log('❌ Begin Analysis button not found for event listener setup');
+            }
         }
         
         // Begin Analysisボタン診断機能
@@ -9029,39 +9030,19 @@
                 console.log('🔄 No smart reload state found, normal initialization will proceed');
             }
             
-            // Mobile fallback check and forced display
+            // モバイル用の最適化された初期化（フラッシュ防止）
+            const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                document.body.classList.add('mobile-device');
+                console.log('📱 Mobile device detected - optimized initialization');
+            }
+            
+            // 初期画面を即座に表示（フラッシュなし）
             setTimeout(() => {
-                const athleteScreen = document.getElementById('athlete-welcome');
-                const isActive = athleteScreen && athleteScreen.classList.contains('active');
-                const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent);
-                
-                if (!isActive || isMobile) {
-                    console.log('📱 Mobile fallback: Forcing athlete welcome display...');
-                    
-                    if (isMobile) {
-                        document.body.classList.add('mobile-device', 'mobile-fallback');
-                    }
-                    
-                    // Force display with multiple methods
-                    if (athleteScreen) {
-                        athleteScreen.classList.add('active');
-                        athleteScreen.style.display = 'flex';
-                        athleteScreen.style.flexDirection = 'column';
-                        athleteScreen.style.visibility = 'visible';
-                        athleteScreen.style.opacity = '1';
-                        athleteScreen.style.position = 'fixed';
-                        athleteScreen.style.top = '0';
-                        athleteScreen.style.left = '0';
-                        athleteScreen.style.width = '100%';
-                        athleteScreen.style.height = '100%';
-                        athleteScreen.style.zIndex = '1000';
-                        
-                        console.log('📱 Athlete welcome screen force-displayed with inline styles');
-                    }
-                    
-                    showAthleteWelcome();
-                }
-            }, 2000);
+                showAthleteWelcome();
+                console.log('✅ Initial screen displayed without flash');
+            }, 50);
             
             // Emergency fallback for mobile - show after 5 seconds if nothing visible
             setTimeout(() => {
