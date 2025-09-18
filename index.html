@@ -372,6 +372,41 @@
                 -webkit-transform: translateZ(0) !important;
                 will-change: transform, opacity !important;
             }
+            
+            /* Registration画面のモバイル最適化 */
+            #registration.active {
+                display: block !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+                z-index: 1000 !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            #registration .px-8 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            #registration h2 {
+                font-size: 1.5rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            #registration input {
+                font-size: 1rem !important;
+                padding: 0.75rem 0 !important;
+            }
+            
+            #registration button {
+                padding: 1rem 2rem !important;
+                font-size: 0.9rem !important;
+                min-height: 48px !important;
+                touch-action: manipulation !important;
+            }
                 height: 100% !important;
                 z-index: 10000 !important;
                 visibility: visible !important;
@@ -1186,9 +1221,9 @@
                     <!-- Luxury CTA -->
                     <div class="flex-none pb-12 dior-slide-up" style="animation-delay: 2.3s;">
                         <div class="space-y-4">
-                            <button onclick="console.log('Get Started clicked!'); showRegistration();" 
+                            <button onclick="console.log('Get Started clicked!'); console.log('About to call showRegistration()'); try { showRegistration(); console.log('showRegistration() called successfully'); } catch(e) { console.error('Error calling showRegistration():', e); }" 
                                     class="w-full bg-black text-white font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-300 hover:bg-gray-800 border border-black transform hover:scale-105"
-                                    style="touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; cursor: pointer; z-index: 1000; position: relative;">
+                                    style="touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; cursor: pointer; z-index: 1001; position: relative; pointer-events: auto;">
                                 Continue
                             </button>
                             <div class="text-center dior-fade-in" style="animation-delay: 2.5s;">
@@ -3912,57 +3947,106 @@
         
         // Welcome Screenボタンのモバイル対応セットアップ
         function setupWelcomeScreenButtons() {
+            console.log('🔧 setupWelcomeScreenButtons() called - searching for Continue button');
+            
             const welcomeScreen = document.getElementById('welcome');
-            const continueButton = welcomeScreen?.querySelector('button[onclick*="showRegistration"]');
+            console.log('🏠 Welcome screen found:', !!welcomeScreen);
+            
+            // より広範囲でボタンを検索
+            const continueButton = welcomeScreen?.querySelector('button[onclick*="showRegistration"]') ||
+                                 welcomeScreen?.querySelector('button') ||
+                                 document.querySelector('#welcome button');
+            
+            console.log('🔍 Continue button search result:', {
+                found: !!continueButton,
+                innerHTML: continueButton?.innerHTML,
+                onclick: continueButton?.getAttribute('onclick')
+            });
             
             if (continueButton) {
-                console.log('🔧 Setting up Welcome Screen Continue button - mobile optimized');
+                console.log('🔧 Setting up Welcome Screen Continue button - enhanced mobile support');
                 
-                // 既存のイベントリスナーをクリア
-                const newButton = continueButton.cloneNode(true);
-                continueButton.parentNode.replaceChild(newButton, continueButton);
+                // 元のonclick属性を削除してJavaScript制御
+                continueButton.removeAttribute('onclick');
+                
+                // 確実にイベントを削除してから新しいイベントを追加
+                continueButton.onclick = null;
                 
                 // モバイルタッチイベントの設定
-                newButton.addEventListener('touchstart', function(e) {
-                    console.log('👆 Continue button touch start');
+                continueButton.addEventListener('touchstart', function(e) {
+                    console.log('👆 Continue button TOUCH START detected');
                     e.preventDefault();
                     this.style.transform = 'scale(0.98)';
-                    this.style.backgroundColor = '#1f2937'; // ダークグレー
+                    this.style.backgroundColor = '#1f2937';
                 }, { passive: false });
                 
-                newButton.addEventListener('touchend', function(e) {
-                    console.log('👆 Continue button touch end - calling showRegistration()');
+                continueButton.addEventListener('touchend', function(e) {
+                    console.log('👆 Continue button TOUCH END detected - CALLING showRegistration()');
                     e.preventDefault();
                     e.stopPropagation();
                     this.style.transform = 'scale(1)';
-                    this.style.backgroundColor = '#000000'; // 元の黒に戻す
+                    this.style.backgroundColor = '#000000';
                     
-                    // showRegistrationを呼び出し
-                    setTimeout(() => {
+                    // 複数の方法で確実に呼び出し
+                    console.log('🚀 About to call showRegistration()...');
+                    try {
                         showRegistration();
-                    }, 100);
+                        console.log('✅ showRegistration() called successfully from touchend');
+                    } catch (error) {
+                        console.error('❌ Error calling showRegistration() from touchend:', error);
+                    }
                 }, { passive: false });
                 
-                // PC用クリックイベント
-                newButton.addEventListener('click', function(e) {
-                    console.log('🖱️ Continue button click - calling showRegistration()');
+                // PC・モバイル共通クリックイベント
+                continueButton.addEventListener('click', function(e) {
+                    console.log('🖱️ Continue button CLICK detected - CALLING showRegistration()');
                     e.preventDefault();
                     e.stopPropagation();
-                    showRegistration();
+                    
+                    console.log('🚀 About to call showRegistration() from click...');
+                    try {
+                        showRegistration();
+                        console.log('✅ showRegistration() called successfully from click');
+                    } catch (error) {
+                        console.error('❌ Error calling showRegistration() from click:', error);
+                    }
                 }, { passive: false });
                 
                 // ボタンのモバイルスタイリング強化
-                newButton.style.touchAction = 'manipulation';
-                newButton.style.webkitTouchCallout = 'none';
-                newButton.style.webkitUserSelect = 'none';
-                newButton.style.userSelect = 'none';
-                newButton.style.cursor = 'pointer';
-                newButton.style.zIndex = '1000';
-                newButton.style.position = 'relative';
+                continueButton.style.touchAction = 'manipulation';
+                continueButton.style.webkitTouchCallout = 'none';
+                continueButton.style.webkitUserSelect = 'none';
+                continueButton.style.userSelect = 'none';
+                continueButton.style.cursor = 'pointer';
+                continueButton.style.zIndex = '1001';
+                continueButton.style.position = 'relative';
+                continueButton.style.pointerEvents = 'auto';
                 
-                console.log('✅ Continue button mobile events setup completed');
+                // 直接テスト用のdouble-tap防止
+                let lastTouchTime = 0;
+                continueButton.addEventListener('touchstart', function(e) {
+                    const currentTime = new Date().getTime();
+                    if (currentTime - lastTouchTime < 300) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    lastTouchTime = currentTime;
+                });
+                
+                console.log('✅ Continue button mobile events setup completed with enhanced debugging');
             } else {
-                console.warn('⚠️ Continue button not found in Welcome screen');
+                console.error('❌ Continue button NOT FOUND in Welcome screen - check HTML structure');
+                
+                // デバッグ用：Welcome Screen内の全ボタンを表示
+                const allButtons = welcomeScreen?.querySelectorAll('button') || [];
+                console.log('🔍 All buttons in Welcome screen:', allButtons.length);
+                allButtons.forEach((btn, index) => {
+                    console.log(`Button ${index}:`, {
+                        innerHTML: btn.innerHTML,
+                        onclick: btn.getAttribute('onclick'),
+                        classList: Array.from(btn.classList)
+                    });
+                });
             }
         }
         
@@ -4078,10 +4162,22 @@
         }
         
         function showRegistration() {
-            console.log('🎯 Showing registration screen - mobile optimized');
+            console.log('🎯 ===== SHOWREGISTRATION() FUNCTION CALLED =====');
+            console.log('🔄 Attempting to switch to registration screen...');
+            
             try {
-                showScreen('registration');
+                // showScreen関数の呼び出し
+                const showScreenResult = showScreen('registration');
+                console.log('🔄 showScreen() result:', showScreenResult);
+                
                 const regScreen = document.getElementById('registration');
+                console.log('📋 Registration screen element:', {
+                    found: !!regScreen,
+                    display: regScreen?.style.display,
+                    visibility: regScreen?.style.visibility,
+                    classList: Array.from(regScreen?.classList || [])
+                });
+                
                 if (regScreen) {
                     regScreen.classList.add('slide-up');
                     console.log('✅ Registration screen displayed successfully');
