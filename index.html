@@ -346,6 +346,26 @@
                 user-select: none !important;
                 touch-action: manipulation !important;
             }
+            
+            /* Manual Startボタンのモバイル最適化（コンパクト版） */
+            #athlete-welcome button:last-child {
+                backdrop-filter: blur(10px) !important;
+                -webkit-backdrop-filter: blur(10px) !important;
+                background: rgba(255, 255, 255, 0.06) !important;
+                border-color: rgba(255, 255, 255, 0.15) !important;
+                min-height: 36px !important;
+                padding: 8px 16px !important;
+            }
+            
+            #athlete-welcome button:last-child:active {
+                background: rgba(255, 255, 255, 0.12) !important;
+                transform: scale(0.92) !important;
+            }
+            
+            /* Manual Startボタンコンテナの中央配置 */
+            #athlete-welcome .flex.flex-col.items-center {
+                margin-top: 8px;
+            }
         }
         
         /* Mobile device class */
@@ -1018,16 +1038,54 @@
 
                             
                             <div class="text-center dior-fade-in" style="animation-delay: 2.8s;">
-                                <p class="text-xs text-gray-500 font-light">
+                                <p class="text-xs text-gray-500 font-light mb-4">
                                     Touch to commence / 開始
                                 </p>
-                                <!-- スマホ専用の代替ボタン -->
-                                <button onclick="console.log('🚨 Manual Start clicked!'); debugBeginAnalysisButton();" 
-                                        style="margin-top: 15px; padding: 12px 24px; background: #DC2626; color: white; border: none; font-size: 16px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); min-height: 48px; touch-action: manipulation;"
-                                        ontouchstart="this.style.transform='scale(0.95)';"
-                                        ontouchend="this.style.transform='scale(1)';">
-                                    📱 Manual Start →
-                                </button>
+                                
+                                <!-- エレガントな区切り線 -->
+                                <div class="h-px bg-gradient-to-r from-transparent via-gray-400 to-transparent opacity-20 mx-auto mb-6 dior-line-draw" style="animation-delay: 3.0s;"></div>
+                                
+                                <!-- 透明レイヤー代替ボタン（コンパクト版） -->
+                                <div class="flex flex-col items-center">
+                                    <button onclick="console.log('🚨 Manual Start clicked!'); debugBeginAnalysisButton();" 
+                                            ontouchstart="this.style.transform='scale(0.95)'; this.style.backdropFilter='blur(15px)';"
+                                            ontouchend="this.style.transform='scale(1)'; this.style.backdropFilter='blur(10px)';"
+                                            class="dior-fade-in"
+                                            style="
+                                                margin-top: 8px; 
+                                                padding: 6px 14px; 
+                                                background: rgba(255, 255, 255, 0.05);
+                                                backdrop-filter: blur(8px);
+                                                -webkit-backdrop-filter: blur(8px);
+                                                border: 1px solid rgba(255, 255, 255, 0.12);
+                                                color: rgba(255, 255, 255, 0.7);
+                                                font-size: 9px; 
+                                                border-radius: 4px; 
+                                                font-weight: 300; 
+                                                cursor: pointer; 
+                                                box-shadow: 
+                                                    0 2px 8px rgba(0, 0, 0, 0.06),
+                                                    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+                                                min-height: 32px; 
+                                                touch-action: manipulation;
+                                                transition: all 0.3s ease;
+                                                letter-spacing: 1.5px;
+                                                text-transform: uppercase;
+                                                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                                                opacity: 0.6;
+                                                animation-delay: 3.2s;
+                                                display: inline-block;
+                                            "
+                                            onmouseover="this.style.background='rgba(255, 255, 255, 0.08)'; this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.opacity='0.9';"
+                                            onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'; this.style.borderColor='rgba(255, 255, 255, 0.12)'; this.style.opacity='0.6';">
+                                        Manual Start
+                                    </button>
+                                    
+                                    <!-- サブテキスト -->
+                                    <p class="text-xs text-gray-600 font-light mt-2 dior-fade-in" style="animation-delay: 3.4s; opacity: 0.4; font-size: 10px;">
+                                        Emergency Access
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
