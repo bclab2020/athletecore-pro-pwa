@@ -421,9 +421,9 @@
             flex-direction: column;
         }
         
-        /* その他の画面は初期非表示 */
+        /* その他の画面は初期非表示（!importantを削除して後で上書き可能に） */
         #welcome, #registration, #dashboard, #static-analysis, #dynamic-analysis, #results, #history, #splash {
-            display: none !important;
+            display: none;
         }
         }
         
@@ -972,14 +972,18 @@
                         <!-- Elegant Call to Action -->
                         <div class="space-y-6 w-full max-w-xs dior-slide-up relative z-20" style="animation-delay: 2.6s;">
                             <!-- メインの Begin Analysis ボタン -->
-                            <div onclick="console.log('🔥 Container clicked!'); showWelcome();" 
+                            <div onclick="console.log('🔥 Container clicked!'); try { showWelcome(); } catch(e) { console.error('Container click error:', e); }" 
+                                 onmousedown="console.log('🖱️ Container mouse down');"
+                                 onmouseup="console.log('🖱️ Container mouse up');"
+                                 ontouchstart="console.log('👆 Container touch start');"
+                                 ontouchend="console.log('👆 Container touch end'); try { showWelcome(); } catch(e) { console.error('Touch end error:', e); }"
                                  style="position: relative; z-index: 1000; cursor: pointer; pointer-events: auto;"
                                  class="w-full bg-white text-black font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-200 hover:bg-gray-100 border-2 border-white shadow-lg transform hover:scale-105 hover:shadow-2xl active:scale-95 touch-manipulation">
                                 <span style="pointer-events: none; display: block;">Begin Analysis</span>
                             </div>
                             
                             <!-- バックアップボタン -->
-                            <button onclick="console.log('🔥 Backup button clicked!'); showWelcome();" 
+                            <button onclick="console.log('🔥 Backup button clicked!'); try { showWelcome(); } catch(e) { console.error('Backup button error:', e); }" 
                                     style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; background: transparent; border: none; z-index: 1001; cursor: pointer;">
                             </button>
                             
@@ -988,9 +992,9 @@
                                     Touch to commence / 開始
                                 </p>
                                 <!-- デバッグ用の代替ボタン -->
-                                <button onclick="console.log('🚨 Emergency button clicked!'); debugBeginAnalysisButton();" 
-                                        style="margin-top: 10px; padding: 8px 15px; background: #1E3A8A; color: white; border: none; font-size: 12px; border-radius: 4px;">
-                                    Manual Start
+                                <button onclick="console.log('🚨 Manual Start clicked!'); debugBeginAnalysisButton();" 
+                                        style="margin-top: 15px; padding: 10px 20px; background: #059669; color: white; border: none; font-size: 14px; border-radius: 6px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);">
+                                    Manual Start →
                                 </button>
                             </div>
                         </div>
@@ -1670,8 +1674,6 @@
                 allScreens.forEach(screen => {
                     screen.classList.remove('active');
                     screen.style.display = 'none'; // Force hide for mobile
-                    // 初期表示制御CSSをクリア
-                    screen.style.removeProperty('display');
                 });
                 
                 // 初期表示制御CSSをリセット（1回のみ実行）
@@ -1692,7 +1694,11 @@
                     targetScreen.classList.add('active');
                     targetScreen.style.display = 'flex'; // Force show for mobile
                     targetScreen.style.flexDirection = 'column';
+                    targetScreen.style.visibility = 'visible';
+                    targetScreen.style.opacity = '1';
                     console.log(`✅ Screen '${screenId}' activated successfully`);
+                    console.log(`🔍 Target screen display: ${targetScreen.style.display}`);
+                    console.log(`🔍 Target screen visibility: ${targetScreen.style.visibility}`);
                     currentScreen = screenId;
                     
                     // Mobile-specific visibility fix
@@ -1707,6 +1713,8 @@
                     console.error(`❌ Screen '${screenId}' not found`);
                     return false;
                 }
+                
+                return true;
                 
                 // Hide all floating buttons when switching screens
                 if (typeof hideAllFloatingButtons === 'function') {
@@ -3660,19 +3668,41 @@
         function showWelcome() {
             console.log('🎯 showWelcome() function called successfully!');
             console.log('🔄 Switching from athlete-welcome to welcome screen');
-            showScreen('welcome');
-            const welcomeScreen = document.getElementById('welcome');
-            welcomeScreen.classList.add('fade-in');
-            // Dior Sport エレガントアニメーションの再適用
-            setTimeout(() => {
-                const elements = welcomeScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw');
-                elements.forEach((el, index) => {
-                    el.style.animation = 'none';
-                    setTimeout(() => {
-                        el.style.animation = '';
-                    }, 50 + index * 100);
+            
+            try {
+                // showScreen関数を呼び出し
+                const screenSwitchResult = showScreen('welcome');
+                console.log('🔄 showScreen result:', screenSwitchResult);
+                
+                const welcomeScreen = document.getElementById('welcome');
+                console.log('🏠 Welcome screen element:', {
+                    exists: !!welcomeScreen,
+                    display: welcomeScreen?.style.display,
+                    visibility: welcomeScreen?.style.visibility,
+                    classList: Array.from(welcomeScreen?.classList || [])
                 });
-            }, 100);
+                
+                if (welcomeScreen) {
+                    welcomeScreen.classList.add('fade-in');
+                    console.log('✅ fade-in class added to welcome screen');
+                    
+                    // Dior Sport エレガントアニメーションの再適用
+                    setTimeout(() => {
+                        const elements = welcomeScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw');
+                        console.log(`🎭 Found ${elements.length} animation elements in welcome screen`);
+                        elements.forEach((el, index) => {
+                            el.style.animation = 'none';
+                            setTimeout(() => {
+                                el.style.animation = '';
+                            }, 50 + index * 100);
+                        });
+                    }, 100);
+                } else {
+                    console.error('❌ Welcome screen element not found!');
+                }
+            } catch (error) {
+                console.error('❌ Error in showWelcome():', error);
+            }
         }
         
         // Begin Analysisボタンに追加のイベントリスナーを設定
@@ -3718,7 +3748,9 @@
             console.log('🔍 === Begin Analysis Button Debug ===');
             
             const athleteScreen = document.getElementById('athlete-welcome');
+            const welcomeScreen = document.getElementById('welcome');
             const button = athleteScreen?.querySelector('button[onclick*="showWelcome"]');
+            const container = athleteScreen?.querySelector('div[onclick*="showWelcome"]');
             
             console.log('📱 Athlete Screen:', {
                 exists: !!athleteScreen,
@@ -3727,27 +3759,35 @@
                 classList: Array.from(athleteScreen?.classList || [])
             });
             
+            console.log('🏠 Welcome Screen:', {
+                exists: !!welcomeScreen,
+                display: welcomeScreen?.style.display || 'default',
+                visibility: welcomeScreen?.style.visibility || 'default',
+                classList: Array.from(welcomeScreen?.classList || [])
+            });
+            
             console.log('🔘 Begin Analysis Button:', {
                 exists: !!button,
                 text: button?.textContent?.trim(),
                 onclick: button?.getAttribute('onclick'),
-                style: button ? {
-                    position: button.style.position,
-                    zIndex: button.style.zIndex,
-                    pointerEvents: button.style.pointerEvents,
-                    cursor: button.style.cursor
-                } : null,
                 boundingRect: button ? button.getBoundingClientRect() : null
             });
             
-            if (button) {
-                console.log('✅ Button found! Attempting manual click...');
-                button.click();
-            } else {
-                console.log('❌ Button not found!');
+            console.log('📦 Button Container:', {
+                exists: !!container,
+                onclick: container?.getAttribute('onclick'),
+                boundingRect: container ? container.getBoundingClientRect() : null
+            });
+            
+            console.log('🔄 Testing showWelcome() function...');
+            try {
+                showWelcome();
+                console.log('✅ showWelcome() executed successfully');
+            } catch (error) {
+                console.error('❌ showWelcome() failed:', error);
             }
             
-            return { athleteScreen, button };
+            return { athleteScreen, welcomeScreen, button, container };
         }
         
         function showRegistration() {
@@ -3935,7 +3975,16 @@
                 
                 // 初期表示を完了してからbodyを可視化
                 document.body.style.visibility = 'visible';
-                console.log('🎨 Body visibility enabled - no flash effect');
+                
+                // athlete-welcome画面も確実に可視化
+                const athleteScreen = document.getElementById('athlete-welcome');
+                if (athleteScreen) {
+                    athleteScreen.style.visibility = 'visible';
+                    athleteScreen.style.opacity = '1';
+                    console.log('🎨 Body and athlete screen visibility enabled - no flash effect');
+                } else {
+                    console.log('🎨 Body visibility enabled - no flash effect');
+                }
                 
                 // アニメーションを適用
                 setTimeout(() => {
