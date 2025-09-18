@@ -317,6 +317,37 @@
             opacity: 1 !important;
         }
         
+        /* モバイル専用の強制スタイル */
+        @media (max-width: 768px) {
+            /* Welcome画面の強制表示 */
+            #welcome.active {
+                display: flex !important;
+                flex-direction: column !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 10000 !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            /* Athlete-welcome画面の隠蔽 */
+            #athlete-welcome:not(.active) {
+                display: none !important;
+            }
+            
+            /* Begin Analysisボタンの強制タッチ対応 */
+            #athlete-welcome button {
+                -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3) !important;
+                -webkit-touch-callout: none !important;
+                -webkit-user-select: none !important;
+                user-select: none !important;
+                touch-action: manipulation !important;
+            }
+        }
+        
         /* Mobile device class */
         .mobile-device .app-screen {
             transform: translateZ(0); /* Hardware acceleration */
@@ -972,29 +1003,30 @@
                         <!-- Elegant Call to Action -->
                         <div class="space-y-6 w-full max-w-xs dior-slide-up relative z-20" style="animation-delay: 2.6s;">
                             <!-- メインの Begin Analysis ボタン -->
-                            <div onclick="console.log('🔥 Container clicked!'); try { showWelcome(); } catch(e) { console.error('Container click error:', e); }" 
-                                 onmousedown="console.log('🖱️ Container mouse down');"
-                                 onmouseup="console.log('🖱️ Container mouse up');"
-                                 ontouchstart="console.log('👆 Container touch start');"
-                                 ontouchend="console.log('👆 Container touch end'); try { showWelcome(); } catch(e) { console.error('Touch end error:', e); }"
-                                 style="position: relative; z-index: 1000; cursor: pointer; pointer-events: auto;"
-                                 class="w-full bg-white text-black font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-200 hover:bg-gray-100 border-2 border-white shadow-lg transform hover:scale-105 hover:shadow-2xl active:scale-95 touch-manipulation">
-                                <span style="pointer-events: none; display: block;">Begin Analysis</span>
-                            </div>
-                            
-                            <!-- バックアップボタン -->
-                            <button onclick="console.log('🔥 Backup button clicked!'); try { showWelcome(); } catch(e) { console.error('Backup button error:', e); }" 
-                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 60px; background: transparent; border: none; z-index: 1001; cursor: pointer;">
+                            <button type="button"
+                                    onclick="console.log('🔥 Button clicked!'); try { showWelcome(); } catch(e) { console.error('Button click error:', e); }" 
+                                    onmousedown="console.log('🖱️ Button mouse down');"
+                                    onmouseup="console.log('🖱️ Button mouse up');"
+                                    ontouchstart="console.log('👆 Button touch start'); this.style.transform='scale(0.95)'; this.style.backgroundColor='#f3f4f6';"
+                                    ontouchend="console.log('👆 Button touch end - calling showWelcome'); this.style.transform='scale(1)'; this.style.backgroundColor='white'; try { showWelcome(); } catch(e) { console.error('Touch end error:', e); }"
+                                    ontouchcancel="console.log('👆 Button touch cancel'); this.style.transform='scale(1)'; this.style.backgroundColor='white';"
+                                    style="position: relative; z-index: 1000; cursor: pointer; pointer-events: auto; width: 100%; border: none; outline: none;"
+                                    class="bg-white text-black font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-200 hover:bg-gray-100 border-2 border-white shadow-lg transform hover:scale-105 hover:shadow-2xl active:scale-95 touch-manipulation">
+                                Begin Analysis
                             </button>
+                            
+
                             
                             <div class="text-center dior-fade-in" style="animation-delay: 2.8s;">
                                 <p class="text-xs text-gray-500 font-light">
                                     Touch to commence / 開始
                                 </p>
-                                <!-- デバッグ用の代替ボタン -->
+                                <!-- スマホ専用の代替ボタン -->
                                 <button onclick="console.log('🚨 Manual Start clicked!'); debugBeginAnalysisButton();" 
-                                        style="margin-top: 15px; padding: 10px 20px; background: #059669; color: white; border: none; font-size: 14px; border-radius: 6px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);">
-                                    Manual Start →
+                                        style="margin-top: 15px; padding: 12px 24px; background: #DC2626; color: white; border: none; font-size: 16px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4); min-height: 48px; touch-action: manipulation;"
+                                        ontouchstart="this.style.transform='scale(0.95)';"
+                                        ontouchend="this.style.transform='scale(1)';">
+                                    📱 Manual Start →
                                 </button>
                             </div>
                         </div>
@@ -1702,12 +1734,25 @@
                     currentScreen = screenId;
                     
                     // Mobile-specific visibility fix
-                    if (/Mobile|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                    const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                    if (isMobile) {
+                        // Force mobile display settings
+                        targetScreen.style.setProperty('display', 'flex', 'important');
+                        targetScreen.style.setProperty('flex-direction', 'column', 'important');
+                        targetScreen.style.setProperty('visibility', 'visible', 'important');
+                        targetScreen.style.setProperty('opacity', '1', 'important');
+                        targetScreen.style.setProperty('position', 'absolute', 'important');
+                        targetScreen.style.setProperty('top', '0', 'important');
+                        targetScreen.style.setProperty('left', '0', 'important');
+                        targetScreen.style.setProperty('width', '100%', 'important');
+                        targetScreen.style.setProperty('height', '100%', 'important');
+                        console.log(`📱 Mobile force visibility applied to ${screenId}`);
+                        
+                        // Additional mobile-specific timeout
                         setTimeout(() => {
-                            targetScreen.style.visibility = 'visible';
-                            targetScreen.style.opacity = '1';
-                            console.log(`📱 Mobile visibility fix applied to ${screenId}`);
-                        }, 50);
+                            targetScreen.scrollIntoView({ behavior: 'instant', block: 'start' });
+                            console.log(`📱 Mobile scroll fix applied to ${screenId}`);
+                        }, 100);
                     }
                 } else {
                     console.error(`❌ Screen '${screenId}' not found`);
@@ -3709,85 +3754,115 @@
         function setupBeginAnalysisButton() {
             setTimeout(() => {
                 const athleteScreen = document.getElementById('athlete-welcome');
-                const button = athleteScreen?.querySelector('button[onclick*="showWelcome"]');
+                const button = athleteScreen?.querySelector('button');
                 
                 if (button) {
-                    console.log('🔧 Setting up additional event listeners for Begin Analysis button');
+                    console.log('🔧 Setting up mobile-optimized event listeners for Begin Analysis button');
                     
-                    // 追加のイベントリスナー
-                    button.addEventListener('click', function(e) {
-                        console.log('🎯 Begin Analysis button clicked via addEventListener!');
+                    // モバイル専用のタッチイベント
+                    button.addEventListener('touchstart', function(e) {
+                        console.log('👆 Touch start - mobile addEventListener');
                         e.preventDefault();
-                        showWelcome();
+                        this.style.transform = 'scale(0.95)';
+                        this.style.backgroundColor = '#f3f4f6';
                     }, { passive: false });
                     
                     button.addEventListener('touchend', function(e) {
-                        console.log('👆 Begin Analysis button touched via addEventListener!');
+                        console.log('👆 Touch end - mobile addEventListener - calling showWelcome()');
                         e.preventDefault();
+                        e.stopPropagation();
+                        this.style.transform = 'scale(1)';
+                        this.style.backgroundColor = 'white';
+                        
+                        // 確実にshowWelcome()を呼び出し
+                        setTimeout(() => {
+                            showWelcome();
+                        }, 50);
+                    }, { passive: false });
+                    
+                    // クリックイベントも追加（PC互換性）
+                    button.addEventListener('click', function(e) {
+                        console.log('🖱️ Click - addEventListener - calling showWelcome()');
+                        e.preventDefault();
+                        e.stopPropagation();
                         showWelcome();
                     }, { passive: false });
                     
-                    // ボタンエリア全体をクリッカブルにする
-                    const buttonContainer = button.parentElement;
-                    buttonContainer.addEventListener('click', function(e) {
-                        console.log('🎯 Button container clicked!');
-                        if (e.target === buttonContainer || e.target === button) {
-                            showWelcome();
-                        }
-                    });
-                    
-                    console.log('✅ Additional event listeners setup complete');
+                    // モバイルデバイス検出とログ
+                    const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                    console.log(`✅ Additional event listeners setup complete (Mobile: ${isMobile})`);
                 } else {
                     console.log('❌ Begin Analysis button not found for event listener setup');
                 }
-            }, 3000); // 3秒後に設定（アニメーション完了を待つ）
+            }, 2000); // 2秒後に設定（アニメーション完了を待つ）
         }
         
         // Begin Analysisボタン診断機能
         function debugBeginAnalysisButton() {
-            console.log('🔍 === Begin Analysis Button Debug ===');
+            console.log('🔍 === Begin Analysis Button Debug (Mobile Optimized) ===');
             
             const athleteScreen = document.getElementById('athlete-welcome');
             const welcomeScreen = document.getElementById('welcome');
-            const button = athleteScreen?.querySelector('button[onclick*="showWelcome"]');
-            const container = athleteScreen?.querySelector('div[onclick*="showWelcome"]');
+            const button = athleteScreen?.querySelector('button');
+            const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            
+            console.log('📱 Device Info:', {
+                isMobile: isMobile,
+                userAgent: navigator.userAgent,
+                viewport: `${window.innerWidth}x${window.innerHeight}`,
+                devicePixelRatio: window.devicePixelRatio
+            });
             
             console.log('📱 Athlete Screen:', {
                 exists: !!athleteScreen,
                 display: athleteScreen?.style.display || 'default',
                 visibility: athleteScreen?.style.visibility || 'default',
-                classList: Array.from(athleteScreen?.classList || [])
+                classList: Array.from(athleteScreen?.classList || []),
+                computedStyle: athleteScreen ? getComputedStyle(athleteScreen).display : null
             });
             
             console.log('🏠 Welcome Screen:', {
                 exists: !!welcomeScreen,
                 display: welcomeScreen?.style.display || 'default',
                 visibility: welcomeScreen?.style.visibility || 'default',
-                classList: Array.from(welcomeScreen?.classList || [])
+                classList: Array.from(welcomeScreen?.classList || []),
+                computedStyle: welcomeScreen ? getComputedStyle(welcomeScreen).display : null
             });
             
             console.log('🔘 Begin Analysis Button:', {
                 exists: !!button,
                 text: button?.textContent?.trim(),
                 onclick: button?.getAttribute('onclick'),
-                boundingRect: button ? button.getBoundingClientRect() : null
-            });
-            
-            console.log('📦 Button Container:', {
-                exists: !!container,
-                onclick: container?.getAttribute('onclick'),
-                boundingRect: container ? container.getBoundingClientRect() : null
+                boundingRect: button ? button.getBoundingClientRect() : null,
+                style: button ? {
+                    display: button.style.display || 'default',
+                    visibility: button.style.visibility || 'default',
+                    pointerEvents: button.style.pointerEvents || 'default',
+                    zIndex: button.style.zIndex || 'default'
+                } : null
             });
             
             console.log('🔄 Testing showWelcome() function...');
             try {
                 showWelcome();
                 console.log('✅ showWelcome() executed successfully');
+                
+                // 画面遷移後の状態確認
+                setTimeout(() => {
+                    const welcomeAfter = document.getElementById('welcome');
+                    console.log('🏠 Welcome Screen After Transition:', {
+                        display: welcomeAfter?.style.display || 'default',
+                        visibility: welcomeAfter?.style.visibility || 'default',
+                        classList: Array.from(welcomeAfter?.classList || []),
+                        computedStyle: welcomeAfter ? getComputedStyle(welcomeAfter).display : null
+                    });
+                }, 500);
+                
             } catch (error) {
                 console.error('❌ showWelcome() failed:', error);
             }
             
-            return { athleteScreen, welcomeScreen, button, container };
+            return { athleteScreen, welcomeScreen, button, isMobile };
         }
         
         function showRegistration() {
