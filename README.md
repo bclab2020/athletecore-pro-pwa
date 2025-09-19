@@ -46,6 +46,26 @@
    }
    ```
 
+### ✅ Continueボタン → Registration画面遷移問題解決
+
+**問題**: ContinueボタンからRegistration画面に遷移しない問題
+
+**解決策**:
+1. **デバッグ情報強化**: `setupWelcomeScreenButtons()`に詳細ログ追加
+2. **イベント処理改善**: 
+   - `onclick`属性の削除とJavaScript完全制御
+   - 複数イベント（`touchend`, `click`）での確実な呼び出し
+3. **Registration画面CSS最適化**:
+   ```css
+   @media (max-width: 768px) {
+       #registration.active {
+           display: block !important;
+           height: 100vh !important;
+           z-index: 1000 !important;
+       }
+   }
+   ```
+
 **技術詳細**:
 ```css
 /* 修正前 */
