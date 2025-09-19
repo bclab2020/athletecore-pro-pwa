@@ -1303,7 +1303,7 @@
                             </div>
                             
                             <div class="pt-8">
-                                <button type="button" onclick="handleRegistration()" 
+                                <button type="button" id="registrationCompleteBtn"
                                         class="w-full bg-black text-white font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-300 hover:bg-gray-800">
                                     Complete Profile
                                 </button>
@@ -4232,6 +4232,11 @@
                         });
                     }, animationDelay);
                     
+                    // 登録ボタンのイベント設定
+                    setTimeout(() => {
+                        setupRegistrationButton();
+                    }, 300);
+                    
                     // デバッグ情報の表示（5秒後）
                     setTimeout(() => {
                         debugRegistrationStatus();
@@ -4280,30 +4285,112 @@
             console.log('🔍 ===== END DEBUG =====');
         }
         
+        // 登録ボタンのセットアップ関数
+        function setupRegistrationButton() {
+            console.log('🔧 Setting up registration button...');
+            
+            const registrationBtn = document.getElementById('registrationCompleteBtn');
+            console.log('🔍 Registration button found:', !!registrationBtn);
+            
+            if (registrationBtn) {
+                // 既存のイベントを削除
+                registrationBtn.onclick = null;
+                
+                // モバイル対応のイベントリスナーを追加
+                registrationBtn.addEventListener('touchstart', function(e) {
+                    console.log('👆 Registration button TOUCH START');
+                    e.preventDefault();
+                    this.style.transform = 'scale(0.98)';
+                    this.style.backgroundColor = '#1f2937';
+                }, { passive: false });
+                
+                registrationBtn.addEventListener('touchend', function(e) {
+                    console.log('👆 Registration button TOUCH END - calling handleRegistration()');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.style.transform = 'scale(1)';
+                    this.style.backgroundColor = '#000000';
+                    
+                    try {
+                        handleRegistration();
+                        console.log('✅ handleRegistration() called from touchend');
+                    } catch (error) {
+                        console.error('❌ Error calling handleRegistration() from touchend:', error);
+                    }
+                }, { passive: false });
+                
+                // PC・モバイル共通クリックイベント
+                registrationBtn.addEventListener('click', function(e) {
+                    console.log('🖱️ Registration button CLICK - calling handleRegistration()');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    try {
+                        handleRegistration();
+                        console.log('✅ handleRegistration() called from click');
+                    } catch (error) {
+                        console.error('❌ Error calling handleRegistration() from click:', error);
+                    }
+                }, { passive: false });
+                
+                // モバイルスタイリング
+                registrationBtn.style.touchAction = 'manipulation';
+                registrationBtn.style.webkitTouchCallout = 'none';
+                registrationBtn.style.webkitUserSelect = 'none';
+                registrationBtn.style.userSelect = 'none';
+                registrationBtn.style.cursor = 'pointer';
+                registrationBtn.style.pointerEvents = 'auto';
+                
+                console.log('✅ Registration button setup completed with enhanced event handling');
+            } else {
+                console.error('❌ Registration button not found with ID: registrationCompleteBtn');
+            }
+        }
+        
         // グローバルデバッグ関数
         window.debugRegistration = debugRegistrationStatus;
         
         function showDashboard() {
-            console.log('Showing dashboard screen');
+            console.log('🎯 ===== SHOWDASHBOARD() FUNCTION CALLED =====');
+            console.log('📊 Attempting to switch to dashboard screen...');
             
             try {
                 // Exit any fullscreen mode first
+                console.log('🔄 Exiting fullscreen modes...');
                 exitFullscreenMode('static');
                 exitFullscreenMode('dynamic');
                 
                 // Stop camera and pose detection if running
+                console.log('🔄 Stopping camera and pose detection...');
                 if (typeof stopCamera === 'function') stopCamera();
                 if (typeof stopPoseDetection === 'function') stopPoseDetection();
                 if (typeof isAnalyzing !== 'undefined') isAnalyzing = false;
                 
-                showScreen('dashboard');
+                console.log('🔄 Calling showScreen("dashboard")...');
+                const showScreenResult = showScreen('dashboard');
+                console.log('🔄 showScreen result:', showScreenResult);
+                
                 const dashScreen = document.getElementById('dashboard');
+                console.log('📊 Dashboard screen element:', {
+                    found: !!dashScreen,
+                    display: dashScreen?.style.display,
+                    visibility: dashScreen?.style.visibility,
+                    classList: Array.from(dashScreen?.classList || [])
+                });
                 if (dashScreen) {
                     dashScreen.classList.add('fade-in');
                     console.log('✅ Dashboard screen displayed successfully');
+                    console.log('📱 Dashboard screen state:', {
+                        classList: Array.from(dashScreen.classList),
+                        display: dashScreen.style.display || getComputedStyle(dashScreen).display,
+                        visibility: dashScreen.style.visibility || getComputedStyle(dashScreen).visibility,
+                        active: dashScreen.classList.contains('active')
+                    });
+                    
                     // Dior Sport エレガントアニメーションの再適用
                     setTimeout(() => {
                         const elements = dashScreen.querySelectorAll('.dior-fade-in, .dior-slide-up, .dior-line-draw');
+                        console.log('🎭 Applying animations to', elements.length, 'elements');
                         elements.forEach((el, index) => {
                             el.style.animation = 'none';
                             setTimeout(() => {
@@ -4315,11 +4402,15 @@
                     console.error('❌ Dashboard screen element not found');
                 }
                 
+                console.log('🔄 Calling updateDashboardContent...');
                 if (typeof updateDashboardContent === 'function') {
                     updateDashboardContent();
+                    console.log('✅ updateDashboardContent called successfully');
                 } else {
                     console.warn('⚠️ updateDashboardContent function not found');
                 }
+                
+                console.log('✅ showDashboard() completed successfully');
             } catch (error) {
                 console.error('❌ Error showing dashboard screen:', error);
             }
@@ -6607,11 +6698,19 @@
         // Navigation functions already defined above
         
         async function handleRegistration() {
+            console.log('🎯 ===== HANDLEREGISTRATION() FUNCTION CALLED =====');
+            console.log('📝 Starting registration process...');
+            
             const form = document.getElementById('profileForm');
+            console.log('📋 Form found:', !!form);
+            
             if (!form.checkValidity()) {
+                console.log('❌ Form validation failed');
                 form.reportValidity();
                 return;
             }
+
+            console.log('✅ Form validation passed');
 
             const profileData = {
                 id: generateUUID(),
@@ -6624,21 +6723,33 @@
                 created_at: new Date().toISOString()
             };
 
+            console.log('👤 Profile data created:', {
+                id: profileData.id,
+                name: profileData.name,
+                sport: profileData.primary_sport,
+                experience: profileData.experience_level
+            });
+
             // オフライン対応：ローカルストレージに保存
             try {
                 localStorage.setItem('athletecore_user', JSON.stringify(profileData));
                 currentUser = profileData;
-                console.log('✅ Profile saved locally:', currentUser);
+                console.log('✅ Profile saved locally:', currentUser.name);
                 
                 // Create sample analysis data for the new user
+                console.log('📊 Creating sample analysis data...');
                 createSampleAnalysisData();
                 
+                console.log('🚀 About to call showDashboard()...');
                 showDashboard();
+                console.log('✅ showDashboard() called successfully');
             } catch (error) {
-                console.error('Local storage error:', error);
+                console.error('❌ Local storage error:', error);
                 // ローカルストレージが使えない場合でもメモリに保存
                 currentUser = profileData;
+                console.log('🚀 Fallback: About to call showDashboard()...');
                 showDashboard();
+                console.log('✅ Fallback showDashboard() called successfully');
             }
         }
         
