@@ -3909,10 +3909,6 @@
             console.log('🎯 showWelcome() function called - mobile optimized!');
             console.log('🔄 Switching from athlete-welcome to welcome screen');
             
-            // 既存ユーザーかどうかをチェック
-            const isExistingUser = currentUser && currentUser.name;
-            console.log('👤 Existing user check:', isExistingUser ? `Yes - ${currentUser.name}` : 'No - new user');
-            
             try {
                 // showScreen関数を呼び出し
                 const screenSwitchResult = showScreen('welcome');
@@ -3923,11 +3919,6 @@
                 
                 if (welcomeScreen) {
                     welcomeScreen.classList.add('fade-in');
-                    
-                    // 既存ユーザー向けにコンテンツを更新
-                    if (isExistingUser) {
-                        updateWelcomeForExistingUser();
-                    }
                     
                     // モバイル用Continueボタンのセットアップを即座に実行
                     setupWelcomeScreenButtons();
@@ -3963,55 +3954,6 @@
                 
             } catch (error) {
                 console.error('❌ Error in showWelcome():', error);
-            }
-        }
-        
-        // 既存ユーザー向けのウェルカム画面更新
-        function updateWelcomeForExistingUser() {
-            console.log('👤 Updating welcome screen for existing user:', currentUser.name);
-            
-            const welcomeScreen = document.getElementById('welcome');
-            if (!welcomeScreen) return;
-            
-            // ユーザー名を表示するテキストを更新
-            const welcomeTitle = welcomeScreen.querySelector('h1');
-            const welcomeSubtitle = welcomeScreen.querySelector('.subtitle, p');
-            
-            if (welcomeTitle) {
-                welcomeTitle.innerHTML = `おかえりなさい<br><span style="color: #d4af37; font-weight: 600;">${currentUser.name}さん</span>`;
-                console.log('✅ Welcome title updated for existing user');
-            }
-            
-            if (welcomeSubtitle) {
-                // 前回の分析から経過した日数を計算
-                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-                const userResults = results.filter(r => r.user_id === currentUser.id);
-                
-                let subtitleText = '今日も最高のパフォーマンスを目指しましょう';
-                if (userResults.length > 0) {
-                    const lastAnalysis = new Date(userResults[userResults.length - 1].analysis_date);
-                    const daysSince = Math.floor((new Date() - lastAnalysis) / (1000 * 60 * 60 * 24));
-                    
-                    if (daysSince === 0) {
-                        subtitleText = '今日も分析を続けていますね。素晴らしい継続力です！';
-                    } else if (daysSince === 1) {
-                        subtitleText = '昨日の分析結果を確認して、今日も挑戦しましょう！';
-                    } else if (daysSince <= 7) {
-                        subtitleText = `${daysSince}日ぶりですね！継続的な改善を続けていきましょう`;
-                    } else {
-                        subtitleText = 'お久しぶりです！新たな目標に向けて再スタートしましょう';
-                    }
-                }
-                
-                welcomeSubtitle.textContent = subtitleText;
-                console.log('✅ Welcome subtitle updated:', subtitleText);
-            }
-            
-            // Continue ボタンのテキストも更新
-            const continueButton = welcomeScreen.querySelector('button');
-            if (continueButton) {
-                continueButton.innerHTML = '📊 ダッシュボードへ';
-                console.log('✅ Continue button text updated for existing user');
             }
         }
         
@@ -4051,57 +3993,34 @@
                 }, { passive: false });
                 
                 continueButton.addEventListener('touchend', function(e) {
-                    console.log('👆 Continue button TOUCH END detected');
+                    console.log('👆 Continue button TOUCH END detected - CALLING showRegistration()');
                     e.preventDefault();
                     e.stopPropagation();
                     this.style.transform = 'scale(1)';
                     this.style.backgroundColor = '#000000';
                     
-                    // 既存ユーザーかどうかで分岐
-                    const isExistingUser = currentUser && currentUser.name;
-                    if (isExistingUser) {
-                        console.log('👤 Existing user - navigating to dashboard');
-                        try {
-                            showDashboard();
-                            console.log('✅ showDashboard() called successfully from touchend');
-                        } catch (error) {
-                            console.error('❌ Error calling showDashboard() from touchend:', error);
-                        }
-                    } else {
-                        console.log('🆕 New user - navigating to registration');
-                        try {
-                            showRegistration();
-                            console.log('✅ showRegistration() called successfully from touchend');
-                        } catch (error) {
-                            console.error('❌ Error calling showRegistration() from touchend:', error);
-                        }
+                    // 複数の方法で確実に呼び出し
+                    console.log('🚀 About to call showRegistration()...');
+                    try {
+                        showRegistration();
+                        console.log('✅ showRegistration() called successfully from touchend');
+                    } catch (error) {
+                        console.error('❌ Error calling showRegistration() from touchend:', error);
                     }
                 }, { passive: false });
                 
                 // PC・モバイル共通クリックイベント
                 continueButton.addEventListener('click', function(e) {
-                    console.log('🖱️ Continue button CLICK detected');
+                    console.log('🖱️ Continue button CLICK detected - CALLING showRegistration()');
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // 既存ユーザーかどうかで分岐
-                    const isExistingUser = currentUser && currentUser.name;
-                    if (isExistingUser) {
-                        console.log('👤 Existing user - navigating to dashboard');
-                        try {
-                            showDashboard();
-                            console.log('✅ showDashboard() called successfully from click');
-                        } catch (error) {
-                            console.error('❌ Error calling showDashboard() from click:', error);
-                        }
-                    } else {
-                        console.log('🆕 New user - navigating to registration');
-                        try {
-                            showRegistration();
-                            console.log('✅ showRegistration() called successfully from click');
-                        } catch (error) {
-                            console.error('❌ Error calling showRegistration() from click:', error);
-                        }
+                    console.log('🚀 About to call showRegistration() from click...');
+                    try {
+                        showRegistration();
+                        console.log('✅ showRegistration() called successfully from click');
+                    } catch (error) {
+                        console.error('❌ Error calling showRegistration() from click:', error);
                     }
                 }, { passive: false });
                 
@@ -4600,22 +4519,12 @@
                 console.log('🔄 Normal app initialization - no smart reload detected');
                 loadLocalUser();
                 
-                // 既存ユーザーがいる場合は直接ダッシュボードへ
-                if (currentUser && currentUser.name) {
-                    console.log('👤 Existing user detected in main init:', currentUser.name, '- showing dashboard');
-                    setTimeout(() => {
-                        showDashboard();
-                        console.log('✅ Dashboard shown for existing user in main init');
-                    }, 100);
-                    return; // 以降の処理をスキップ
-                }
-                
                 // Mobile device detection and optimized initialization
                 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
                 console.log(`📱 Device detected: ${isMobile ? 'Mobile' : 'Desktop'}`);
                 
-                // Athlete welcome画面は既にCSSで表示済みなので、アニメーション設定のみ（新規ユーザーの場合のみ）
-                console.log('🏆 New user - preparing Athlete Welcome screen');
+                // Athlete welcome画面は既にCSSで表示済みなので、アニメーション設定のみ
+                console.log('🏆 Athlete Welcome screen already visible via CSS');
                 
                 if (isMobile) {
                     // Add mobile-specific CSS class
@@ -6937,15 +6846,8 @@
                     greetingElement.textContent = `Hello, ${currentUser.name}!`;
                 }
                 
-                // ユーザー統計情報を表示
-                const userStats = getUserStats();
-                console.log('📊 User statistics:', userStats);
-                
-                // 統計情報を画面に反映
-                updateDashboardStats(userStats);
-                
                 console.log('📊 Loading analysis history for user:', currentUser.name);
-                // Load and display analysis history (user-specific)
+                // Load and display analysis history
                 await loadAnalysisHistory();
             } else {
                 console.warn('⚠️ No current user found in updateDashboardContent');
@@ -6954,47 +6856,6 @@
                 setTimeout(() => {
                     showRegistration();
                 }, 1000);
-            }
-        }
-        
-        // ダッシュボード統計情報の更新
-        function updateDashboardStats(stats) {
-            console.log('📈 Updating dashboard with stats:', stats);
-            
-            // 統計カードを更新
-            const totalAnalysesEl = document.querySelector('[data-stat="total-analyses"]');
-            const averageScoreEl = document.querySelector('[data-stat="average-score"]');
-            const bestScoreEl = document.querySelector('[data-stat="best-score"]');
-            const improvementEl = document.querySelector('[data-stat="improvement"]');
-            
-            if (totalAnalysesEl) totalAnalysesEl.textContent = stats.totalAnalyses;
-            if (averageScoreEl) averageScoreEl.textContent = stats.averageScore;
-            if (bestScoreEl) bestScoreEl.textContent = stats.bestScore;
-            
-            if (improvementEl) {
-                const improvement = stats.improvement;
-                improvementEl.textContent = improvement > 0 ? `+${improvement}` : improvement;
-                improvementEl.className = improvement > 0 ? 'text-green-500' : improvement < 0 ? 'text-red-500' : 'text-gray-500';
-            }
-            
-            // 最後の分析情報を更新
-            if (stats.lastAnalysis) {
-                const lastAnalysisDate = new Date(stats.lastAnalysis.analysis_date);
-                const daysSince = Math.floor((new Date() - lastAnalysisDate) / (1000 * 60 * 60 * 24));
-                
-                let lastAnalysisText = '';
-                if (daysSince === 0) {
-                    lastAnalysisText = '今日';
-                } else if (daysSince === 1) {
-                    lastAnalysisText = '昨日';
-                } else {
-                    lastAnalysisText = `${daysSince}日前`;
-                }
-                
-                const lastAnalysisEl = document.querySelector('[data-stat="last-analysis"]');
-                if (lastAnalysisEl) {
-                    lastAnalysisEl.textContent = lastAnalysisText;
-                }
             }
         }
         
@@ -7116,151 +6977,6 @@
             } catch (error) {
                 return { error: error.message };
             }
-        }
-        
-        // ユーザー別データ管理ヘルパー関数
-        function getUserAnalysisHistory(userId = null) {
-            const targetUserId = userId || (currentUser ? currentUser.id : null);
-            if (!targetUserId) {
-                console.log('⚠️ No user ID provided for analysis history');
-                return [];
-            }
-            
-            const allResults = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-            const userResults = allResults.filter(result => result.user_id === targetUserId);
-            
-            console.log(`📊 Found ${userResults.length} analysis results for user:`, targetUserId);
-            return userResults.sort((a, b) => new Date(b.analysis_date) - new Date(a.analysis_date));
-        }
-        
-        function saveAnalysisResult(analysisData) {
-            if (!currentUser || !currentUser.id) {
-                console.error('❌ Cannot save analysis - no current user');
-                return false;
-            }
-            
-            // ユーザーIDを確実に付与
-            analysisData.user_id = currentUser.id;
-            analysisData.id = analysisData.id || generateUUID();
-            
-            let results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-            results.push(analysisData);
-            
-            try {
-                localStorage.setItem('athletecore_results', JSON.stringify(results));
-                console.log('✅ Analysis result saved for user:', currentUser.id);
-                return true;
-            } catch (error) {
-                console.error('❌ Failed to save analysis result:', error);
-                return false;
-            }
-        }
-        
-        function getUserStats() {
-            const userResults = getUserAnalysisHistory();
-            if (userResults.length === 0) {
-                return {
-                    totalAnalyses: 0,
-                    averageScore: 0,
-                    bestScore: 0,
-                    lastAnalysis: null,
-                    improvement: 0
-                };
-            }
-            
-            const scores = userResults.map(r => r.overall_score);
-            const totalScore = scores.reduce((sum, score) => sum + score, 0);
-            const averageScore = Math.round(totalScore / scores.length);
-            const bestScore = Math.max(...scores);
-            const lastAnalysis = userResults[0]; // Already sorted by date desc
-            
-            // 改善度計算（直近3回の平均 vs 全期間の平均）
-            let improvement = 0;
-            if (userResults.length >= 3) {
-                const recentAverage = scores.slice(0, 3).reduce((sum, score) => sum + score, 0) / 3;
-                improvement = Math.round(recentAverage - averageScore);
-            }
-            
-            return {
-                totalAnalyses: userResults.length,
-                averageScore: averageScore,
-                bestScore: bestScore,
-                lastAnalysis: lastAnalysis,
-                improvement: improvement
-            };
-        }
-        
-        // 将来のクラウドDB移行に向けた設計
-        function exportUserDataForMigration() {
-            if (!currentUser) {
-                console.log('❌ No user to export');
-                return null;
-            }
-            
-            const userData = {
-                user: currentUser,
-                analysisHistory: getUserAnalysisHistory(),
-                exportDate: new Date().toISOString(),
-                version: '1.0'
-            };
-            
-            console.log('📤 User data prepared for export:', {
-                userId: userData.user.id,
-                userName: userData.user.name,
-                totalAnalyses: userData.analysisHistory.length
-            });
-            
-            return userData;
-        }
-        
-        function importUserDataFromMigration(userData) {
-            try {
-                if (!userData || !userData.user || !userData.analysisHistory) {
-                    throw new Error('Invalid user data format');
-                }
-                
-                // Import user profile
-                localStorage.setItem('athletecore_user', JSON.stringify(userData.user));
-                currentUser = userData.user;
-                
-                // Import analysis history (merge with existing data)
-                let existingResults = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
-                
-                // Remove any existing data for this user to prevent duplicates
-                existingResults = existingResults.filter(r => r.user_id !== userData.user.id);
-                
-                // Add imported data
-                const mergedResults = [...existingResults, ...userData.analysisHistory];
-                localStorage.setItem('athletecore_results', JSON.stringify(mergedResults));
-                
-                console.log('📥 User data imported successfully:', userData.user.name);
-                return true;
-            } catch (error) {
-                console.error('❌ Failed to import user data:', error);
-                return false;
-            }
-        }
-        
-        // データバックアップ機能（JSON形式）
-        function createDataBackup() {
-            const backup = {
-                users: currentUser ? [currentUser] : [],
-                analyses: getUserAnalysisHistory(),
-                backupDate: new Date().toISOString(),
-                appVersion: 'AthleteCore Pro v1.0'
-            };
-            
-            const dataStr = JSON.stringify(backup, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `athletecore-backup-${new Date().toISOString().slice(0,10)}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            console.log('💾 Data backup created:', exportFileDefaultName);
         }
         
         // Show photo capture success feedback
@@ -7686,32 +7402,27 @@
         
         function loadAnalysisHistory() {
             try {
-                // ヘルパー関数を使用してユーザー別履歴を取得
+                const results = JSON.parse(localStorage.getItem('athletecore_results') || '[]');
+                const historyContainer = document.getElementById('analysisHistory');
+                
+                // Debug: Check if currentUser exists
                 if (!currentUser) {
                     console.warn('❌ No current user found for history loading');
-                    const historyContainer = document.getElementById('analysisHistory');
-                    if (historyContainer) {
-                        historyContainer.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Please register first / まず登録してください</p>';
-                    }
+                    historyContainer.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Please register first / まず登録してください</p>';
                     return;
                 }
                 
                 console.log('📊 Loading history for user:', currentUser.id);
-                const userResults = getUserAnalysisHistory();
+                const userResults = results.filter(result => result.user_id === currentUser.id);
                 console.log('🗂️ Found analysis results:', userResults.length);
-                
-                const historyContainer = document.getElementById('analysisHistory');
-                if (!historyContainer) {
-                    console.warn('❌ Analysis history container not found');
-                    return;
-                }
                 
                 if (userResults.length === 0) {
                     // Add sample data for demonstration if no results exist
                     const sampleData = createSampleAnalysisData();
                     if (sampleData.length > 0) {
-                        // Save sample data to localStorage using helper function
-                        sampleData.forEach(data => saveAnalysisResult(data));
+                        // Save sample data to localStorage
+                        const allResults = [...results, ...sampleData];
+                        localStorage.setItem('athletecore_results', JSON.stringify(allResults));
                         console.log('📝 Created sample analysis data for demonstration');
                         // Reload with sample data
                         loadAnalysisHistory();
@@ -9727,27 +9438,8 @@
                 console.log('📱 Mobile device detected - optimized initialization');
             }
             
-            // 初期画面を決定（既存ユーザーがいる場合はダッシュボードへ）
+            // 初期画面を即座に表示（フラッシュなし）
             setTimeout(() => {
-                // ローカルストレージから現在のユーザーをチェック
-                const storedUser = localStorage.getItem('athletecore_user');
-                if (storedUser) {
-                    try {
-                        const userData = JSON.parse(storedUser);
-                        if (userData && userData.name) {
-                            console.log('👤 Existing user found:', userData.name, '- redirecting to dashboard');
-                            currentUser = userData;
-                            showDashboard();
-                            console.log('✅ Dashboard displayed for existing user');
-                            return;
-                        }
-                    } catch (error) {
-                        console.log('⚠️ Error parsing stored user data:', error);
-                    }
-                }
-                
-                // 新規ユーザーまたはエラーの場合はウェルカム画面を表示
-                console.log('🔄 New user - showing welcome flow');
                 showAthleteWelcome();
                 console.log('✅ Initial screen displayed without flash');
             }, 50);
