@@ -3993,34 +3993,61 @@
                 }, { passive: false });
                 
                 continueButton.addEventListener('touchend', function(e) {
-                    console.log('👆 Continue button TOUCH END detected - CALLING showRegistration()');
+                    console.log('👆 Continue button TOUCH END detected - Checking user status...');
                     e.preventDefault();
                     e.stopPropagation();
                     this.style.transform = 'scale(1)';
                     this.style.backgroundColor = '#000000';
                     
-                    // 複数の方法で確実に呼び出し
-                    console.log('🚀 About to call showRegistration()...');
+                    // 既存ユーザーの確認
+                    const savedUser = localStorage.getItem('athletecore_user');
+                    console.log('🔍 Checking for existing user (touchend):', savedUser ? 'Found' : 'Not found');
+                    
                     try {
-                        showRegistration();
-                        console.log('✅ showRegistration() called successfully from touchend');
+                        if (savedUser) {
+                            // 既存ユーザーの場合はダッシュボードに遷移
+                            console.log('👤 Existing user detected - going to Dashboard (touchend)');
+                            currentUser = JSON.parse(savedUser);
+                            showDashboard();
+                        } else {
+                            // 新規ユーザーの場合は登録画面に遷移
+                            console.log('🆕 New user detected - going to Registration (touchend)');
+                            showRegistration();
+                        }
+                        console.log('✅ Navigation completed successfully (touchend)');
                     } catch (error) {
-                        console.error('❌ Error calling showRegistration() from touchend:', error);
+                        console.error('❌ Error in touchend navigation:', error);
+                        // エラーの場合はとりあえず登録画面に遷移
+                        showRegistration();
                     }
                 }, { passive: false });
                 
                 // PC・モバイル共通クリックイベント
                 continueButton.addEventListener('click', function(e) {
-                    console.log('🖱️ Continue button CLICK detected - CALLING showRegistration()');
+                    console.log('🖱️ Continue button CLICK detected - Checking user status...');
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    console.log('🚀 About to call showRegistration() from click...');
+                    // 既存ユーザーの確認
+                    const savedUser = localStorage.getItem('athletecore_user');
+                    console.log('🔍 Checking for existing user:', savedUser ? 'Found' : 'Not found');
+                    
                     try {
-                        showRegistration();
-                        console.log('✅ showRegistration() called successfully from click');
+                        if (savedUser) {
+                            // 既存ユーザーの場合はダッシュボードに遷移
+                            console.log('👤 Existing user detected - going to Dashboard');
+                            currentUser = JSON.parse(savedUser);
+                            showDashboard();
+                        } else {
+                            // 新規ユーザーの場合は登録画面に遷移
+                            console.log('🆕 New user detected - going to Registration');
+                            showRegistration();
+                        }
+                        console.log('✅ Navigation completed successfully');
                     } catch (error) {
-                        console.error('❌ Error calling showRegistration() from click:', error);
+                        console.error('❌ Error in continue button navigation:', error);
+                        // エラーの場合はとりあえず登録画面に遷移
+                        showRegistration();
                     }
                 }, { passive: false });
                 
