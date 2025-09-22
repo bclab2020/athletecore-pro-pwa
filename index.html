@@ -1116,12 +1116,10 @@
                         <div class="space-y-6 w-full max-w-xs dior-slide-up relative z-20" style="animation-delay: 2.6s;">
                             <!-- メインの Begin Analysis ボタン -->
                             <button type="button" id="beginAnalysisButton"
-                                    onclick="console.log('🔥 Button clicked!'); document.body.style.visibility='visible'; try { showWelcome(); } catch(e) { console.error('Button click error:', e); }" 
-                                    onmousedown="console.log('🖱️ Button mouse down');"
-                                    onmouseup="console.log('🖱️ Button mouse up');"
-                                    ontouchstart="console.log('👆 Button touch start'); document.body.style.visibility='visible'; this.style.transform='scale(0.95)'; this.style.backgroundColor='#f3f4f6';"
-                                    ontouchend="console.log('👆 Button touch end - calling showWelcome'); this.style.transform='scale(1)'; this.style.backgroundColor='white'; try { showWelcome(); } catch(e) { console.error('Touch end error:', e); }"
-                                    ontouchcancel="console.log('👆 Button touch cancel'); this.style.transform='scale(1)'; this.style.backgroundColor='white';"
+                                    onclick="document.body.style.visibility='visible'; showWelcome();" 
+                                    ontouchstart="document.body.style.visibility='visible'; this.style.transform='scale(0.95)'; this.style.backgroundColor='#f3f4f6';"
+                                    ontouchend="this.style.transform='scale(1)'; this.style.backgroundColor='white'; showWelcome();"
+                                    ontouchcancel="this.style.transform='scale(1)'; this.style.backgroundColor='white';"
                                     style="position: relative; z-index: 1000; cursor: pointer; pointer-events: auto; width: 100%; border: none; outline: none;"
                                     class="bg-white text-black font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-200 hover:bg-gray-100 border-2 border-white shadow-lg transform hover:scale-105 hover:shadow-2xl active:scale-95 touch-manipulation">
                                 Begin Analysis
@@ -1139,7 +1137,7 @@
                                 
                                 <!-- 透明レイヤー代替ボタン（コンパクト版） -->
                                 <div class="flex flex-col items-center">
-                                    <button onclick="console.log('🚨 Manual Start clicked!'); debugBeginAnalysisButton();" 
+                                    <button onclick="debugBeginAnalysisButton();" 
                                             ontouchstart="this.style.transform='scale(0.95)'; this.style.backdropFilter='blur(15px)';"
                                             ontouchend="this.style.transform='scale(1)'; this.style.backdropFilter='blur(10px)';"
                                             class="dior-fade-in"
@@ -1233,7 +1231,7 @@
                     <!-- Luxury CTA -->
                     <div class="flex-none pb-12 dior-slide-up" style="animation-delay: 2.3s;">
                         <div class="space-y-4">
-                            <button onclick="console.log('Get Started clicked!'); console.log('About to call showRegistration()'); try { showRegistration(); console.log('showRegistration() called successfully'); } catch(e) { console.error('Error calling showRegistration():', e); }" 
+                            <button onclick="showRegistration();" 
                                     class="w-full bg-black text-white font-light py-4 px-8 rounded-none text-sm tracking-widest uppercase transition-all duration-300 hover:bg-gray-800 border border-black transform hover:scale-105"
                                     style="touch-action: manipulation; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; cursor: pointer; z-index: 1001; position: relative; pointer-events: auto;">
                                 Continue
@@ -1840,14 +1838,14 @@
     <script>
         // 🚨 緊急修正：bodyを即座に可視化（複数の方法で確実に実行）
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚨 Emergency fix: Making body visible immediately');
+            // Emergency fix: Making body visible immediately
             document.body.style.visibility = 'visible';
             document.body.style.opacity = '1';
         });
         
         // さらに早い段階でも実行
         setTimeout(function() {
-            console.log('🚨 Emergency fix: Early visibility set');
+            // Emergency fix: Early visibility set
             document.body.style.visibility = 'visible';
             document.body.style.opacity = '1';
             
@@ -1855,7 +1853,7 @@
             setTimeout(function() {
                 const athleteScreen = document.getElementById('athlete-welcome');
                 if (athleteScreen && !athleteScreen.offsetParent) {
-                    console.log('🚨 EMERGENCY: Forcing basic display');
+                    // EMERGENCY: Forcing basic display
                     athleteScreen.style.display = 'block';
                     athleteScreen.style.visibility = 'visible';
                     athleteScreen.style.position = 'fixed';
@@ -1887,22 +1885,18 @@
         
         // Core navigation functions - MUST be defined first
         function showScreen(screenId) {
-            console.log(`📱 Switching to screen: ${screenId}`);
+            // Switching to screen
             
             // モバイル特有デバッグ: showScreen入力時の状態
             const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
             if (isMobile && screenId === 'dashboard') {
-                console.log('📱 MOBILE showScreen(dashboard) - Pre-execution state:', {
-                    fromScreen: currentScreen,
-                    toScreen: screenId,
-                    timestamp: new Date().toISOString()
-                });
+                // MOBILE showScreen(dashboard) - Pre-execution state check
             }
             
             try {
                 // Hide all screens first
                 const allScreens = document.querySelectorAll('.app-screen');
-                console.log(`🔍 Found ${allScreens.length} app screens`);
+                // Found app screens
                 
                 allScreens.forEach(screen => {
                     screen.classList.remove('active');
@@ -1918,7 +1912,7 @@
                     `;
                     document.head.appendChild(style);
                     window.initialDisplayCleared = true;
-                    console.log('🎨 Initial display control CSS cleared');
+                    // Initial display control CSS cleared
                 }
                 
                 // Show target screen
@@ -1929,20 +1923,14 @@
                     targetScreen.style.flexDirection = 'column';
                     targetScreen.style.visibility = 'visible';
                     targetScreen.style.opacity = '1';
-                    console.log(`✅ Screen '${screenId}' activated successfully`);
-                    console.log(`🔍 Target screen display: ${targetScreen.style.display}`);
-                    console.log(`🔍 Target screen visibility: ${targetScreen.style.visibility}`);
+                    // Screen activated successfully
+                    // Target screen display check
+                    // Target screen visibility check
                     currentScreen = screenId;
                     
                     // モバイル特有: dashboard遷移時の追加チェック
                     if (isMobile && screenId === 'dashboard') {
-                        console.log('📱 MOBILE showScreen(dashboard) - Post-activation check:', {
-                            currentScreen: currentScreen,
-                            targetScreenExists: !!targetScreen,
-                            displayStyle: targetScreen.style.display,
-                            computedDisplay: getComputedStyle(targetScreen).display,
-                            hasActiveClass: targetScreen.classList.contains('active')
-                        });
+                        // MOBILE showScreen(dashboard) - Post-activation check completed
                     }
                     
                     // Mobile-specific visibility fix
@@ -1958,27 +1946,20 @@
                         targetScreen.style.setProperty('left', '0', 'important');
                         targetScreen.style.setProperty('width', '100%', 'important');
                         targetScreen.style.setProperty('height', '100%', 'important');
-                        console.log(`📱 Mobile force visibility applied to ${screenId}`);
+                        // Mobile force visibility applied
                         
                         // dashboard特有のモバイルチェック
                         if (screenId === 'dashboard') {
-                            console.log('📱 MOBILE DASHBOARD: Force visibility complete, checking final state...');
+                            // MOBILE DASHBOARD: Force visibility complete
                             
                             // DOMの完全性を確認
                             const dashboardCheck = setInterval(() => {
                                 const computedStyle = getComputedStyle(targetScreen);
-                                console.log('📱 MOBILE DASHBOARD DOM Check:', {
-                                    display: computedStyle.display,
-                                    visibility: computedStyle.visibility,
-                                    opacity: computedStyle.opacity,
-                                    position: computedStyle.position,
-                                    zIndex: computedStyle.zIndex,
-                                    transform: computedStyle.transform
-                                });
+                                // MOBILE DASHBOARD DOM Check completed
                                 
                                 // dashboardが正しく表示されているか確認
                                 if (computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden') {
-                                    console.log('✅ MOBILE DASHBOARD: Successfully visible');
+                                    // MOBILE DASHBOARD: Successfully visible
                                     clearInterval(dashboardCheck);
                                 }
                             }, 200);
@@ -1992,11 +1973,11 @@
                         // Additional mobile-specific timeout
                         setTimeout(() => {
                             targetScreen.scrollIntoView({ behavior: 'instant', block: 'start' });
-                            console.log(`📱 Mobile scroll fix applied to ${screenId}`);
+                            // Mobile scroll fix applied
                         }, 100);
                     }
                 } else {
-                    console.error(`❌ Screen '${screenId}' not found`);
+                    // Error: Screen not found
                     return false;
                 }
                 
@@ -2009,14 +1990,14 @@
                 
                 return true;
             } catch (error) {
-                console.error('❌ Error in showScreen:', error);
+                // Error in showScreen
                 return false;
             }
         }
         
         // Fullscreen camera control functions
         function enterFullscreenMode(type) {
-            console.log('Entering fullscreen mode for:', type);
+            // Entering fullscreen mode
             
             try {
                 if (type === 'static') {
@@ -2036,9 +2017,9 @@
                         
                         // Hide floating button during fullscreen operations
                         hideFloatingButton('static');
-                        console.log('✅ Static fullscreen mode activated');
+                        // Static fullscreen mode activated
                     } else {
-                        console.error('❌ Static elements not found:', {header, controls, container});
+                        // Error: Static elements not found
                     }
                 } else if (type === 'dynamic') {
                     const header = document.getElementById('dynamicHeader');
@@ -2057,9 +2038,9 @@
                         
                         // Hide floating button during fullscreen operations
                         hideFloatingButton('dynamic');
-                        console.log('✅ Dynamic fullscreen mode activated');
+                        // Dynamic fullscreen mode activated
                     } else {
-                        console.error('❌ Dynamic elements not found:', {header, controls, container});
+                        // Error: Dynamic elements not found
                     }
                 }
             } catch (error) {
@@ -2475,10 +2456,10 @@
                     score: r.overall_score
                 }))
             });
-            console.log('👤 Current user:', currentUser);
+            // Current user check
             if (currentUser) {
                 const userResults = results.filter(r => r.user_id === currentUser.id);
-                console.log('🗂️ User results:', userResults.length);
+                // User results count
             }
             return results;
         };
@@ -2494,7 +2475,7 @@
             const photosWithData = results.filter(r => r.capturedPhoto);
             const photosWithoutData = results.filter(r => !r.capturedPhoto);
             
-            console.log('📸 Photo Capture Debug Report:');
+            // Photo Capture Debug Report
             console.log('📊 Total analysis results:', results.length);
             console.log('✅ Results with photos:', photosWithData.length);
             console.log('❌ Results without photos:', photosWithoutData.length);
@@ -2512,7 +2493,7 @@
             }
             
             if (photosWithoutData.length > 0) {
-                console.log('⚠️ Results without photos (recent 3):');
+                // Results without photos
                 photosWithoutData.slice(-3).forEach(result => {
                     console.log({
                         id: result.id,
@@ -2706,7 +2687,7 @@
             console.log('Time 6s: Display "4"');
             console.log('Time 7s: Display "3"');
             console.log('Time 8s: Display "2"');
-            console.log('Time 9s: Display "1" + 📸 PHOTO CAPTURE');
+            // Time 9s: Display 1 + PHOTO CAPTURE
             console.log('Time 10s: Display "GO!" + Flash effects');
             console.log('');
             console.log('🎯 Photo capture occurs at exactly 9 seconds after countdown start');
@@ -2719,12 +2700,12 @@
             const testInterval = setInterval(() => {
                 elapsedSeconds++;
                 testCount--;
-                console.log(`Time ${elapsedSeconds}s: Count ${testCount}${testCount === 1 ? ' + 📸 CAPTURE!' : ''}${testCount === 0 ? ' + 🎉 GO!' : ''}`);
+                // Countdown display
                 
                 if (testCount === 0) {
                     clearInterval(testInterval);
                     console.log('✅ 10-second countdown simulation completed!');
-                    console.log(`📸 Photo captured at ${elapsedSeconds - 1}s (count=1)`);
+                    // Photo captured
                     console.log(`🎉 Effects displayed at ${elapsedSeconds}s (count=0)`);
                 }
             }, 1000);
@@ -2734,7 +2715,7 @@
         
         // Debug function to test welcome screen layout
         window.debugWelcomeLayout = function() {
-            console.log('📱 Welcome Screen Layout Debug');
+            // Welcome Screen Layout Debug
             console.log('=============================');
             
             const welcomeScreen = document.getElementById('welcome');
@@ -2798,7 +2779,7 @@
         
         // New debug function to test current video capture immediately
         window.debugCaptureNow = function() {
-            console.log('📸 DEBUG: Attempting immediate photo capture...');
+            // DEBUG: Attempting immediate photo capture
             
             // Try both static and dynamic videos
             const staticVideo = document.getElementById('staticVideo');
@@ -2984,7 +2965,7 @@
                     
                     // Restore user if it exists
                     if (state.user) {
-                        console.log('👤 Restoring user:', state.user.name || state.user.id);
+                        // Restoring user
                         currentUser = state.user;
                     }
                     
@@ -4053,18 +4034,18 @@
                     const savedUser = localStorage.getItem('athletecore_user');
                     
                     if (savedUser) {
-                        console.log('👤 Existing user -> Dashboard');
+                        // Existing user -> Dashboard
                         currentUser = JSON.parse(savedUser);
                         showDashboard();
                     } else {
-                        console.log('🆕 New user -> Registration');
+                        // New user -> Registration
                         showRegistration();
                     }
                 }, { passive: false });
                 
                 // PC・モバイル共通クリックイベント
                 continueButton.addEventListener('click', function(e) {
-                    console.log('🖱️ Continue button CLICK');
+                    // Continue button CLICK
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -4072,11 +4053,11 @@
                     const savedUser = localStorage.getItem('athletecore_user');
                     
                     if (savedUser) {
-                        console.log('👤 Existing user -> Dashboard');
+                        // Existing user -> Dashboard
                         currentUser = JSON.parse(savedUser);
                         showDashboard();
                     } else {
-                        console.log('🆕 New user -> Registration');
+                        // New user -> Registration
                         showRegistration();
                     }
                 }, { passive: false });
@@ -4148,7 +4129,7 @@
                 
                 // クリックイベントも追加（PC互換性）
                 button.addEventListener('click', function(e) {
-                    console.log('🖱️ Click - addEventListener - calling showWelcome()');
+                    // Click - calling showWelcome
                     e.preventDefault();
                     e.stopPropagation();
                     showWelcome();
@@ -4378,7 +4359,7 @@
                 
                 // PC・モバイル共通クリックイベント
                 registrationBtn.addEventListener('click', function(e) {
-                    console.log('🖱️ Registration button CLICK - calling handleRegistration()');
+                    // Registration button CLICK
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -6771,7 +6752,7 @@
                 created_at: new Date().toISOString()
             };
 
-            console.log('👤 Profile created for:', profileData.name);
+            // Profile created
 
             // オフライン対応：ローカルストレージに保存
             try {
@@ -7486,7 +7467,7 @@
                     
                     return `
                         <div class="bg-white p-3 rounded-lg border border-gray-100 cursor-pointer hover:shadow-md transition-shadow" 
-                             onclick="console.log('🖱️ Clicked analysis:', '${analysis.id}'); showAnalysisDetail('${analysis.id}');"
+                             onclick="showAnalysisDetail('${analysis.id}');"
                              data-analysis-id="${analysis.id}">
                             <div class="flex justify-between items-center">
                                 <div>
