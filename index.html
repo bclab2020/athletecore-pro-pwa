@@ -1125,6 +1125,14 @@
                                 Begin Analysis
                             </button>
                             
+                            <!-- デバッグ用: 新規ユーザーテストボタン -->
+                            <button type="button" id="debugNewUserButton"
+                                    onclick="localStorage.removeItem('athletecore_user'); currentUser = null; if(window.updateMobileDebug) { window.updateMobileDebug('DEBUG', {action: 'LocalStorage Cleared', user: 'New'}); } alert('New user mode activated');"
+                                    style="position: relative; z-index: 1000; cursor: pointer; pointer-events: auto; width: 100%; border: none; outline: none;"
+                                    class="bg-red-800 bg-opacity-70 text-white font-light py-2 px-4 rounded-none text-xs tracking-wider uppercase transition-all duration-200 hover:bg-red-700 border border-red-600 shadow-md">
+                                Debug: New User
+                            </button>
+                            
 
                             
                             <div class="text-center dior-fade-in" style="animation-delay: 2.8s;">
@@ -1404,7 +1412,7 @@
                     <!-- Elegant Header -->
                     <div id="staticHeader" class="flex-shrink-0 px-8 py-6 bg-black bg-opacity-90 backdrop-filter backdrop-blur-md transition-all duration-300">
                         <div class="flex items-center dior-fade-in">
-                            <button onclick="showDashboard()" class="mr-6 text-white hover:text-gray-300 transition-colors duration-300 font-thin text-lg">←</button>
+                            <button id="staticAnalysisBackBtn" onclick="showWelcome()" class="mr-6 text-white hover:text-gray-300 transition-colors duration-300 font-thin text-lg">←</button>
                             <div>
                                 <div class="w-8 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-1"></div>
                                 <h2 class="text-sm font-thin text-white tracking-widest uppercase">Static Analysis</h2>
@@ -1486,7 +1494,7 @@
                     <!-- Elegant Header -->
                     <div id="dynamicHeader" class="flex-shrink-0 px-8 py-6 bg-black bg-opacity-90 backdrop-filter backdrop-blur-md transition-all duration-300">
                         <div class="flex items-center dior-fade-in">
-                            <button onclick="showDashboard()" class="mr-6 text-white hover:text-gray-300 transition-colors duration-300 font-thin text-lg">←</button>
+                            <button id="dynamicAnalysisBackBtn" onclick="showWelcome()" class="mr-6 text-white hover:text-gray-300 transition-colors duration-300 font-thin text-lg">←</button>
                             <div>
                                 <div class="w-8 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent mb-1"></div>
                                 <h2 class="text-sm font-thin text-white tracking-widest uppercase">Dynamic Analysis</h2>
@@ -3989,6 +3997,57 @@
         }
         
         // Welcome Screenボタンのモバイル対応セットアップ
+        // モバイルナビゲーションデバッグ機能
+        function addMobileNavigationDebug() {
+            // モバイル検出
+            const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // モバイル専用デバッグパネルを追加
+                const debugPanel = document.createElement('div');
+                debugPanel.id = 'mobileDebugPanel';
+                debugPanel.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    font-size: 10px;
+                    z-index: 9999;
+                    max-width: 200px;
+                    font-family: monospace;
+                    display: none;
+                `;
+                document.body.appendChild(debugPanel);
+                
+                // デバッグ情報更新関数
+                window.updateMobileDebug = function(action, details = {}) {
+                    const timestamp = new Date().toLocaleTimeString();
+                    const savedUser = localStorage.getItem('athletecore_user');
+                    debugPanel.innerHTML = `
+                        <div style="margin-bottom: 5px;"><strong>📱 Mobile Debug</strong></div>
+                        <div>⏰ Time: ${timestamp}</div>
+                        <div>🎬 Action: ${action}</div>
+                        <div>📺 Screen: ${currentScreen || 'unknown'}</div>
+                        <div>👤 User: ${currentUser ? currentUser.name || 'logged' : 'new'}</div>
+                        <div>💾 LocalStorage: ${savedUser ? '✅' : '❌'}</div>
+                        ${Object.entries(details).map(([k,v]) => `<div>🔍 ${k}: ${v}</div>`).join('')}
+                        <button onclick="this.parentElement.style.display='none'" style="margin-top: 5px; background: #333; color: white; border: none; padding: 2px 8px; font-size: 8px;">Close</button>
+                    `;
+                    debugPanel.style.display = 'block';
+                    
+                    // 10秒後に自動非表示（延長）
+                    setTimeout(() => {
+                        debugPanel.style.display = 'none';
+                    }, 10000);
+                };
+                
+                console.log('📱 Mobile navigation debug system initialized');
+            }
+        }
+        
         function setupWelcomeScreenButtons() {
             console.log('🔧 setupWelcomeScreenButtons() called - searching for Continue button');
             
@@ -4018,46 +4077,79 @@
                 // モバイルタッチイベントの設定
                 continueButton.addEventListener('touchstart', function(e) {
                     console.log('👆 Continue button TOUCH START detected');
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('TOUCH_START', { button: 'Continue' });
+                    }
                     e.preventDefault();
                     this.style.transform = 'scale(0.98)';
                     this.style.backgroundColor = '#1f2937';
                 }, { passive: false });
                 
                 continueButton.addEventListener('touchend', function(e) {
-                    console.log('👆 Continue button TOUCH END');
+                    console.log('👆 Continue button TOUCH END - Checking user status');
                     e.preventDefault();
                     e.stopPropagation();
                     this.style.transform = 'scale(1)';
                     this.style.backgroundColor = '#000000';
                     
-                    // 簡潔なユーザー確認
+                    // 詳細なユーザー状態確認
                     const savedUser = localStorage.getItem('athletecore_user');
+                    console.log('📊 User status check:', {
+                        hasLocalStorage: !!savedUser,
+                        userData: savedUser ? JSON.parse(savedUser) : null,
+                        currentUser: currentUser
+                    });
+                    
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('TOUCH_END', { 
+                            button: 'Continue',
+                            hasUser: !!savedUser,
+                            destination: savedUser ? 'StaticAnalysis' : 'Registration'
+                        });
+                    }
                     
                     if (savedUser) {
-                        // Existing user -> Dashboard
+                        // Existing user -> Static Analysis directly
+                        console.log('✅ Existing user detected - navigating to Static Analysis');
                         currentUser = JSON.parse(savedUser);
-                        showDashboard();
+                        showStaticAnalysis();
                     } else {
                         // New user -> Registration
+                        console.log('✅ New user detected - navigating to Registration');
                         showRegistration();
                     }
                 }, { passive: false });
                 
                 // PC・モバイル共通クリックイベント
                 continueButton.addEventListener('click', function(e) {
-                    // Continue button CLICK
+                    console.log('🖱️ Continue button CLICK - Checking user status');
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    // 簡潔なユーザー確認
+                    // 詳細なユーザー状態確認
                     const savedUser = localStorage.getItem('athletecore_user');
+                    console.log('📊 User status check:', {
+                        hasLocalStorage: !!savedUser,
+                        userData: savedUser ? JSON.parse(savedUser) : null,
+                        currentUser: currentUser
+                    });
+                    
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('CLICK', { 
+                            button: 'Continue',
+                            hasUser: !!savedUser,
+                            destination: savedUser ? 'StaticAnalysis' : 'Registration'
+                        });
+                    }
                     
                     if (savedUser) {
-                        // Existing user -> Dashboard
+                        // Existing user -> Static Analysis directly
+                        console.log('✅ Existing user detected - navigating to Static Analysis');
                         currentUser = JSON.parse(savedUser);
-                        showDashboard();
+                        showStaticAnalysis();
                     } else {
                         // New user -> Registration
+                        console.log('✅ New user detected - navigating to Registration');
                         showRegistration();
                     }
                 }, { passive: false });
@@ -4098,6 +4190,90 @@
                     });
                 });
             }
+        }
+        
+        // 分析画面の戻るボタンのモバイルイベント設定
+        function setupAnalysisBackButtons() {
+            // 全ての戻るボタンを検索（IDベース + セレクターベース）
+            const backButtons = [
+                document.getElementById('staticAnalysisBackBtn'),
+                document.getElementById('dynamicAnalysisBackBtn'),
+                document.querySelector('#static-analysis button[onclick*="showWelcome"]'),
+                document.querySelector('#dynamic-analysis button[onclick*="showWelcome"]')
+            ];
+            
+            // 重複を除去
+            const uniqueButtons = [...new Set(backButtons.filter(btn => btn))];
+            
+            uniqueButtons.forEach((button, index) => {
+                if (button && !button.dataset.mobileEventsSetup) {
+                    button.dataset.mobileEventsSetup = 'true'; // 重複防止
+                    
+                    const screenName = button.closest('#static-analysis') ? 'Static' : 
+                                     button.closest('#dynamic-analysis') ? 'Dynamic' : 'Analysis';
+                    console.log(`🔧 Setting up ${screenName} Analysis back button - mobile support`);
+                    
+                    // モバイルタッチイベント
+                    button.addEventListener('touchstart', function(e) {
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('BACK_TOUCH_START', { 
+                                screen: screenName,
+                                destination: 'Welcome'
+                            });
+                        }
+                        e.preventDefault();
+                        this.style.transform = 'scale(0.9)';
+                        this.style.color = '#9ca3af';
+                    }, { passive: false });
+                    
+                    button.addEventListener('touchend', function(e) {
+                        console.log(`👈 ${screenName} Analysis back button TOUCH END`);
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('BACK_TOUCH_END', { 
+                                screen: screenName,
+                                action: 'Navigating to Welcome'
+                            });
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.style.transform = 'scale(1)';
+                        this.style.color = '#ffffff';
+                        
+                        // Welcome画面に戻る
+                        showWelcome();
+                    }, { passive: false });
+                    
+                    // クリックイベント（PC用）
+                    button.addEventListener('click', function(e) {
+                        console.log(`👈 ${screenName} Analysis back button CLICK`);
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('BACK_CLICK', { 
+                                screen: screenName,
+                                action: 'Navigating to Welcome'
+                            });
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Welcome画面に戻る
+                        showWelcome();
+                    }, { passive: false });
+                    
+                    // モバイル最適化スタイル
+                    button.style.touchAction = 'manipulation';
+                    button.style.webkitTouchCallout = 'none';
+                    button.style.userSelect = 'none';
+                    button.style.cursor = 'pointer';
+                    button.style.zIndex = '1001';
+                    button.style.minWidth = '44px';
+                    button.style.minHeight = '44px';
+                    button.style.display = 'flex';
+                    button.style.alignItems = 'center';
+                    button.style.justifyContent = 'center';
+                    
+                    console.log(`✅ ${screenName} Analysis back button mobile events setup completed`);
+                }
+            });
         }
         
         // Begin Analysisボタンに追加のイベントリスナーを設定
@@ -6763,16 +6939,33 @@
                 console.log('✅ Profile saved locally');
                 createSampleAnalysisData();
                 
-                console.log('🚀 Navigating to Dashboard...');
-                showDashboard();
-                console.log('✅ showDashboard() called');
+                // Mobile debug
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('REGISTRATION_COMPLETE', { 
+                        name: profileData.name,
+                        destination: 'StaticAnalysis'
+                    });
+                }
+                
+                console.log('🚀 Navigating to Static Analysis...');
+                showStaticAnalysis();
+                console.log('✅ showStaticAnalysis() called');
             } catch (error) {
                 console.error('❌ Local storage error:', error);
                 // ローカルストレージが使えない場合でもメモリに保存
                 currentUser = profileData;
-                console.log('🚀 Fallback: Navigating to Dashboard...');
-                showDashboard();
-                console.log('✅ Fallback showDashboard() called');
+                
+                // Mobile debug
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('REGISTRATION_FALLBACK', { 
+                        name: profileData.name,
+                        destination: 'StaticAnalysis'
+                    });
+                }
+                
+                console.log('🚀 Fallback: Navigating to Static Analysis...');
+                showStaticAnalysis();
+                console.log('✅ Fallback showStaticAnalysis() called');
             }
         }
         
@@ -7506,6 +7699,11 @@
             showScreen('static-analysis');
             document.getElementById('static-analysis').classList.add('slide-up');
             
+            // 戻るボタンのイベント再設定
+            setTimeout(() => {
+                setupAnalysisBackButtons();
+            }, 100);
+            
             // Initialize MediaPipe if not already done
             if (!pose) {
                 console.log('🧠 Initializing MediaPipe...');
@@ -7557,6 +7755,11 @@
         async function showDynamicAnalysis() {
             showScreen('dynamic-analysis');
             document.getElementById('dynamic-analysis').classList.add('slide-up');
+            
+            // 戻るボタンのイベント再設定
+            setTimeout(() => {
+                setupAnalysisBackButtons();
+            }, 100);
             
             // Reset squat counter
             currentSquatCount = 0;
@@ -9459,6 +9662,14 @@
             if (isMobile) {
                 document.body.classList.add('mobile-device');
                 console.log('📱 Mobile device detected - optimized initialization');
+                
+                // モバイルデバッグ機能を初期化
+                addMobileNavigationDebug();
+                
+                // 分析画面の戻るボタンを設定
+                setTimeout(() => {
+                    setupAnalysisBackButtons();
+                }, 100);
             }
             
             // 初期画面を即座に表示（フラッシュなし）
