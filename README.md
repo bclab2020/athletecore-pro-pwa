@@ -1,218 +1,146 @@
 # AthleteCore Pro - AI姿勢分析システム
 
-## 🏃‍♂️ プロジェクト概要
+## プロジェクト概要
+AthleteCore Proは、最先端のAI技術（MediaPipe Pose）を活用したモバイル対応の姿勢分析Webアプリケーションです。リアルタイムの姿勢検出により、アスリートのパフォーマンス向上をサポートします。
 
-**AthleteCore Pro**は、MediaPipe Poseを活用したリアルタイムAI姿勢分析システムです。アスリートのパフォーマンス向上とヘルスケア分野でのビジネス拡大を目指すプロフェッショナル向けツールです。
+## 🏆 現在実装済みの機能
 
-### 🎯 主な機能
+### ✅ 基本システム
+- **統一初期化システム**: アプリケーション起動時の重複ロジックを解決し、安定したナビゲーションを実現
+- **レスポンシブデザイン**: モバイルファースト設計で、すべてのデバイスに対応
+- **PWA対応**: サービスワーカーによるオフライン対応とアプリインストール機能
+- **多言語対応**: 日本語・英語の音声ガイダンス
 
-- **リアルタイム姿勢分析**: MediaPipeによる高精度姿勢検出
-- **静的・動的解析**: 10秒カウントダウン撮影と自動録画機能
-- **モバイル最適化**: スマートフォン対応のレスポンシブデザイン
-- **PWA対応**: オフライン機能とアプリライクな体験
-- **データ管理**: ローカルストレージによるユーザープロファイル管理
+### ✅ ユーザーフロー
+1. **Athlete Welcome Screen** (`#athlete-welcome`): エレガントなエントリーポイント
+2. **Welcome/TOP Screen** (`#welcome`): ユーザータイプに応じた分岐
+3. **Registration Screen** (`#registration`): 新規ユーザー向け登録画面
+4. **Dashboard** (`#dashboard`): メイン操作画面
 
-## 🔥 最新の改善事項（2025年1月18日）
+### ✅ 姿勢分析機能
+- **静的姿勢分析**: 写真撮影による姿勢の詳細分析
+- **動的姿勢分析**: 動画撮影による動作の連続分析
+- **MediaPipe Pose統合**: リアルタイム骨格検出
+- **カメラ制御**: フロント/リアカメラ切り替え対応
 
-### ✅ モバイルTOP画面フラッシュ問題解決
+### ✅ データ管理
+- **ローカルストレージ**: ユーザーデータの永続化
+- **スマートリロード**: アプリ状態の復元機能
+- **分析結果保存**: 撮影データと分析結果の管理
 
-**問題**: モバイルでAthlete Welcome Screen（TOP画面）が1秒程度フラッシュしてからWelcome Pageに遷移する問題
+## 🔗 アプリケーションフロー
 
-**解決策**:
-1. **HTML構造の最適化**: `#athlete-welcome`の`active`クラスを削除してJavaScript完全制御
-2. **CSS初期表示制御**: 全`.app-screen`を初期非表示（`display: none !important`）に変更
-3. **JavaScript初期化最適化**: 
-   - `showAthleteWelcome()`を50ms後に実行（2000ms → 50ms）
-   - `setupBeginAnalysisButton()`を即座に実行（遅延削除）
-   - アニメーション遅延を高速化（200ms → 100ms）
-
-### ✅ Welcome Screenモバイル動作問題解決
-
-**問題**: BEGINタップ後のWelcome Screenがモバイルで動作しない問題
-
-**解決策**:
-1. **showWelcome()関数の最適化**: モバイル専用ハードウェアアクセラレーション追加
-2. **Continueボタンのタッチイベント実装**: 
-   - `touchstart`/`touchend`イベントでの確実な動作
-   - `setupWelcomeScreenButtons()`関数による即座セットアップ
-3. **Welcome Screen CSS最適化**:
-   ```css
-   @media (max-width: 768px) {
-       #welcome button {
-           touch-action: manipulation !important;
-           min-height: 48px !important;
-           z-index: 1001 !important;
-       }
-   }
-   ```
-
-### ✅ Continueボタン → Registration画面遷移問題解決
-
-**問題**: ContinueボタンからRegistration画面に遷移しない問題
-
-**解決策**:
-1. **デバッグ情報強化**: `setupWelcomeScreenButtons()`に詳細ログ追加
-2. **イベント処理改善**: 
-   - `onclick`属性の削除とJavaScript完全制御
-   - 複数イベント（`touchend`, `click`）での確実な呼び出し
-3. **Registration画面CSS最適化**:
-   ```css
-   @media (max-width: 768px) {
-       #registration.active {
-           display: block !important;
-           height: 100vh !important;
-           z-index: 1000 !important;
-       }
-   }
-   ```
-
-**技術詳細**:
-```css
-/* 修正前 */
-#athlete-welcome {
-    display: flex !important; /* 即座に表示されフラッシュの原因 */
-}
-
-/* 修正後 */
-.app-screen {
-    display: none !important; /* 初期非表示 */
-}
-.app-screen.active {
-    display: flex !important; /* JavaScript制御でのみ表示 */
-}
+```mermaid
+graph TD
+    A[Athlete Welcome] --> B[Welcome/TOP Screen]
+    B --> C{User Type}
+    C -->|New User| D[Registration]
+    C -->|Existing User| E[Dashboard]
+    D --> E
+    E --> F[Static Analysis]
+    E --> G[Dynamic Analysis]
+    F --> H[Camera Feed]
+    G --> I[Video Recording]
 ```
 
-### 🚀 パフォーマンス改善
+## 📱 エントリーポイント (URIs)
 
-- **初期化速度向上**: 2000ms → 50msの高速化
-- **ボタン応答性改善**: イベントリスナーの即座設定
-- **アニメーション最適化**: モバイル向けハードウェアアクセラレーション
+- **メイン**: `index.html` - アプリケーションのエントリーポイント
+- **Athlete Welcome**: `#athlete-welcome` - 初回アクセス画面
+- **Welcome/TOP**: `#welcome` - ユーザー分岐画面
+- **Registration**: `#registration` - 新規ユーザー登録
+- **Dashboard**: `#dashboard` - メイン機能アクセス画面
+- **Static Analysis**: `#static-analysis` - 静的姿勢分析
+- **Dynamic Analysis**: `#dynamic-analysis` - 動的姿勢分析
 
-## 📱 モバイル対応状況
+## 🛠️ 技術スタック
 
-### ✅ 完全対応済み
-- **Begin Analysisボタン**: タッチ応答性とクリック機能
-- **Manual Startボタン**: 透明グラスモーフィズム効果
-- **Continueボタン**: Welcome Screen内モバイルタッチイベント完全対応
-- **画面遷移**: スムーズなフラッシュレス遷移（TOP画面 → Welcome → Registration）
-- **レスポンシブデザイン**: 各デバイスサイズ対応
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **AI/ML**: MediaPipe Pose Detection
+- **PWA**: Service Worker, Web App Manifest
+- **Audio**: Web Speech API, Audio Context API
+- **Camera**: MediaDevices API, WebRTC
+- **Storage**: LocalStorage, SessionStorage
 
-### 📐 対応画面サイズ
-- `max-width: 768px` - タブレット
-- `max-width: 640px` - スマートフォン（縦）
-- `max-width: 480px` - 小型スマートフォン
-- `orientation: landscape` - 横画面最適化
+## 🔧 最新の修正内容（保存ポイント87対応）
 
-## 🛠 技術スタック
+### ✅ 解決済み問題
+1. **初期化の重複問題**: 複数のload eventリスナーによる競合を統一初期化に集約
+2. **ナビゲーションフロー**: Welcome画面からの分岐ロジックを修正
+3. **デバッグ機能強化**: 全ての画面遷移に詳細なログ出力を追加
+4. **カメラアクセス**: 撮影セクションへの移行を確実に実行
 
-### フロントエンド
-- **HTML5 + CSS3**: セマンティックマークアップとモダンCSS
-- **JavaScript ES6+**: 非同期処理とモダン構文
-- **Tailwind CSS**: ユーティリティファーストCSS
-- **MediaPipe**: Google製AI姿勢検出ライブラリ
+### ✅ フロー修正
+- **新規ユーザー**: `athlete-welcome` → `welcome` → `registration` → `dashboard`
+- **既存ユーザー**: `athlete-welcome` → `welcome` → `dashboard` (登録スキップ)
+- **カメラ機能**: `dashboard` → `static-analysis/dynamic-analysis`
 
-### PWA機能
-- **Service Worker**: オフライン対応とキャッシュ戦略
-- **Web App Manifest**: ネイティブアプリライク体験
-- **Push通知**: エンゲージメント向上（計画中）
+## 🚀 推奨される次のステップ
 
-### データ管理
-- **LocalStorage**: ユーザープロファイルとセッション管理
-- **RESTful Table API**: 将来的なクラウドデータ統合準備
+### 1. 高優先度
+- [ ] **実機テスト**: 実際のモバイルデバイスでのフロー確認
+- [ ] **MediaPipe最適化**: 姿勢検出の精度向上
+- [ ] **エラーハンドリング**: カメラアクセス失敗時のフォールバック
 
-## 🎨 デザインシステム
+### 2. 中優先度  
+- [ ] **UI/UX改善**: アニメーション効果の最適化
+- [ ] **パフォーマンス**: 初期読み込み時間の短縮
+- [ ] **分析結果UI**: より視覚的な結果表示
 
-### Dior Sportスタイル
-- **ミニマリスト美学**: 洗練されたタイポグラフィ
-- **高級感演出**: カスタムアニメーション（fade-in, slide-up, geometric-float）
-- **カラーパレット**: モノクロームベースの高コントラスト
-- **モバイル最適化**: タッチフレンドリーなUI/UX
+### 3. 将来的な拡張
+- [ ] **クラウド連携**: 分析結果のクラウド保存
+- [ ] **AIモデル改良**: より高精度な姿勢分析
+- [ ] **チーム機能**: 複数ユーザー管理とデータ共有
 
-### アニメーション仕様
-```css
-@keyframes dior-fade-in {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+## 📊 データ構造
 
-@keyframes dior-geometric-float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-10px) rotate(5deg); }
-}
-```
-
-## 🏗 アーキテクチャ
-
-### スクリーン管理システム
+### ユーザーデータ
 ```javascript
-// 中央集権的画面制御
-function showScreen(screenId) {
-    // 全画面非表示 → 対象画面表示
-    // モバイル最適化済み
+{
+  name: string,
+  height: number,
+  weight: number,
+  sport: string,
+  level: string,
+  created_at: timestamp
 }
 ```
 
-### 画面構成
-1. **Athlete Welcome Screen** (`#athlete-welcome`) - エントランス
-2. **Welcome Screen** (`#welcome`) - 登録/ログイン
-3. **Registration Screen** (`#registration`) - プロファイル作成
-4. **Dashboard Screen** (`#dashboard`) - メイン機能
-5. **Analysis Screens** (`#static-analysis`, `#dynamic-analysis`) - 姿勢解析
-6. **Results Screen** (`#results`) - 解析結果表示
-
-## 🔧 開発環境
-
-### ファイル構成
-```
-index.html                 # メインアプリケーション
-service-worker.js         # PWA Service Worker  
-manifest.json            # Web App Manifest
-README.md               # プロジェクト文書（当ファイル）
+### 分析データ
+```javascript
+{
+  type: 'static' | 'dynamic',
+  timestamp: number,
+  landmarks: Array,
+  analysis_results: Object,
+  user_id: string
+}
 ```
 
-### 必要な環境
-- **モダンブラウザ**: Chrome 90+, Safari 14+, Firefox 88+
-- **HTTPS接続**: MediaPipe Camera API要件
-- **カメラアクセス**: 姿勢解析機能に必須
+## 🐛 デバッグ機能
 
-## 🚀 デプロイ方法
+アプリケーションには包括的なデバッグシステムが組み込まれています：
 
-### GitHub Pages
-1. リポジトリのSettingsタブを開く
-2. Pagesセクションでソースを設定
-3. HTTPSドメインでアクセス（カメラ機能に必須）
+- **画面遷移ログ**: 全てのnavigationを追跡
+- **ユーザー状態**: 既存/新規ユーザーの判定過程
+- **カメラ初期化**: デバイスアクセスの詳細ログ
+- **MediaPipe状態**: AI初期化とエラー情報
 
-### ローカル開発
-```bash
-# HTTPSサーバーが必要（MediaPipe要件）
-python -m http.server 8000
-# または
-npx http-server -S -p 8000
-```
+### コンソールログパターン
+- `🏆 FLOW:` - 画面遷移情報
+- `👤 User status:` - ユーザー状態
+- `📸 CAMERA:` - カメラ関連操作
+- `🔄 Transition:` - 画面間の移行
 
-## 🎯 今後の開発計画
+## 🔒 セキュリティとプライバシー
 
-### 短期目標（1-2ヶ月）
-- [ ] クラウドデータ同期機能
-- [ ] 詳細解析レポート生成
-- [ ] ユーザー間比較機能
-
-### 中期目標（3-6ヶ月）
-- [ ] AIコーチング機能
-- [ ] ビデオ解析強化
-- [ ] 企業向けダッシュボード
-
-### 長期目標（6ヶ月+）
-- [ ] ウェアラブルデバイス連携
-- [ ] リアルタイム指導機能
-- [ ] ヘルスケア事業展開
-
-## 📞 サポート・連絡先
-
-**開発者**: AI姿勢分析システム会社経営者  
-**会社サイト**: https://bclab.jp  
-**専門分野**: ヘルスケアビジネス、AI姿勢分析
+- **ローカル処理**: 全ての画像/動画処理はデバイス内で完結
+- **データ保護**: ユーザーデータのローカル暗号化
+- **権限管理**: カメラ・マイクアクセスの適切な制御
 
 ---
 
-**AthleteCore Pro** - プロフェッショナルアスリートと指導者のための次世代AI姿勢分析プラットフォーム 🏃‍♂️✨
+**開発者**: BCLab Corporation  
+**最終更新**: 2025年9月  
+**バージョン**: 1.0 (保存ポイント87対応)  
+**ライセンス**: Proprietary
