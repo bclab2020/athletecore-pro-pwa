@@ -1850,6 +1850,29 @@
                             <div class="w-12 h-px bg-gray-300 mx-auto mt-4"></div>
                         </div>
                         
+                        <!-- Captured Photo Section -->
+                        <div id="capturedPhotoSection" class="bg-white bg-opacity-60 backdrop-filter backdrop-blur-sm border border-gray-300 border-opacity-50 rounded-none p-8 mb-12 dior-fade-in hidden" style="animation-delay: 0.3s;">
+                            <div class="text-center mb-6">
+                                <h3 class="text-sm font-light text-black tracking-wide uppercase mb-2">Captured Analysis</h3>
+                                <div class="w-12 h-px bg-gray-300 mx-auto mb-1"></div>
+                                <div class="text-xs text-gray-500 font-light">撮影分析</div>
+                            </div>
+                            <div class="text-center">
+                                <img id="capturedPhotoImg" src="" alt="Captured Photo" class="max-w-full max-h-64 mx-auto rounded border border-gray-200 shadow-sm" style="display: none;">
+                                <div id="photoPlaceholder" class="w-full h-48 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-400">
+                                    <div class="text-center">
+                                        <div class="text-3xl mb-2">📷</div>
+                                        <div class="text-sm">No Photo Available</div>
+                                        <div class="text-xs">写真がありません</div>
+                                    </div>
+                                </div>
+                                <div id="photoInfo" class="mt-4 text-xs text-gray-500" style="display: none;">
+                                    <div>Camera: <span id="photoCamera">Unknown</span></div>
+                                    <div>Size: <span id="photoSize">Unknown</span></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Elegant Chart -->
                         <div class="bg-white bg-opacity-60 backdrop-filter backdrop-blur-sm border border-gray-300 border-opacity-50 rounded-none p-8 mb-12 dior-fade-in" style="animation-delay: 0.4s;">
                             <div class="text-center mb-6">
@@ -4422,17 +4445,34 @@
         
         // 分析画面の戻るボタンのモバイルイベント設定
         function setupAnalysisBackButtons() {
-            // 全ての戻るボタンを検索（IDベース + セレクターベース）- 結果画面も含める
+            console.log('🔧 Setting up analysis back buttons...');
+            
+            // より包括的な戻るボタン検索
             const backButtons = [
                 document.getElementById('staticAnalysisBackBtn'),
                 document.getElementById('dynamicAnalysisBackBtn'),
                 document.querySelector('#static-analysis button[onclick*="showWelcome"]'),
                 document.querySelector('#dynamic-analysis button[onclick*="showWelcome"]'),
-                document.querySelector('#results button[onclick*="showDashboard"]') // 結果画面の戻るボタンも追加
-            ];
+                // 結果画面の全ての戻るボタンを検索
+                ...document.querySelectorAll('#results button[onclick*="showDashboard"]'),
+                // 結果画面内のすべてのダッシュボード戻りボタンを確実に取得
+                ...document.querySelectorAll('#results button')
+            ].filter(btn => {
+                if (!btn) return false;
+                const onclick = btn.getAttribute('onclick') || '';
+                return onclick.includes('showWelcome') || onclick.includes('showDashboard');
+            });
             
             // 重複を除去
-            const uniqueButtons = [...new Set(backButtons.filter(btn => btn))];
+            const uniqueButtons = [...new Set(backButtons)];
+            
+            console.log(`🔍 Found ${uniqueButtons.length} back buttons to setup:`, 
+                uniqueButtons.map(btn => ({
+                    id: btn.id || 'no-id',
+                    onclick: btn.getAttribute('onclick'),
+                    text: btn.textContent.trim().substring(0, 20)
+                }))
+            );
             
             uniqueButtons.forEach((button, index) => {
                 if (button && !button.dataset.mobileEventsSetup) {
@@ -4441,58 +4481,82 @@
                     const screenName = button.closest('#static-analysis') ? 'Static' : 
                                      button.closest('#dynamic-analysis') ? 'Dynamic' : 
                                      button.closest('#results') ? 'Results' : 'Analysis';
-                    console.log(`🔧 Setting up ${screenName} Analysis back button - mobile support`);
+                                     
+                    const onclickAttr = button.getAttribute('onclick') || '';
+                    const isResultsButton = onclickAttr.includes('showDashboard') || screenName === 'Results';
                     
-                    // モバイルタッチイベント
+                    console.log(`🔧 Setting up ${screenName} back button (${index + 1}/${uniqueButtons.length}):`, {
+                        onclick: onclickAttr,
+                        isResultsButton: isResultsButton,
+                        text: button.textContent.trim().substring(0, 30)
+                    });
+                    
+                    // 元のonclick属性を削除してJavaScript制御に統一
+                    const originalOnclick = button.getAttribute('onclick');
+                    button.removeAttribute('onclick');
+                    
+                    // モバイルタッチイベント（強化版）
                     button.addEventListener('touchstart', function(e) {
+                        console.log(`👆 ${screenName} back button TOUCH START`);
                         if (window.updateMobileDebug) {
                             window.updateMobileDebug('BACK_TOUCH_START', { 
                                 screen: screenName,
-                                destination: 'Welcome'
+                                destination: isResultsButton ? 'Dashboard' : 'Welcome',
+                                originalOnclick: originalOnclick
                             });
                         }
                         e.preventDefault();
-                        this.style.transform = 'scale(0.9)';
-                        this.style.color = '#9ca3af';
+                        this.style.transform = 'scale(0.95)';
+                        this.style.opacity = '0.7';
                     }, { passive: false });
                     
                     button.addEventListener('touchend', function(e) {
-                        console.log(`👈 ${screenName} Analysis back button TOUCH END`);
+                        console.log(`👈 ${screenName} back button TOUCH END - ${isResultsButton ? 'to Dashboard' : 'to Welcome'}`);
                         if (window.updateMobileDebug) {
                             window.updateMobileDebug('BACK_TOUCH_END', { 
                                 screen: screenName,
-                                action: 'Navigating to Welcome'
+                                action: `Navigating to ${isResultsButton ? 'Dashboard' : 'Welcome'}`,
+                                isResultsButton: isResultsButton
                             });
                         }
                         e.preventDefault();
                         e.stopPropagation();
-                        this.style.transform = 'scale(1)';
-                        this.style.color = '#ffffff';
                         
-                        // 結果画面の場合はダッシュボードに、その他はWelcome画面に戻る
-                        if (screenName === 'Results') {
-                            showDashboard();
-                        } else {
-                            showWelcome();
-                        }
+                        // 視覚フィードバック復元
+                        this.style.transform = 'scale(1)';
+                        this.style.opacity = '1';
+                        
+                        // 短い遅延後にナビゲーション実行（タッチイベントの競合を回避）
+                        setTimeout(() => {
+                            if (isResultsButton) {
+                                console.log('🏠 Navigating to Dashboard from Results');
+                                showDashboard();
+                            } else {
+                                console.log('🏠 Navigating to Welcome from Analysis');
+                                showWelcome();
+                            }
+                        }, 100);
                     }, { passive: false });
                     
-                    // クリックイベント（PC用）
+                    // クリックイベント（PC用・フォールバック）
                     button.addEventListener('click', function(e) {
-                        console.log(`👈 ${screenName} Analysis back button CLICK`);
+                        console.log(`👈 ${screenName} back button CLICK - ${isResultsButton ? 'to Dashboard' : 'to Welcome'}`);
                         if (window.updateMobileDebug) {
                             window.updateMobileDebug('BACK_CLICK', { 
                                 screen: screenName,
-                                action: 'Navigating to Welcome'
+                                action: `Clicking to ${isResultsButton ? 'Dashboard' : 'Welcome'}`,
+                                isResultsButton: isResultsButton
                             });
                         }
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        // 結果画面の場合はダッシュボードに、その他はWelcome画面に戻る
-                        if (screenName === 'Results') {
+                        // すぐにナビゲーション実行
+                        if (isResultsButton) {
+                            console.log('🏠 Click navigating to Dashboard from Results');
                             showDashboard();
                         } else {
+                            console.log('🏠 Click navigating to Welcome from Analysis');
                             showWelcome();
                         }
                     }, { passive: false });
@@ -6066,44 +6130,11 @@
         }
         
         // Handle pose detection results
-        // 人型ガイドとの位置合わせを評価する関数
+        // 人型ガイドとの位置合わせを評価する関数（無効化済み）
         function updateHumanGuideAlignment(landmarks) {
-            try {
-                const activeScreen = document.querySelector('.app-screen:not(.hidden)');
-                if (!activeScreen) {
-                    console.log('⚠️ No active screen found for guide alignment');
-                    return;
-                }
-                
-                const isStatic = activeScreen.id === 'static-analysis';
-                const isDynamic = activeScreen.id === 'dynamic-analysis';
-                
-                if (!isStatic && !isDynamic) {
-                    console.log('⚠️ Active screen is not analysis screen:', activeScreen.id);
-                    return;
-                }
-                
-                // 人型ガイドの表示状態を確認
-                const prefix = isStatic ? 'static' : 'dynamic';
-                const guideElement = document.getElementById(`${prefix}PersonGuide`);
-                if (!guideElement) {
-                    console.error(`❌ Guide element ${prefix}PersonGuide not found`);
-                    return;
-                }
-                
-                // ガイドが非表示の場合はスキップ
-                if (guideElement.style.display === 'none' || !humanGuideVisible) {
-                    console.log('⚠️ Human guide is hidden, skipping alignment update');
-                    return;
-                }
-                
-                // MediaPipeランドマークの安全な取得
-                if (!landmarks || landmarks.length < 29) {
-                    console.log('⚠️ Insufficient landmarks for guide alignment:', landmarks ? landmarks.length : 'null');
-                    // ランドマークが不足している場合もステータス更新
-                    updateAlignmentStatus(isStatic, 0, { error: 'no_landmarks' });
-                    return;
-                }
+            // 人型ガイドシステムは無効化されています（ユーザーリクエスト: 撮影距離では視認困難）
+            // この関数は互換性のために残していますが、処理はスキップされます
+            return;
                 
                 // 重要な関節点の取得 (MediaPipe Pose landmark indices)
                 const nose = landmarks[0];           // 鼻
@@ -6285,58 +6316,36 @@
         
         // 画面表示時にガイドの初期状態を設定
         function initializeHumanGuide(screenType) {
-            console.log(`👤 Initializing human guide for ${screenType} screen`);
+            console.log(`👤 Human guide disabled for ${screenType} screen (user request: not visible at capture distance)`);
             
             const guideElement = document.getElementById(`${screenType}PersonGuide`);
             const toggleButton = document.getElementById(`${screenType}GuideToggle`);
+            const alignmentElement = document.getElementById(`${screenType}AlignmentStatus`);
             
-            console.log(`🔍 Guide element search for ${screenType}:`, {
-                guideFound: !!guideElement,
-                buttonFound: !!toggleButton,
-                guideDisplay: guideElement ? guideElement.style.display : 'N/A',
-                guideVisibility: guideElement ? guideElement.style.visibility : 'N/A'
-            });
-            
+            // 人型ガイドを完全に無効化（ユーザーリクエストに基づく）
             if (guideElement) {
-                // 強制的にガイドを表示状態にする
-                guideElement.style.display = 'block';
-                guideElement.style.visibility = 'visible';
-                guideElement.style.opacity = '1';
-                guideElement.style.pointerEvents = 'none';
-                guideElement.style.zIndex = '25';
-                
-                // 人型ガイドを常に表示（デフォルト状態）
-                humanGuideVisible = true;
-                
-                console.log(`✅ Human guide FORCED VISIBLE for ${screenType}:`, {
-                    display: guideElement.style.display,
-                    visibility: guideElement.style.visibility,
-                    opacity: guideElement.style.opacity,
-                    zIndex: guideElement.style.zIndex
-                });
-                
-                // ボタンの状態も更新
-                if (toggleButton) {
-                    toggleButton.classList.add('bg-green-600');
-                    toggleButton.classList.remove('bg-gray-600');
-                }
-                
-                // デフォルトステータス表示
-                const alignmentElement = document.getElementById(`${screenType}AlignmentStatus`);
-                if (alignmentElement) {
-                    alignmentElement.style.display = 'block';
-                    alignmentElement.style.visibility = 'visible';
-                }
-                
-            } else {
-                console.error(`❌ Human guide elements not found for ${screenType}:`, {
-                    guideElement: !!guideElement,
-                    toggleButton: !!toggleButton,
-                    expectedGuideId: `${screenType}PersonGuide`,
-                    expectedButtonId: `${screenType}GuideToggle`,
-                    allElementsWithPersonGuide: document.querySelectorAll('[id*="PersonGuide"]').length
-                });
+                guideElement.style.display = 'none';
+                guideElement.style.visibility = 'hidden';
+                guideElement.style.opacity = '0';
+                console.log(`🚫 Human guide DISABLED for ${screenType} (user request)`);
             }
+            
+            // ガイドトグルボタンも無効化
+            if (toggleButton) {
+                toggleButton.style.display = 'none';
+                console.log(`🚫 Guide toggle button HIDDEN for ${screenType}`);
+            }
+            
+            // 位置合わせステータスも非表示
+            if (alignmentElement) {
+                alignmentElement.style.display = 'none';
+                console.log(`🚫 Alignment status HIDDEN for ${screenType}`);
+            }
+            
+            // グローバル状態も無効に設定
+            humanGuideVisible = false;
+            
+            console.log(`✅ Human guide system DISABLED for ${screenType} screen`);
         }
 
         function onPoseResults(results) {
@@ -9954,6 +9963,9 @@
                 
                 console.log('📊 Starting chart creation...');
                 
+                // Handle captured photo display
+                displayCapturedPhoto(analysisData);
+                
                 // Create chart with delay to ensure DOM is ready
                 setTimeout(() => {
                     createAnalysisChart(analysisData);
@@ -9980,6 +9992,105 @@
                         message: error.message,
                         function: 'updateResultsDisplay',
                         stack: error.stack
+                    });
+                }
+            }
+        }
+        
+        // 撮影写真表示関数
+        function displayCapturedPhoto(analysisData) {
+            console.log('📸 displayCapturedPhoto() called with:', {
+                hasAnalysisData: !!analysisData,
+                hasCapturedPhoto: !!(analysisData && analysisData.capturedPhoto),
+                hasImageData: !!(analysisData && analysisData.capturedPhoto && analysisData.capturedPhoto.imageData)
+            });
+            
+            const photoSection = document.getElementById('capturedPhotoSection');
+            const photoImg = document.getElementById('capturedPhotoImg');
+            const photoPlaceholder = document.getElementById('photoPlaceholder');
+            const photoInfo = document.getElementById('photoInfo');
+            const photoCamera = document.getElementById('photoCamera');
+            const photoSize = document.getElementById('photoSize');
+            
+            if (!photoSection) {
+                console.error('❌ Photo section elements not found');
+                return;
+            }
+            
+            // 写真セクションを表示
+            photoSection.classList.remove('hidden');
+            
+            if (analysisData && analysisData.capturedPhoto && analysisData.capturedPhoto.imageData) {
+                // 写真が利用可能な場合
+                const capturedPhoto = analysisData.capturedPhoto;
+                
+                console.log('✅ Captured photo available:', {
+                    imageDataLength: capturedPhoto.imageData.length,
+                    width: capturedPhoto.width,
+                    height: capturedPhoto.height,
+                    cameraType: capturedPhoto.cameraType,
+                    hasPoseOverlay: capturedPhoto.hasPoseOverlay
+                });
+                
+                // 写真を表示
+                if (photoImg && photoPlaceholder) {
+                    photoImg.src = capturedPhoto.imageData;
+                    photoImg.style.display = 'block';
+                    photoPlaceholder.style.display = 'none';
+                    
+                    // 写真の読み込みエラー処理
+                    photoImg.onerror = function() {
+                        console.error('❌ Failed to load captured photo');
+                        photoImg.style.display = 'none';
+                        photoPlaceholder.style.display = 'flex';
+                        photoPlaceholder.innerHTML = `
+                            <div class="text-center">
+                                <div class="text-3xl mb-2">⚠️</div>
+                                <div class="text-sm text-red-600">Photo Load Error</div>
+                                <div class="text-xs text-red-500">画像読み込みエラー</div>
+                            </div>
+                        `;
+                    };
+                    
+                    photoImg.onload = function() {
+                        console.log('✅ Captured photo loaded successfully');
+                    };
+                }
+                
+                // 写真情報を表示
+                if (photoInfo && photoCamera && photoSize) {
+                    photoCamera.textContent = capturedPhoto.cameraType === 'front' ? 'Front Camera / フロントカメラ' : 'Back Camera / バックカメラ';
+                    photoSize.textContent = `${capturedPhoto.width} × ${capturedPhoto.height}`;
+                    photoInfo.style.display = 'block';
+                }
+                
+                // モバイルデバッグ
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('PHOTO_DISPLAYED', {
+                        size: `${capturedPhoto.width}x${capturedPhoto.height}`,
+                        camera: capturedPhoto.cameraType,
+                        dataSize: (capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB'
+                    });
+                }
+                
+            } else {
+                // 写真が利用できない場合
+                console.log('⚠️ No captured photo available');
+                
+                if (photoImg && photoPlaceholder) {
+                    photoImg.style.display = 'none';
+                    photoPlaceholder.style.display = 'flex';
+                }
+                
+                if (photoInfo) {
+                    photoInfo.style.display = 'none';
+                }
+                
+                // モバイルデバッグ
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('NO_PHOTO_AVAILABLE', {
+                        hasAnalysisData: !!analysisData,
+                        hasCapturedPhoto: !!(analysisData && analysisData.capturedPhoto)
                     });
                 }
             }
