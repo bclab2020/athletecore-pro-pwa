@@ -4204,26 +4204,72 @@
                 `;
                 document.body.appendChild(debugPanel);
                 
-                // デバッグ情報更新関数
+                // デバッグ情報更新関数（強化版）
                 window.updateMobileDebug = function(action, details = {}) {
                     const timestamp = new Date().toLocaleTimeString();
                     const savedUser = localStorage.getItem('athletecore_user');
+                    
+                    // MediaPipe状態確認
+                    const mediaPipeStatus = pose ? '✅ Ready' : '❌ Not initialized';
+                    const currentPoseStatus = currentPoseResults ? '🎯 Active' : '⭕ Idle';
+                    
+                    // カメラ状態確認
+                    const staticVideo = document.getElementById('staticCameraFeed');
+                    const dynamicVideo = document.getElementById('dynamicCameraFeed');
+                    const cameraStatus = (staticVideo?.srcObject || dynamicVideo?.srcObject) ? '📹 Active' : '📷 Inactive';
+                    
+                    // 人型ガイド状態確認
+                    const staticGuide = document.getElementById('staticPersonGuide');
+                    const dynamicGuide = document.getElementById('dynamicPersonGuide');
+                    const guideStatus = (staticGuide?.style.display === 'block' || dynamicGuide?.style.display === 'block') ? 
+                                       '👤 Visible' : '👻 Hidden';
+                    
+                    // メモリ使用量（可能な場合）
+                    const memoryInfo = navigator.memory ? 
+                        `${(navigator.memory.usedJSHeapSize / 1024 / 1024).toFixed(1)}MB` : 'N/A';
+                    
                     debugPanel.innerHTML = `
-                        <div style="margin-bottom: 5px;"><strong>📱 Mobile Debug</strong></div>
-                        <div>⏰ Time: ${timestamp}</div>
+                        <div style="margin-bottom: 5px;"><strong>📱 Enhanced Debug</strong></div>
+                        <div>⏰ ${timestamp}</div>
                         <div>🎬 Action: ${action}</div>
                         <div>📺 Screen: ${currentScreen || 'unknown'}</div>
                         <div>👤 User: ${currentUser ? currentUser.name || 'logged' : 'new'}</div>
-                        <div>💾 LocalStorage: ${savedUser ? '✅' : '❌'}</div>
-                        ${Object.entries(details).map(([k,v]) => `<div>🔍 ${k}: ${v}</div>`).join('')}
-                        <button onclick="this.parentElement.style.display='none'" style="margin-top: 5px; background: #333; color: white; border: none; padding: 2px 8px; font-size: 8px;">Close</button>
+                        <div>💾 Storage: ${savedUser ? '✅' : '❌'}</div>
+                        <div>🧠 MediaPipe: ${mediaPipeStatus}</div>
+                        <div>🎯 Pose: ${currentPoseStatus}</div>
+                        <div>📹 Camera: ${cameraStatus}</div>
+                        <div>👤 Guide: ${guideStatus}</div>
+                        <div>💾 Memory: ${memoryInfo}</div>
+                        ${Object.entries(details).map(([k,v]) => {
+                            // 長い値は省略
+                            const displayValue = typeof v === 'string' && v.length > 20 ? v.substring(0, 20) + '...' : v;
+                            return `<div>🔍 ${k}: ${displayValue}</div>`;
+                        }).join('')}
+                        <div style="margin-top: 5px; font-size: 8px;">
+                            <button onclick="this.parentElement.style.display='none'" style="background: #333; color: white; border: none; padding: 2px 6px; margin-right: 2px;">Close</button>
+                            <button onclick="console.log('📊 Full Debug State:', {
+                                timestamp: '${timestamp}', 
+                                action: '${action}', 
+                                details: ${JSON.stringify(details)}, 
+                                pose: !!window.pose,
+                                currentPoseResults: !!window.currentPoseResults,
+                                humanGuideVisible: window.humanGuideVisible,
+                                currentScreen: '${currentScreen || 'unknown'}'
+                            })" style="background: #666; color: white; border: none; padding: 2px 6px; font-size: 6px;">Log</button>
+                        </div>
                     `;
                     debugPanel.style.display = 'block';
                     
-                    // 15秒後に自動非表示（モバイル対応で延長）
+                    // エラーレベルに応じて表示時間調整
+                    const displayDuration = action.includes('ERROR') || action.includes('FAILED') ? 20000 : 15000;
                     setTimeout(() => {
                         debugPanel.style.display = 'none';
-                    }, 15000);
+                    }, displayDuration);
+                    
+                    // 重要なイベントはコンソールにも出力
+                    if (action.includes('ERROR') || action.includes('FAILED') || action.includes('CRASH')) {
+                        console.error(`🚨 ${action}:`, details);
+                    }
                 };
                 
                 console.log('📱 Mobile navigation debug system initialized');
@@ -4898,29 +4944,89 @@
         // Add global error handlers to prevent app crashes
         window.addEventListener('error', (event) => {
             console.error('🚨 Uncaught error detected:', event.error);
-            console.error('Error details:', {
+            const errorDetails = {
                 message: event.message,
                 filename: event.filename,
                 lineno: event.lineno,
                 colno: event.colno,
-                stack: event.error?.stack
-            });
+                stack: event.error?.stack,
+                userAgent: navigator.userAgent,
+                currentScreen: currentScreen || 'unknown',
+                timestamp: new Date().toISOString()
+            };
+            console.error('Error details:', errorDetails);
+            
+            // モバイルデバッグに詳細を送信
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('GLOBAL_ERROR', {
+                    message: event.message,
+                    file: event.filename ? event.filename.split('/').pop() : 'unknown',
+                    line: event.lineno,
+                    screen: currentScreen
+                });
+            }
             
             // Prevent default error handling that might cause page navigation
             event.preventDefault();
             
             // Show user-friendly message
             showToast('⚠️ An error occurred - app stability maintained / エラーが発生しましたが、アプリは安定動作を継続しています', 'warning');
+            
+            // 重篤なエラーの場合は部分的な回復処理
+            if (event.message.includes('MediaPipe') || event.message.includes('pose') || 
+                event.filename.includes('pose') || event.message.includes('InvalidStateError')) {
+                console.warn('🔄 MediaPipe-related error detected - considering recovery');
+                // MediaPipe関連エラーの場合は軽度な回復処理を行う
+                setTimeout(() => {
+                    if (!pose || !currentPoseResults) {
+                        console.log('🚑 Attempting MediaPipe recovery due to error');
+                        initMediaPipe().catch(err => console.error('Recovery failed:', err));
+                    }
+                }, 2000);
+            }
         });
         
         window.addEventListener('unhandledrejection', (event) => {
             console.error('🚨 Unhandled promise rejection:', event.reason);
+            
+            // 詳細な診断情報の収集
+            const rejectionDetails = {
+                reason: event.reason,
+                message: event.reason?.message || 'Unknown promise rejection',
+                stack: event.reason?.stack,
+                currentScreen: currentScreen || 'unknown',
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent
+            };
+            console.error('Promise rejection details:', rejectionDetails);
+            
+            // モバイルデバッグに送信
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('PROMISE_REJECTION', {
+                    reason: rejectionDetails.message,
+                    screen: currentScreen,
+                    isMediaPipeRelated: rejectionDetails.message.includes('MediaPipe') || 
+                                        rejectionDetails.message.includes('pose') || 
+                                        rejectionDetails.message.includes('camera')
+                });
+            }
             
             // Prevent default rejection handling
             event.preventDefault();
             
             // Show user-friendly message for promise rejections
             showToast('⚠️ Operation failed - please try again / 操作が失敗しました、再度お試しください', 'warning');
+            
+            // MediaPipe関連のPromise拒否の場合は特別な対応
+            if (rejectionDetails.message.includes('MediaPipe') || rejectionDetails.message.includes('pose')) {
+                console.warn('🔄 MediaPipe-related promise rejection - scheduling recovery check');
+                setTimeout(() => {
+                    if (!pose) {
+                        console.log('🚑 Attempting MediaPipe recovery due to promise rejection');
+                        initMediaPipe().catch(err => console.error('Promise rejection recovery failed:', err));
+                    }
+                }, 3000);
+            }
         });
         
         // Initialize app
@@ -5859,17 +5965,33 @@
         let isAnalyzing = false;
         
         // Initialize MediaPipe Pose
-        async function initMediaPipe() {
+        // MediaPipe初期化リトライ管理
+        let mediaPipeInitAttempts = 0;
+        const MAX_MEDIAPIPE_INIT_ATTEMPTS = 3;
+        
+        async function initMediaPipe(retryCount = 0) {
             const timestamp = new Date().toISOString().slice(11, 23);
-            console.log(`🚀 [${timestamp}] Initializing MediaPipe Pose...`);
+            console.log(`🚀 [${timestamp}] Initializing MediaPipe Pose (attempt ${retryCount + 1}/${MAX_MEDIAPIPE_INIT_ATTEMPTS})...`);
             
             if (typeof Pose === 'undefined') {
-                console.error(`❌ [${timestamp}] MediaPipe Pose not loaded - retrying in 1 second`);
-                setTimeout(initMediaPipe, 1000);
-                return false;
+                if (retryCount < MAX_MEDIAPIPE_INIT_ATTEMPTS - 1) {
+                    console.error(`❌ [${timestamp}] MediaPipe Pose not loaded - retrying in 2 seconds`);
+                    setTimeout(() => initMediaPipe(retryCount + 1), 2000);
+                    return false;
+                } else {
+                    console.error(`❌ [${timestamp}] MediaPipe Pose failed to load after ${MAX_MEDIAPIPE_INIT_ATTEMPTS} attempts`);
+                    return false;
+                }
             }
             
             try {
+                // 既存のposeインスタンスがある場合は破棄
+                if (pose && typeof pose.close === 'function') {
+                    console.log(`🧹 [${timestamp}] Cleaning up existing pose instance`);
+                    pose.close();
+                    pose = null;
+                }
+                
                 console.log(`🔧 [${timestamp}] Creating new Pose instance...`);
                 pose = new Pose({
                     locateFile: (file) => {
@@ -5879,39 +6001,67 @@
                     }
                 });
                 
-                // Optimize settings for mobile devices
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                console.log(`📱 [${timestamp}] Device type: ${isMobile ? 'Mobile' : 'Desktop'}`);
+                // モバイルデバイス用最適化
+                const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isLowEndDevice = navigator.deviceMemory && navigator.deviceMemory < 4; // 4GB未満はローエンドとみなす
                 
-                console.log(`⚙️ [${timestamp}] Setting MediaPipe options...`);
+                console.log(`📱 [${timestamp}] Device info:`, {
+                    isMobile,
+                    isLowEndDevice,
+                    deviceMemory: navigator.deviceMemory || 'unknown',
+                    hardwareConcurrency: navigator.hardwareConcurrency || 'unknown'
+                });
+                
+                console.log(`⚙️ [${timestamp}] Setting optimized MediaPipe options...`);
                 pose.setOptions({
-                    modelComplexity: 1, // Use model complexity 1 for better accuracy
-                    smoothLandmarks: true,
-                    enableSegmentation: false,
+                    // ローエンドデバイスでは軽量設定
+                    modelComplexity: (isMobile && isLowEndDevice) ? 0 : 1,
+                    smoothLandmarks: !isLowEndDevice, // ローエンドではスムージング無効
+                    enableSegmentation: false, // 常に無効（パフォーマンス優先）
                     smoothSegmentation: false,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
+                    minDetectionConfidence: isMobile ? 0.6 : 0.5, // モバイルでは検出閾値を上げる
+                    minTrackingConfidence: isMobile ? 0.6 : 0.5
                 });
                 
                 console.log(`🔗 [${timestamp}] Setting pose.onResults callback...`);
                 pose.onResults(onPoseResults);
                 
-                // Wait for initialization to complete
-                console.log(`⏳ [${timestamp}] Waiting for initialization to complete...`);
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // 初期化完了を待機（モバイルでは長めに待機）
+                const waitTime = isMobile ? 500 : 100;
+                console.log(`⏳ [${timestamp}] Waiting ${waitTime}ms for initialization to complete...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
                 
-                // Test the pose object
+                // pose オブジェクトの検証
                 console.log(`🧪 [${timestamp}] Testing pose object:`, {
                     poseExists: !!pose,
                     poseType: typeof pose,
-                    poseMethods: pose ? Object.getOwnPropertyNames(Object.getPrototypeOf(pose)) : 'N/A'
+                    hasOnResults: typeof pose.onResults === 'function',
+                    hasSend: typeof pose.send === 'function'
                 });
                 
+                mediaPipeInitAttempts = 0; // 成功したらカウンターリセット
                 console.log(`✅ [${timestamp}] MediaPipe Pose initialized successfully`);
                 return true;
+                
             } catch (error) {
-                console.error(`❌ [${timestamp}] Failed to initialize MediaPipe Pose:`, error);
-                return false;
+                console.error(`❌ [${timestamp}] Failed to initialize MediaPipe Pose (attempt ${retryCount + 1}):`, error);
+                
+                if (retryCount < MAX_MEDIAPIPE_INIT_ATTEMPTS - 1) {
+                    const retryDelay = (retryCount + 1) * 2000; // 指数バックオフ
+                    console.log(`🔄 [${timestamp}] Retrying initialization in ${retryDelay}ms...`);
+                    setTimeout(() => initMediaPipe(retryCount + 1), retryDelay);
+                    return false;
+                } else {
+                    console.error(`❌ [${timestamp}] MediaPipe initialization failed after ${MAX_MEDIAPIPE_INIT_ATTEMPTS} attempts`);
+                    // ユーザーに通知
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('MEDIAPIPE_INIT_FAILED', {
+                            attempts: MAX_MEDIAPIPE_INIT_ATTEMPTS,
+                            lastError: error.message
+                        });
+                    }
+                    return false;
+                }
             }
         }
         
@@ -5920,16 +6070,38 @@
         function updateHumanGuideAlignment(landmarks) {
             try {
                 const activeScreen = document.querySelector('.app-screen:not(.hidden)');
-                if (!activeScreen) return;
+                if (!activeScreen) {
+                    console.log('⚠️ No active screen found for guide alignment');
+                    return;
+                }
                 
                 const isStatic = activeScreen.id === 'static-analysis';
                 const isDynamic = activeScreen.id === 'dynamic-analysis';
                 
-                if (!isStatic && !isDynamic) return;
+                if (!isStatic && !isDynamic) {
+                    console.log('⚠️ Active screen is not analysis screen:', activeScreen.id);
+                    return;
+                }
+                
+                // 人型ガイドの表示状態を確認
+                const prefix = isStatic ? 'static' : 'dynamic';
+                const guideElement = document.getElementById(`${prefix}PersonGuide`);
+                if (!guideElement) {
+                    console.error(`❌ Guide element ${prefix}PersonGuide not found`);
+                    return;
+                }
+                
+                // ガイドが非表示の場合はスキップ
+                if (guideElement.style.display === 'none' || !humanGuideVisible) {
+                    console.log('⚠️ Human guide is hidden, skipping alignment update');
+                    return;
+                }
                 
                 // MediaPipeランドマークの安全な取得
                 if (!landmarks || landmarks.length < 29) {
                     console.log('⚠️ Insufficient landmarks for guide alignment:', landmarks ? landmarks.length : 'null');
+                    // ランドマークが不足している場合もステータス更新
+                    updateAlignmentStatus(isStatic, 0, { error: 'no_landmarks' });
                     return;
                 }
                 
@@ -6113,32 +6285,56 @@
         
         // 画面表示時にガイドの初期状態を設定
         function initializeHumanGuide(screenType) {
-            console.log(`🎯 Initializing human guide for ${screenType}...`);
+            console.log(`👤 Initializing human guide for ${screenType} screen`);
             
             const guideElement = document.getElementById(`${screenType}PersonGuide`);
             const toggleButton = document.getElementById(`${screenType}GuideToggle`);
             
-            console.log(`🔍 Guide elements found: guide=${!!guideElement}, button=${!!toggleButton}`);
+            console.log(`🔍 Guide element search for ${screenType}:`, {
+                guideFound: !!guideElement,
+                buttonFound: !!toggleButton,
+                guideDisplay: guideElement ? guideElement.style.display : 'N/A',
+                guideVisibility: guideElement ? guideElement.style.visibility : 'N/A'
+            });
             
-            if (guideElement && toggleButton) {
-                if (humanGuideVisible[screenType]) {
-                    guideElement.style.setProperty('display', 'block', 'important');
-                    guideElement.style.setProperty('visibility', 'visible', 'important');
-                    guideElement.style.setProperty('opacity', '1', 'important');
-                    toggleButton.style.backgroundColor = 'rgba(34, 197, 94, 0.6)';
-                    console.log(`✅ Human guide set to visible for ${screenType}`);
-                } else {
-                    guideElement.style.display = 'none';
-                    toggleButton.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-                    console.log(`❌ Human guide set to hidden for ${screenType}`);
+            if (guideElement) {
+                // 強制的にガイドを表示状態にする
+                guideElement.style.display = 'block';
+                guideElement.style.visibility = 'visible';
+                guideElement.style.opacity = '1';
+                guideElement.style.pointerEvents = 'none';
+                guideElement.style.zIndex = '25';
+                
+                // 人型ガイドを常に表示（デフォルト状態）
+                humanGuideVisible = true;
+                
+                console.log(`✅ Human guide FORCED VISIBLE for ${screenType}:`, {
+                    display: guideElement.style.display,
+                    visibility: guideElement.style.visibility,
+                    opacity: guideElement.style.opacity,
+                    zIndex: guideElement.style.zIndex
+                });
+                
+                // ボタンの状態も更新
+                if (toggleButton) {
+                    toggleButton.classList.add('bg-green-600');
+                    toggleButton.classList.remove('bg-gray-600');
                 }
-                console.log(`🎯 Human guide initialized for ${screenType}: ${humanGuideVisible[screenType] ? 'visible' : 'hidden'}`);
+                
+                // デフォルトステータス表示
+                const alignmentElement = document.getElementById(`${screenType}AlignmentStatus`);
+                if (alignmentElement) {
+                    alignmentElement.style.display = 'block';
+                    alignmentElement.style.visibility = 'visible';
+                }
+                
             } else {
                 console.error(`❌ Human guide elements not found for ${screenType}:`, {
                     guideElement: !!guideElement,
                     toggleButton: !!toggleButton,
                     expectedGuideId: `${screenType}PersonGuide`,
-                    expectedButtonId: `${screenType}GuideToggle`
+                    expectedButtonId: `${screenType}GuideToggle`,
+                    allElementsWithPersonGuide: document.querySelectorAll('[id*="PersonGuide"]').length
                 });
             }
         }
@@ -6146,56 +6342,83 @@
         function onPoseResults(results) {
             currentPoseResults = results;
             
+            // ヘルスチェック用の結果受信記録
+            recordPoseResults();
+            
             // Monitor pose detection for smart reload feature
             monitorPoseDetection();
             
-            // Enhanced debugging for pose results
-            const landmarks = results.poseLandmarks;
-            const landmarkCount = landmarks ? landmarks.length : 0;
-            const timestamp = new Date().toISOString().slice(11, 23); // HH:MM:SS.mmm
-            
-            console.log(`🎯 [${timestamp}] Pose results received:`, {
-                landmarks: landmarkCount,
-                hasResults: !!results,
-                resultsKeys: Object.keys(results),
-                worldLandmarks: results.poseWorldLandmarks ? results.poseWorldLandmarks.length : 0
-            });
-            
-            // Update pose status indicators with enhanced logging
-            updatePoseStatus(results.poseLandmarks);
-            
-            // Update human guide alignment
-            if (results.poseLandmarks) {
-                updateHumanGuideAlignment(results.poseLandmarks);
-            }
-            
-            // Draw pose landmarks on canvas - ALWAYS SHOW
-            if (results.poseLandmarks) {
-                console.log(`🎯 [${timestamp}] Calling drawPoseLandmarks with`, results.poseLandmarks.length, 'landmarks');
-                try {
-                    drawPoseLandmarks(results);
-                    console.log(`✅ [${timestamp}] drawPoseLandmarks completed successfully`);
-                } catch (drawError) {
-                    console.error(`❌ [${timestamp}] drawPoseLandmarks failed:`, drawError);
-                }
+            try {
+                // Enhanced debugging for pose results
+                const landmarks = results.poseLandmarks;
+                const landmarkCount = landmarks ? landmarks.length : 0;
+                const timestamp = new Date().toISOString().slice(11, 23); // HH:MM:SS.mmm
                 
-                // Real-time squat detection for dynamic analysis
-                const activeScreen = document.querySelector('.app-screen:not(.hidden)');
-                if (activeScreen && activeScreen.id === 'dynamic-analysis') {
-                    const squatDetection = detectSquat(results.poseLandmarks);
-                    updateSquatCounter(squatDetection);
-                }
-                
-                // Perform pose analysis if analyzing
-                if (isAnalyzing) {
-                    performPoseAnalysis(results.poseLandmarks);
-                }
-            } else {
-                console.log(`❌ [${timestamp}] No pose landmarks detected in results:`, {
-                    resultsType: typeof results,
-                    resultsKeys: results ? Object.keys(results) : 'null/undefined',
-                    poseLandmarksType: typeof results?.poseLandmarks
+                console.log(`🎯 [${timestamp}] Pose results received:`, {
+                    landmarks: landmarkCount,
+                    hasResults: !!results,
+                    resultsKeys: Object.keys(results),
+                    worldLandmarks: results.poseWorldLandmarks ? results.poseWorldLandmarks.length : 0
                 });
+                
+                // Update pose status indicators with enhanced logging
+                updatePoseStatus(results.poseLandmarks);
+                
+                // Update human guide alignment - 常に実行
+                try {
+                    updateHumanGuideAlignment(results.poseLandmarks);
+                } catch (alignError) {
+                    console.error(`❌ [${timestamp}] updateHumanGuideAlignment failed:`, alignError);
+                }
+                
+                // Draw pose landmarks on canvas - ALWAYS SHOW
+                if (results.poseLandmarks) {
+                    console.log(`🎯 [${timestamp}] Calling drawPoseLandmarks with`, results.poseLandmarks.length, 'landmarks');
+                    try {
+                        drawPoseLandmarks(results);
+                        console.log(`✅ [${timestamp}] drawPoseLandmarks completed successfully`);
+                    } catch (drawError) {
+                        console.error(`❌ [${timestamp}] drawPoseLandmarks failed:`, drawError);
+                    }
+                    
+                    // Real-time squat detection for dynamic analysis
+                    const activeScreen = document.querySelector('.app-screen:not(.hidden)');
+                    if (activeScreen && activeScreen.id === 'dynamic-analysis') {
+                        try {
+                            const squatDetection = detectSquat(results.poseLandmarks);
+                            updateSquatCounter(squatDetection);
+                        } catch (squatError) {
+                            console.error(`❌ [${timestamp}] Squat detection failed:`, squatError);
+                        }
+                    }
+                    
+                    // Perform pose analysis if analyzing
+                    if (isAnalyzing) {
+                        try {
+                            performPoseAnalysis(results.poseLandmarks);
+                        } catch (analysisError) {
+                            console.error(`❌ [${timestamp}] Pose analysis failed:`, analysisError);
+                        }
+                    }
+                } else {
+                    console.log(`❌ [${timestamp}] No pose landmarks detected in results:`, {
+                        resultsType: typeof results,
+                        resultsKeys: results ? Object.keys(results) : 'null/undefined',
+                        poseLandmarksType: typeof results?.poseLandmarks
+                    });
+                }
+            } catch (error) {
+                console.error(`❌ Critical error in onPoseResults:`, error);
+                // 人型ガイドの状態を確認
+                const activeScreen = document.querySelector('.app-screen:not(.hidden)');
+                if (activeScreen) {
+                    const prefix = activeScreen.id === 'static-analysis' ? 'static' : 'dynamic';
+                    const guideElement = document.getElementById(`${prefix}PersonGuide`);
+                    if (guideElement && guideElement.style.display === 'none') {
+                        console.log('🔧 Re-initializing human guide due to error...');
+                        initializeHumanGuide(prefix);
+                    }
+                }
             }
         }
         
@@ -6965,6 +7188,15 @@
                                 const isHealthy = autoMonitorMediaPipeHealth();
                                 if (!isHealthy) {
                                     console.warn('🚨 MediaPipe health check failed during pose detection');
+                                    // 軽度な再初期化試行
+                                    try {
+                                        if (pose && typeof pose.reset === 'function') {
+                                            pose.reset();
+                                            console.log('🔄 MediaPipe pose reset attempted');
+                                        }
+                                    } catch (resetError) {
+                                        console.warn('⚠️ MediaPipe reset failed:', resetError);
+                                    }
                                 }
                             }
                         } else {
@@ -6999,6 +7231,38 @@
             
             // Start checking for video readiness with a small delay
             setTimeout(waitForVideo, 300);
+        }
+        
+        // MediaPipeの自動ヘルスチェック機能
+        let lastPoseResults = null;
+        let lastResultsTime = 0;
+        const HEALTH_CHECK_TIMEOUT = 5000; // 5秒間結果がなければ異常
+        
+        function autoMonitorMediaPipeHealth() {
+            const now = Date.now();
+            const timeSinceLastResult = now - lastResultsTime;
+            
+            // 最後の結果から5秒以上経過している場合は異常とみなす
+            if (timeSinceLastResult > HEALTH_CHECK_TIMEOUT && lastResultsTime > 0) {
+                console.warn('🚨 MediaPipe health check: No pose results for', timeSinceLastResult, 'ms');
+                
+                // ユーザーに通知
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('MEDIAPIPE_HEALTH_WARNING', {
+                        timeSinceLastResult,
+                        lastResultsTime: new Date(lastResultsTime).toISOString()
+                    });
+                }
+                
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // MediaPipeの結果を受信したときの時間を記録
+        function recordPoseResults() {
+            lastResultsTime = Date.now();
         }
         
         // Stop pose detection
@@ -8201,11 +8465,17 @@
                 console.log('✅ Back buttons setup completed');
             }, 100);
             
-            // 人型ガイドの初期化 - DOM確実存在待機
+            // 人型ガイドの初期化 - 即座に実行 + 遅延バックアップ
             setTimeout(() => {
+                console.log('🔧 First attempt: Human guide initialization for static analysis');
                 initializeHumanGuide('static');
-                console.log('✅ Human guide initialization attempted for static analysis');
-            }, 1000);
+            }, 100);
+            
+            // バックアップ初期化 - MediaPipe初期化後
+            setTimeout(() => {
+                console.log('🔧 Backup attempt: Human guide re-initialization for static analysis');
+                initializeHumanGuide('static');
+            }, 2000);
             
             // Mobile debug - screen displayed
             if (window.updateMobileDebug) {
@@ -8340,11 +8610,17 @@
                 console.log('✅ Back buttons setup completed');
             }, 100);
             
-            // 人型ガイドの初期化 - DOM確実存在待機
+            // 人型ガイドの初期化 - 即座に実行 + 遅延バックアップ
             setTimeout(() => {
+                console.log('🔧 First attempt: Human guide initialization for dynamic analysis');
                 initializeHumanGuide('dynamic');
-                console.log('✅ Human guide initialization attempted for dynamic analysis');
-            }, 1000);
+            }, 100);
+            
+            // バックアップ初期化 - MediaPipe初期化後
+            setTimeout(() => {
+                console.log('🔧 Backup attempt: Human guide re-initialization for dynamic analysis');
+                initializeHumanGuide('dynamic');
+            }, 2000);
             
             // Reset squat counter
             currentSquatCount = 0;
@@ -10169,13 +10445,21 @@
         }
         
         function createAnalysisDetailContent(analysis) {
-            const date = new Date(analysis.analysis_date).toLocaleDateString('ja-JP', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-            });
-            const time = new Date(analysis.analysis_date).toLocaleTimeString('ja-JP');
+            try {
+                console.log('📝 Creating analysis detail content for:', analysis.id);
+                console.log('📝 Analysis data check:', {
+                    hasAnalysisDate: !!analysis.analysis_date,
+                    hasCapturedPhoto: !!analysis.capturedPhoto,
+                    hasScores: !!(analysis.overall_score && analysis.hip_flexibility && analysis.postural_stability && analysis.dynamic_balance)
+                });
+                
+                const date = new Date(analysis.analysis_date).toLocaleDateString('ja-JP', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'long'
+                });
+                const time = new Date(analysis.analysis_date).toLocaleTimeString('ja-JP');
             
             const typeLabel = {
                 'static': 'Static Posture Analysis / 静的姿勢分析',
@@ -10183,16 +10467,16 @@
                 'sport_specific': 'Sport-Specific Analysis / 競技特化分析'
             };
             
-            const scoreGrade = analysis.overall_score >= 90 ? 'A+' :
-                              analysis.overall_score >= 80 ? 'A' :
-                              analysis.overall_score >= 70 ? 'B' :
-                              analysis.overall_score >= 60 ? 'C' : 'D';
+            const scoreGrade = (analysis.overall_score || 0) >= 90 ? 'A+' :
+                              (analysis.overall_score || 0) >= 80 ? 'A' :
+                              (analysis.overall_score || 0) >= 70 ? 'B' :
+                              (analysis.overall_score || 0) >= 60 ? 'C' : 'D';
             
             return `
                 <!-- Header Info -->
                 <div class="bg-white rounded-xl p-6 mb-6 shadow-sm">
                     <div class="text-center">
-                        <div class="text-4xl font-bold brand-color mb-2">${analysis.overall_score}/100</div>
+                        <div class="text-4xl font-bold brand-color mb-2">${analysis.overall_score || 0}/100</div>
                         <div class="text-2xl font-bold text-gray-600 mb-1">Grade ${scoreGrade}</div>
                         <div class="text-lg text-gray-700 mb-2">${typeLabel[analysis.analysis_type] || analysis.analysis_type}</div>
                         <div class="text-sm text-gray-500">${date}</div>
@@ -10202,7 +10486,7 @@
                     </div>
                 </div>
                 
-                ${analysis.capturedPhoto ? `
+                ${(analysis.capturedPhoto && analysis.capturedPhoto.imageData && analysis.capturedPhoto.imageData.startsWith('data:image/')) ? `
                 <!-- Captured Photo with Pose Analysis -->
                 <div class="bg-white rounded-xl p-4 mb-6 shadow-sm border-2 border-green-200">
                     <div class="flex items-center justify-between mb-4">
@@ -10218,7 +10502,7 @@
                              onclick="showPhotoModal('${analysis.id}')"
                              style="max-height: 400px; object-fit: contain; background: #f3f4f6;"
                              onload="console.log('✅ Photo loaded successfully for analysis:', '${analysis.id}')"
-                             onerror="console.error('❌ Photo failed to load for analysis:', '${analysis.id}')">
+                             onerror="console.error('❌ Photo failed to load for analysis:', '${analysis.id}'); this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                             ${analysis.capturedPhoto.cameraType === 'front' ? '🤳 Front Camera' : '📷 Back Camera'}
                         </div>
@@ -10227,6 +10511,14 @@
                         </div>
                         <div class="absolute top-2 left-2 bg-green-500 bg-opacity-80 text-white text-xs px-2 py-1 rounded">
                             Photo ID: ${analysis.id.slice(-8)}
+                        </div>
+                        <!-- Error fallback for corrupted image -->
+                        <div class="hidden w-full h-48 bg-red-50 border-2 border-red-200 rounded-lg flex items-center justify-center text-red-600">
+                            <div class="text-center">
+                                <div class="text-3xl mb-2">🚫</div>
+                                <div class="font-medium">Photo Load Error</div>
+                                <div class="text-sm">画像の読み込みに失敗しました</div>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-3 text-center">
@@ -10243,8 +10535,29 @@
                     <div class="mt-2 p-2 bg-gray-50 rounded text-xs">
                         <strong>Debug Info:</strong><br>
                         Photo Data Length: ${analysis.capturedPhoto.imageData ? (analysis.capturedPhoto.imageData.length / 1024).toFixed(1) + 'KB' : 'N/A'}<br>
+                        Photo Data Valid: ${analysis.capturedPhoto.imageData && analysis.capturedPhoto.imageData.startsWith('data:image/') ? 'Yes' : 'No'}<br>
                         Timestamp: ${analysis.capturedPhoto.timestamp}<br>
                         Has Pose Overlay: ${analysis.capturedPhoto.hasPoseOverlay ? 'Yes' : 'No'}
+                    </div>
+                </div>
+                ` : (analysis.capturedPhoto && !analysis.capturedPhoto.imageData) ? `
+                <!-- Corrupted Photo Data -->
+                <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="text-2xl mr-3">🚫</div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-red-800">Photo Data Corrupted</h3>
+                            <p class="text-sm text-red-700">The photo data for this analysis is corrupted or missing.</p>
+                            <p class="text-xs text-red-600">写真データが破損しているか、欠損しています。</p>
+                        </div>
+                    </div>
+                    <!-- 🔍 Debug Info -->
+                    <div class="mt-3 p-2 bg-red-100 rounded text-xs">
+                        <strong>Debug Info:</strong><br>
+                        Analysis ID: ${analysis.id}<br>
+                        Has capturedPhoto: ${!!analysis.capturedPhoto}<br>
+                        Has imageData: ${analysis.capturedPhoto ? !!analysis.capturedPhoto.imageData : 'N/A'}<br>
+                        Photo timestamp: ${analysis.capturedPhoto ? analysis.capturedPhoto.timestamp : 'N/A'}
                     </div>
                 </div>
                 ` : `
@@ -10286,8 +10599,8 @@
                                 <div class="text-sm text-gray-500">股関節柔軟性</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-2xl font-bold ${analysis.hip_flexibility >= 80 ? 'text-green-600' : analysis.hip_flexibility >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.hip_flexibility}%</div>
-                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.hip_flexibility)}</div>
+                                <div class="text-2xl font-bold ${(analysis.hip_flexibility || 0) >= 80 ? 'text-green-600' : (analysis.hip_flexibility || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.hip_flexibility || 0}%</div>
+                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.hip_flexibility || 0)}</div>
                             </div>
                         </div>
                     </div>
@@ -10299,8 +10612,8 @@
                                 <div class="text-sm text-gray-500">姿勢安定性</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-2xl font-bold ${analysis.postural_stability >= 80 ? 'text-green-600' : analysis.postural_stability >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.postural_stability}%</div>
-                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.postural_stability)}</div>
+                                <div class="text-2xl font-bold ${(analysis.postural_stability || 0) >= 80 ? 'text-green-600' : (analysis.postural_stability || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.postural_stability || 0}%</div>
+                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.postural_stability || 0)}</div>
                             </div>
                         </div>
                     </div>
@@ -10312,8 +10625,8 @@
                                 <div class="text-sm text-gray-500">動的バランス</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-2xl font-bold ${analysis.dynamic_balance >= 80 ? 'text-green-600' : analysis.dynamic_balance >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.dynamic_balance}%</div>
-                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.dynamic_balance)}</div>
+                                <div class="text-2xl font-bold ${(analysis.dynamic_balance || 0) >= 80 ? 'text-green-600' : (analysis.dynamic_balance || 0) >= 60 ? 'text-yellow-600' : 'text-red-600'}">${analysis.dynamic_balance || 0}%</div>
+                                <div class="text-xs text-gray-500">${getScoreLabel(analysis.dynamic_balance || 0)}</div>
                             </div>
                         </div>
                     </div>
@@ -10344,6 +10657,21 @@
                     </button>
                 </div>
             `;
+            
+            } catch (error) {
+                console.error('❌ Error creating analysis detail content:', error);
+                return `
+                    <div class="bg-red-50 border-2 border-red-200 rounded-xl p-6 text-center">
+                        <div class="text-3xl mb-3">⚠️</div>
+                        <h3 class="text-lg font-semibold text-red-800 mb-2">Content Generation Error</h3>
+                        <p class="text-sm text-red-600 mb-4">Failed to generate analysis detail content.</p>
+                        <p class="text-xs text-red-500">分析詳細コンテンツの生成に失敗しました。</p>
+                        <button onclick="showDashboard()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
+                            Return to Dashboard / ダッシュボードに戻る
+                        </button>
+                    </div>
+                `;
+            }
         }
         
         function getScoreLabel(score) {
@@ -10355,15 +10683,36 @@
         }
         
         function createDetailedAnalysisChart(analysis) {
-            const canvas = document.getElementById('detailAnalysisChart');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Destroy existing chart if it exists
-            if (window.detailAnalysisChart instanceof Chart) {
-                window.detailAnalysisChart.destroy();
-            }
+            try {
+                console.log('📊 Creating detailed analysis chart for:', analysis.id);
+                
+                const canvas = document.getElementById('detailAnalysisChart');
+                if (!canvas) {
+                    console.error('❌ Chart canvas element not found');
+                    return false;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('❌ Unable to get 2D context from canvas');
+                    return false;
+                }
+                
+                // Destroy existing chart if it exists
+                if (window.detailAnalysisChart instanceof Chart) {
+                    console.log('🧹 Destroying existing chart');
+                    window.detailAnalysisChart.destroy();
+                }
+                
+                // Validate analysis data
+                const chartData = [
+                    analysis.hip_flexibility || 0,
+                    analysis.postural_stability || 0,
+                    analysis.dynamic_balance || 0,
+                    analysis.overall_score || 0
+                ];
+                
+                console.log('📊 Chart data:', chartData);
             
             window.detailAnalysisChart = new Chart(ctx, {
                 type: 'radar',
@@ -10376,12 +10725,7 @@
                     ],
                     datasets: [{
                         label: 'Current Score',
-                        data: [
-                            analysis.hip_flexibility,
-                            analysis.postural_stability,
-                            analysis.dynamic_balance,
-                            analysis.overall_score
-                        ],
+                        data: chartData,
                         backgroundColor: 'rgba(30, 58, 138, 0.2)',
                         borderColor: 'rgba(30, 58, 138, 0.8)',
                         borderWidth: 3,
@@ -10432,6 +10776,30 @@
                     }
                 }
             });
+            
+            console.log('✅ Chart created successfully');
+            return true;
+            
+            } catch (error) {
+                console.error('❌ Error creating detailed analysis chart:', error);
+                
+                // Show error message in chart area
+                const canvas = document.getElementById('detailAnalysisChart');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#ef4444';
+                        ctx.font = '16px Inter';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Chart Error / チャートエラー', canvas.width/2, canvas.height/2);
+                        ctx.font = '12px Inter';
+                        ctx.fillText('Unable to display chart', canvas.width/2, canvas.height/2 + 20);
+                    }
+                }
+                
+                return false;
+            }
         }
         
         function shareAnalysisDetail(analysisId) {
