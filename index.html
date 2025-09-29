@@ -4038,10 +4038,10 @@
                     `;
                     debugPanel.style.display = 'block';
                     
-                    // 10秒後に自動非表示（延長）
+                    // 15秒後に自動非表示（モバイル対応で延長）
                     setTimeout(() => {
                         debugPanel.style.display = 'none';
-                    }, 10000);
+                    }, 15000);
                 };
                 
                 console.log('📱 Mobile navigation debug system initialized');
@@ -4525,11 +4525,26 @@
                     this.style.transform = 'scale(1)';
                     this.style.backgroundColor = '#000000';
                     
-                    try {
-                        handleRegistration();
-                        console.log('✅ handleRegistration() called from touchend');
-                    } catch (error) {
-                        console.error('❌ Error calling handleRegistration() from touchend:', error);
+                    // MOBILE DELAY FIX - スマートフォンでの画面遷移を確実にする
+                    const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+                    if (isMobile) {
+                        console.log('📱 MOBILE TOUCHEND - Adding delay for reliable navigation');
+                        setTimeout(() => {
+                            try {
+                                console.log('📱 MOBILE DELAYED handleRegistration() START');
+                                handleRegistration();
+                                console.log('✅ MOBILE handleRegistration() called from delayed touchend');
+                            } catch (error) {
+                                console.error('❌ Error calling handleRegistration() from delayed touchend:', error);
+                            }
+                        }, 200); // 200ms delay for mobile
+                    } else {
+                        try {
+                            handleRegistration();
+                            console.log('✅ handleRegistration() called from touchend');
+                        } catch (error) {
+                            console.error('❌ Error calling handleRegistration() from touchend:', error);
+                        }
                     }
                 }, { passive: false });
                 
@@ -6943,13 +6958,16 @@
                 if (window.updateMobileDebug) {
                     window.updateMobileDebug('REGISTRATION_COMPLETE', { 
                         name: profileData.name,
-                        destination: 'StaticAnalysis'
+                        destination: 'StaticAnalysis',
+                        currentScreen: currentScreen,
+                        timestamp: new Date().getTime()
                     });
                 }
                 
-                console.log('🚀 Navigating to Static Analysis...');
+                console.log('🚀 ===== NAVIGATING TO STATIC ANALYSIS =====');
+                console.log('📱 About to call showStaticAnalysis()...');
                 showStaticAnalysis();
-                console.log('✅ showStaticAnalysis() called');
+                console.log('✅ ===== showStaticAnalysis() CALL COMPLETED =====');
             } catch (error) {
                 console.error('❌ Local storage error:', error);
                 // ローカルストレージが使えない場合でもメモリに保存
@@ -6963,9 +6981,10 @@
                     });
                 }
                 
-                console.log('🚀 Fallback: Navigating to Static Analysis...');
+                console.log('🚀 ===== FALLBACK: NAVIGATING TO STATIC ANALYSIS =====');
+                console.log('📱 About to call showStaticAnalysis() (fallback)...');
                 showStaticAnalysis();
-                console.log('✅ Fallback showStaticAnalysis() called');
+                console.log('✅ ===== FALLBACK showStaticAnalysis() CALL COMPLETED =====');
             }
         }
         
@@ -7695,70 +7714,200 @@
         }
         
         async function showStaticAnalysis() {
-            console.log('🎯 Starting static analysis...');
+            console.log('🎯 ===== SHOWSTATICANALYSIS() FUNCTION CALLED =====');
+            
+            // Mobile debug
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('SHOWSTATICANALYSIS_START', { 
+                    screen: 'static-analysis',
+                    user: currentUser ? currentUser.name : 'none'
+                });
+            }
+            
+            console.log('📺 Immediately showing static analysis screen...');
             showScreen('static-analysis');
+            console.log('✅ showScreen(static-analysis) completed');
+            
+            // MOBILE FORCE FIX - スマートフォン特有の表示問題対応
+            const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            if (isMobile) {
+                console.log('📱 MOBILE DETECTED - Applying force display fix');
+                setTimeout(() => {
+                    const staticScreen = document.getElementById('static-analysis');
+                    if (staticScreen) {
+                        // 全画面を強制非表示
+                        document.querySelectorAll('.app-screen').forEach(screen => {
+                            screen.style.setProperty('display', 'none', 'important');
+                        });
+                        
+                        // static-analysisのみ強制表示
+                        staticScreen.style.setProperty('display', 'flex', 'important');
+                        staticScreen.style.setProperty('flex-direction', 'column', 'important');
+                        staticScreen.style.setProperty('position', 'fixed', 'important');
+                        staticScreen.style.setProperty('top', '0', 'important');
+                        staticScreen.style.setProperty('left', '0', 'important');
+                        staticScreen.style.setProperty('width', '100vw', 'important');
+                        staticScreen.style.setProperty('height', '100vh', 'important');
+                        staticScreen.style.setProperty('z-index', '9999', 'important');
+                        staticScreen.style.setProperty('visibility', 'visible', 'important');
+                        staticScreen.style.setProperty('opacity', '1', 'important');
+                        staticScreen.classList.add('active');
+                        
+                        console.log('📱 MOBILE FORCE DISPLAY APPLIED to static-analysis');
+                        
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('MOBILE_FORCE_DISPLAY', { 
+                                screen: 'static-analysis',
+                                display: staticScreen.style.display,
+                                visibility: staticScreen.style.visibility,
+                                zIndex: staticScreen.style.zIndex
+                            });
+                        }
+                    } else {
+                        console.error('❌ static-analysis element not found for mobile fix');
+                    }
+                }, 100);
+            }
+            
             document.getElementById('static-analysis').classList.add('slide-up');
             
             // 戻るボタンのイベント再設定
             setTimeout(() => {
                 setupAnalysisBackButtons();
+                console.log('✅ Back buttons setup completed');
             }, 100);
             
-            // Initialize MediaPipe if not already done
-            if (!pose) {
-                console.log('🧠 Initializing MediaPipe...');
-                const initialized = await initMediaPipe();
-                if (!initialized) {
-                    console.error('❌ Failed to initialize MediaPipe for static analysis');
-                    return;
-                }
-            } else {
-                console.log('✅ MediaPipe already initialized');
+            // Mobile debug - screen displayed
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('STATIC_SCREEN_SHOWN', { 
+                    screen: currentScreen,
+                    element: document.getElementById('static-analysis') ? 'found' : 'missing'
+                });
             }
             
-            // Reset to front camera
-            currentFacingMode = 'user';
-            console.log('📱 Set to front camera mode');
-            
-            // Initialize camera and pose detection with debug
+            // DELAYED INITIALIZATION - 画面表示後に段階的に初期化
             setTimeout(async () => {
-                console.log('🎥 Initializing camera for static analysis...');
-                const cameraInitialized = await initCamera('staticCameraFeed', 'staticCameraPlaceholder', 'user');
+                console.log('🔄 Starting delayed MediaPipe initialization...');
                 
-                if (cameraInitialized) {
-                    console.log('✅ Camera initialized, waiting for video to be ready...');
-                    
-                    // Check video element immediately
-                    const videoElement = document.getElementById('staticCameraFeed');
-                    if (videoElement) {
-                        console.log('📺 Video element state:', {
-                            srcObject: !!videoElement.srcObject,
-                            videoWidth: videoElement.videoWidth,
-                            videoHeight: videoElement.videoHeight,
-                            readyState: videoElement.readyState,
-                            display: videoElement.style.display,
-                            visibility: videoElement.style.visibility
-                        });
+                try {
+                    // Initialize MediaPipe if not already done
+                    if (!pose) {
+                        console.log('🧠 Initializing MediaPipe...');
+                        const initialized = await initMediaPipe();
+                        if (!initialized) {
+                            console.error('❌ Failed to initialize MediaPipe for static analysis');
+                            // Even if MediaPipe fails, keep the screen visible
+                            return;
+                        }
+                    } else {
+                        console.log('✅ MediaPipe already initialized');
                     }
                     
-                    // Wait a bit more for video to be ready
-                    setTimeout(() => {
-                        console.log('🎬 Starting pose detection...');
-                        startPoseDetection('staticCameraFeed', 'staticPoseCanvas', 'staticPoseStatus');
-                    }, 1000);
-                } else {
-                    console.error('❌ Camera initialization failed');
+                    // Reset to front camera
+                    currentFacingMode = 'user';
+                    console.log('📱 Set to front camera mode');
+                    
+                    // Initialize camera and pose detection with debug
+                    setTimeout(async () => {
+                        console.log('🎥 Initializing camera for static analysis...');
+                        const cameraInitialized = await initCamera('staticCameraFeed', 'staticCameraPlaceholder', 'user');
+                        
+                        if (cameraInitialized) {
+                            console.log('✅ Camera initialized, waiting for video to be ready...');
+                            
+                            // Check video element immediately
+                            const videoElement = document.getElementById('staticCameraFeed');
+                            if (videoElement) {
+                                console.log('📺 Video element state:', {
+                                    srcObject: !!videoElement.srcObject,
+                                    videoWidth: videoElement.videoWidth,
+                                    videoHeight: videoElement.videoHeight,
+                                    readyState: videoElement.readyState,
+                                    display: videoElement.style.display,
+                                    visibility: videoElement.style.visibility
+                                });
+                            }
+                            
+                            // Wait a bit more for video to be ready
+                            setTimeout(() => {
+                                console.log('🎬 Starting pose detection...');
+                                startPoseDetection('staticCameraFeed', 'staticPoseCanvas', 'staticPoseStatus');
+                            }, 1000);
+                        } else {
+                            console.error('❌ Camera initialization failed');
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('❌ Error during delayed initialization:', error);
+                    // Even if initialization fails, keep the screen visible
                 }
-            }, 500);
+                
+            }, 1000); // 1秒後に初期化開始
         }
         
         async function showDynamicAnalysis() {
+            console.log('🎯 ===== SHOWDYNAMICANALYSIS() FUNCTION CALLED =====');
+            
+            // Mobile debug
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('SHOWDYNAMICANALYSIS_START', { 
+                    screen: 'dynamic-analysis',
+                    user: currentUser ? currentUser.name : 'none'
+                });
+            }
+            
+            console.log('📺 Immediately showing dynamic analysis screen...');
             showScreen('dynamic-analysis');
+            console.log('✅ showScreen(dynamic-analysis) completed');
+            
+            // MOBILE FORCE FIX - スマートフォン特有の表示問題対応
+            const isMobile = /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            if (isMobile) {
+                console.log('📱 MOBILE DETECTED - Applying force display fix');
+                setTimeout(() => {
+                    const dynamicScreen = document.getElementById('dynamic-analysis');
+                    if (dynamicScreen) {
+                        // 全画面を強制非表示
+                        document.querySelectorAll('.app-screen').forEach(screen => {
+                            screen.style.setProperty('display', 'none', 'important');
+                        });
+                        
+                        // dynamic-analysisのみ強制表示
+                        dynamicScreen.style.setProperty('display', 'flex', 'important');
+                        dynamicScreen.style.setProperty('flex-direction', 'column', 'important');
+                        dynamicScreen.style.setProperty('position', 'fixed', 'important');
+                        dynamicScreen.style.setProperty('top', '0', 'important');
+                        dynamicScreen.style.setProperty('left', '0', 'important');
+                        dynamicScreen.style.setProperty('width', '100vw', 'important');
+                        dynamicScreen.style.setProperty('height', '100vh', 'important');
+                        dynamicScreen.style.setProperty('z-index', '9999', 'important');
+                        dynamicScreen.style.setProperty('visibility', 'visible', 'important');
+                        dynamicScreen.style.setProperty('opacity', '1', 'important');
+                        dynamicScreen.classList.add('active');
+                        
+                        console.log('📱 MOBILE FORCE DISPLAY APPLIED to dynamic-analysis');
+                        
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('MOBILE_FORCE_DISPLAY', { 
+                                screen: 'dynamic-analysis',
+                                display: dynamicScreen.style.display,
+                                visibility: dynamicScreen.style.visibility,
+                                zIndex: dynamicScreen.style.zIndex
+                            });
+                        }
+                    } else {
+                        console.error('❌ dynamic-analysis element not found for mobile fix');
+                    }
+                }, 100);
+            }
+            
             document.getElementById('dynamic-analysis').classList.add('slide-up');
             
             // 戻るボタンのイベント再設定
             setTimeout(() => {
                 setupAnalysisBackButtons();
+                console.log('✅ Back buttons setup completed');
             }, 100);
             
             // Reset squat counter
@@ -7767,28 +7916,54 @@
             const countElement = document.getElementById('squatCount');
             if (countElement) countElement.textContent = '0';
             
-            // Initialize MediaPipe if not already done
-            if (!pose) {
-                const initialized = await initMediaPipe();
-                if (!initialized) {
-                    console.error('Failed to initialize MediaPipe for dynamic analysis');
-                    return;
-                }
+            // Mobile debug - screen displayed
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('DYNAMIC_SCREEN_SHOWN', { 
+                    screen: currentScreen,
+                    element: document.getElementById('dynamic-analysis') ? 'found' : 'missing'
+                });
             }
             
-            // Reset to front camera
-            currentFacingMode = 'user';
-            
-            // Initialize camera and pose detection
+            // DELAYED INITIALIZATION - 画面表示後に段階的に初期化
             setTimeout(async () => {
-                const cameraInitialized = await initCamera('dynamicCameraFeed', 'dynamicCameraPlaceholder', 'user');
-                if (cameraInitialized) {
-                    // Wait a bit more for video to be ready
-                    setTimeout(() => {
-                        startPoseDetection('dynamicCameraFeed', 'dynamicPoseCanvas', 'dynamicPoseStatus');
-                    }, 1000);
+                console.log('🔄 Starting delayed MediaPipe initialization...');
+                
+                try {
+                    // Initialize MediaPipe if not already done
+                    if (!pose) {
+                        const initialized = await initMediaPipe();
+                        if (!initialized) {
+                            console.error('Failed to initialize MediaPipe for dynamic analysis');
+                            // Even if MediaPipe fails, keep the screen visible
+                            return;
+                        }
+                    }
+                    
+                    // Reset to front camera
+                    currentFacingMode = 'user';
+                    
+                    // Initialize camera and pose detection
+                    setTimeout(async () => {
+                        console.log('🎥 Initializing camera for dynamic analysis...');
+                        const cameraInitialized = await initCamera('dynamicCameraFeed', 'dynamicCameraPlaceholder', 'user');
+                        if (cameraInitialized) {
+                            console.log('✅ Camera initialized for dynamic analysis');
+                            // Wait a bit more for video to be ready
+                            setTimeout(() => {
+                                console.log('🎬 Starting pose detection for dynamic analysis...');
+                                startPoseDetection('dynamicCameraFeed', 'dynamicPoseCanvas', 'dynamicPoseStatus');
+                            }, 1000);
+                        } else {
+                            console.error('❌ Camera initialization failed for dynamic analysis');
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('❌ Error during delayed initialization:', error);
+                    // Even if initialization fails, keep the screen visible
                 }
-            }, 500);
+                
+            }, 1000); // 1秒後に初期化開始
         }
         
         function showSportSpecific() {
