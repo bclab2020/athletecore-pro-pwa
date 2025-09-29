@@ -902,6 +902,45 @@
                 box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
             }
             
+            /* 人型ガイドのモバイル最適化 */
+            #staticPersonGuide, #dynamicPersonGuide {
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                overflow: hidden !important;
+            }
+            
+            #staticPersonGuide svg, #dynamicPersonGuide svg {
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+            }
+            
+            /* 位置合わせステータスのモバイル調整 */
+            #staticAlignmentStatus {
+                left: 10px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                max-width: 120px !important;
+                font-size: 10px !important;
+            }
+            
+            #dynamicAlignmentStatus {
+                right: 10px !important;
+                top: 30% !important;
+                max-width: 120px !important;
+                font-size: 10px !important;
+            }
+            
+            /* ガイド切り替えボタンのモバイル調整 */
+            #staticGuideToggle, #dynamicGuideToggle {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                padding: 10px !important;
+            }
+            
             /* Welcome画面専用のレイアウト調整 */
             #welcome {
                 display: flex !important;
@@ -1426,6 +1465,68 @@
                         <!-- Full Screen Camera Container -->
                         <div class="w-full h-full relative absolute inset-0">
                             <video id="staticCameraFeed" class="w-full h-full object-cover" autoplay muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></video>
+                            
+                            <!-- 人型ガイド オーバーレイ -->
+                            <div id="staticPersonGuide" class="w-full h-full absolute top-0 left-0 z-25" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: block;">
+                                <!-- 人型シルエット -->
+                                <svg class="w-full h-full" style="position: absolute; top: 0; left: 0; max-width: 100vw; max-height: 100vh;" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
+                                    <defs>
+                                        <linearGradient id="guideGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#22C55E;stop-opacity:0.4" />
+                                            <stop offset="100%" style="stop-color:#16A34A;stop-opacity:0.6" />
+                                        </linearGradient>
+                                        <filter id="glow">
+                                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                            <feMerge> 
+                                                <feMergeNode in="coloredBlur"/>
+                                                <feMergeNode in="SourceGraphic"/> 
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
+                                    
+                                    <!-- 頭部 -->
+                                    <circle cx="200" cy="80" r="35" fill="none" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 胴体 -->
+                                    <line x1="200" y1="115" x2="200" y2="300" stroke="url(#guideGradient)" stroke-width="4" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 肩ライン -->
+                                    <line x1="150" y1="150" x2="250" y2="150" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 左腕 -->
+                                    <line x1="150" y1="150" x2="120" y2="220" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    <line x1="120" y1="220" x2="130" y2="280" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 右腕 -->
+                                    <line x1="250" y1="150" x2="280" y2="220" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    <line x1="280" y1="220" x2="270" y2="280" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 腰ライン -->
+                                    <line x1="170" y1="300" x2="230" y2="300" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 左脚 -->
+                                    <line x1="180" y1="300" x2="160" y2="420" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    <line x1="160" y1="420" x2="150" y2="520" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 右脚 -->
+                                    <line x1="220" y1="300" x2="240" y2="420" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    <line x1="240" y1="420" x2="250" y2="520" stroke="url(#guideGradient)" stroke-width="3" filter="url(#glow)" opacity="0.8"/>
+                                    
+                                    <!-- 足の位置マーカー -->
+                                    <circle cx="150" cy="530" r="10" fill="url(#guideGradient)" opacity="0.6"/>
+                                    <circle cx="250" cy="530" r="10" fill="url(#guideGradient)" opacity="0.6"/>
+                                </svg>
+                                
+                                <!-- 位置合わせステータス -->
+                                <div id="staticAlignmentStatus" class="absolute top-1/2 left-6 transform -translate-y-1/2 bg-black bg-opacity-60 backdrop-filter backdrop-blur-md text-white text-xs px-4 py-3 rounded-none border border-gray-400 border-opacity-30">
+                                    <div class="text-center">
+                                        <div id="staticAlignmentIndicator" class="w-3 h-3 bg-yellow-400 rounded-full mx-auto mb-2"></div>
+                                        <div id="staticAlignmentText" class="font-light tracking-wide uppercase">Align Body</div>
+                                        <div class="text-xs opacity-75 mt-1">体を合わせてください</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <canvas id="staticPoseCanvas" class="w-full h-full absolute top-0 left-0 z-30" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
                             <div id="staticCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
                                 <div class="text-center text-white">
@@ -1454,6 +1555,13 @@
                                 <button id="staticCameraSwitch" onclick="switchCamera('static')" class="bg-black bg-opacity-60 backdrop-filter backdrop-blur-md text-white p-2 rounded-none border border-gray-400 border-opacity-30 hover:bg-opacity-80 transition-all">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Human Guide Toggle Button -->
+                                <button id="staticGuideToggle" onclick="toggleHumanGuide('static')" class="bg-black bg-opacity-60 backdrop-filter backdrop-blur-md text-white p-2 rounded-none border border-gray-400 border-opacity-30 hover:bg-opacity-80 transition-all" title="人型ガイドの表示切替">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                     </svg>
                                 </button>
                                 
@@ -1508,6 +1616,73 @@
                         <!-- Full Screen Camera Container -->
                         <div class="w-full h-full relative absolute inset-0">
                             <video id="dynamicCameraFeed" class="w-full h-full object-cover" autoplay muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></video>
+                            
+                            <!-- 人型ガイド オーバーレイ (動的分析用) -->
+                            <div id="dynamicPersonGuide" class="w-full h-full absolute top-0 left-0 z-25" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: block;">
+                                <!-- 人型シルエット - 動的動作用 -->
+                                <svg class="w-full h-full" style="position: absolute; top: 0; left: 0; max-width: 100vw; max-height: 100vh;" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
+                                    <defs>
+                                        <linearGradient id="dynamicGuideGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:0.4" />
+                                            <stop offset="100%" style="stop-color:#1D4ED8;stop-opacity:0.6" />
+                                        </linearGradient>
+                                        <filter id="dynamicGlow">
+                                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                            <feMerge> 
+                                                <feMergeNode in="coloredBlur"/>
+                                                <feMergeNode in="SourceGraphic"/> 
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
+                                    
+                                    <!-- スクワット姿勢のガイド -->
+                                    <!-- 頭部 -->
+                                    <circle cx="200" cy="80" r="35" fill="none" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 胴体 -->
+                                    <line x1="200" y1="115" x2="200" y2="280" stroke="url(#dynamicGuideGradient)" stroke-width="4" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 肩ライン -->
+                                    <line x1="160" y1="150" x2="240" y2="150" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 左腕 (スクワット時のポジション) -->
+                                    <line x1="160" y1="150" x2="140" y2="200" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    <line x1="140" y1="200" x2="150" y2="240" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 右腕 (スクワット時のポジション) -->
+                                    <line x1="240" y1="150" x2="260" y2="200" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    <line x1="260" y1="200" x2="250" y2="240" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 腰ライン -->
+                                    <line x1="170" y1="280" x2="230" y2="280" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 左脚 (スクワット姿勢) -->
+                                    <line x1="180" y1="280" x2="150" y2="380" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    <line x1="150" y1="380" x2="140" y2="480" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 右脚 (スクワット姿勢) -->
+                                    <line x1="220" y1="280" x2="250" y2="380" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    <line x1="250" y1="380" x2="260" y2="480" stroke="url(#dynamicGuideGradient)" stroke-width="3" filter="url(#dynamicGlow)" opacity="0.8"/>
+                                    
+                                    <!-- 足の位置マーカー -->
+                                    <circle cx="140" cy="490" r="12" fill="url(#dynamicGuideGradient)" opacity="0.6"/>
+                                    <circle cx="260" cy="490" r="12" fill="url(#dynamicGuideGradient)" opacity="0.6"/>
+                                    
+                                    <!-- 動作範囲の表示 -->
+                                    <path d="M 180 280 Q 200 320 220 280" fill="none" stroke="url(#dynamicGuideGradient)" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+                                    <text x="200" y="310" text-anchor="middle" fill="#3B82F6" font-size="12" opacity="0.7">動作範囲</text>
+                                </svg>
+                                
+                                <!-- 動作ガイドステータス -->
+                                <div id="dynamicAlignmentStatus" class="absolute top-1/3 right-6 bg-black bg-opacity-60 backdrop-filter backdrop-blur-md text-white text-xs px-4 py-3 rounded-none border border-gray-400 border-opacity-30">
+                                    <div class="text-center">
+                                        <div id="dynamicAlignmentIndicator" class="w-3 h-3 bg-blue-400 rounded-full mx-auto mb-2"></div>
+                                        <div id="dynamicAlignmentText" class="font-light tracking-wide uppercase">Squat Ready</div>
+                                        <div class="text-xs opacity-75 mt-1">スクワット準備</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <canvas id="dynamicPoseCanvas" class="w-full h-full absolute top-0 left-0 z-30" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
                             <div id="dynamicCameraPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-800" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
                                 <div class="text-center text-white">
@@ -1541,6 +1716,13 @@
                                 <button id="dynamicReloadBtn" onclick="smartReload()" class="bg-red-600 bg-opacity-80 text-white p-2 rounded-full hover:bg-opacity-100 transition-all" title="Reload app if pose detection stops / 骨格認識が停止したらリロード">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Human Guide Toggle Button -->
+                                <button id="dynamicGuideToggle" onclick="toggleHumanGuide('dynamic')" class="bg-black bg-opacity-70 text-white p-2 rounded-full hover:bg-opacity-90 transition-all" title="人型ガイドの表示切替">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                     </svg>
                                 </button>
                                 
@@ -4194,12 +4376,13 @@
         
         // 分析画面の戻るボタンのモバイルイベント設定
         function setupAnalysisBackButtons() {
-            // 全ての戻るボタンを検索（IDベース + セレクターベース）
+            // 全ての戻るボタンを検索（IDベース + セレクターベース）- 結果画面も含める
             const backButtons = [
                 document.getElementById('staticAnalysisBackBtn'),
                 document.getElementById('dynamicAnalysisBackBtn'),
                 document.querySelector('#static-analysis button[onclick*="showWelcome"]'),
-                document.querySelector('#dynamic-analysis button[onclick*="showWelcome"]')
+                document.querySelector('#dynamic-analysis button[onclick*="showWelcome"]'),
+                document.querySelector('#results button[onclick*="showDashboard"]') // 結果画面の戻るボタンも追加
             ];
             
             // 重複を除去
@@ -4210,7 +4393,8 @@
                     button.dataset.mobileEventsSetup = 'true'; // 重複防止
                     
                     const screenName = button.closest('#static-analysis') ? 'Static' : 
-                                     button.closest('#dynamic-analysis') ? 'Dynamic' : 'Analysis';
+                                     button.closest('#dynamic-analysis') ? 'Dynamic' : 
+                                     button.closest('#results') ? 'Results' : 'Analysis';
                     console.log(`🔧 Setting up ${screenName} Analysis back button - mobile support`);
                     
                     // モバイルタッチイベント
@@ -4239,8 +4423,12 @@
                         this.style.transform = 'scale(1)';
                         this.style.color = '#ffffff';
                         
-                        // Welcome画面に戻る
-                        showWelcome();
+                        // 結果画面の場合はダッシュボードに、その他はWelcome画面に戻る
+                        if (screenName === 'Results') {
+                            showDashboard();
+                        } else {
+                            showWelcome();
+                        }
                     }, { passive: false });
                     
                     // クリックイベント（PC用）
@@ -4255,8 +4443,12 @@
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        // Welcome画面に戻る
-                        showWelcome();
+                        // 結果画面の場合はダッシュボードに、その他はWelcome画面に戻る
+                        if (screenName === 'Results') {
+                            showDashboard();
+                        } else {
+                            showWelcome();
+                        }
                     }, { passive: false });
                     
                     // モバイル最適化スタイル
@@ -5724,6 +5916,205 @@
         }
         
         // Handle pose detection results
+        // 人型ガイドとの位置合わせを評価する関数
+        function updateHumanGuideAlignment(landmarks) {
+            try {
+                const activeScreen = document.querySelector('.app-screen:not(.hidden)');
+                if (!activeScreen) return;
+                
+                const isStatic = activeScreen.id === 'static-analysis';
+                const isDynamic = activeScreen.id === 'dynamic-analysis';
+                
+                if (!isStatic && !isDynamic) return;
+                
+                // 重要な関節点の取得 (MediaPipe Pose landmark indices)
+                const nose = landmarks[0];           // 鼻
+                const leftShoulder = landmarks[11];  // 左肩
+                const rightShoulder = landmarks[12]; // 右肩
+                const leftHip = landmarks[23];       // 左腰
+                const rightHip = landmarks[24];      // 右腰
+                const leftAnkle = landmarks[27];     // 左足首
+                const rightAnkle = landmarks[28];    // 右足首
+                
+                // 画面中央からの位置差を計算
+                const centerX = 0.5; // MediaPipeの座標系では0.5が中央
+                const headCenterX = nose.x;
+                const shoulderCenterX = (leftShoulder.x + rightShoulder.x) / 2;
+                const hipCenterX = (leftHip.x + rightHip.x) / 2;
+                
+                // 水平方向の位置ずれを評価
+                const horizontalOffset = Math.abs(shoulderCenterX - centerX);
+                const verticalAlignment = Math.abs(headCenterX - shoulderCenterX) + Math.abs(shoulderCenterX - hipCenterX);
+                
+                // 足の幅を評価（スクワット用）
+                const footWidth = Math.abs(leftAnkle.x - rightAnkle.x);
+                const idealFootWidth = isDynamic ? 0.3 : 0.2; // 動的分析では足幅を広めに
+                const footWidthScore = 1 - Math.abs(footWidth - idealFootWidth);
+                
+                // 全体的な位置合わせスコアを計算
+                const alignmentScore = Math.max(0, 1 - (horizontalOffset * 2 + verticalAlignment * 1.5));
+                
+                // ステータスを更新
+                updateAlignmentStatus(isStatic, alignmentScore, {
+                    horizontalOffset,
+                    verticalAlignment,
+                    footWidth,
+                    footWidthScore
+                });
+                
+                // 音声ガイダンス（スコアが低い場合）
+                if (alignmentScore < 0.5) {
+                    provideAlignmentGuidance(horizontalOffset, verticalAlignment, isStatic);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error in updateHumanGuideAlignment:', error);
+            }
+        }
+        
+        // 位置合わせステータスを更新する関数
+        function updateAlignmentStatus(isStatic, alignmentScore, details) {
+            const prefix = isStatic ? 'static' : 'dynamic';
+            const statusElement = document.getElementById(`${prefix}AlignmentStatus`);
+            const indicatorElement = document.getElementById(`${prefix}AlignmentIndicator`);
+            const textElement = document.getElementById(`${prefix}AlignmentText`);
+            
+            if (!statusElement || !indicatorElement || !textElement) return;
+            
+            let status, color, message, messageJp;
+            
+            if (alignmentScore > 0.8) {
+                status = 'excellent';
+                color = '#22C55E'; // Green
+                message = 'Perfect Alignment';
+                messageJp = '完璧な位置';
+            } else if (alignmentScore > 0.6) {
+                status = 'good';
+                color = '#3B82F6'; // Blue
+                message = 'Good Position';
+                messageJp = '良いポジション';
+            } else if (alignmentScore > 0.4) {
+                status = 'adjust';
+                color = '#F59E0B'; // Yellow
+                message = 'Adjust Position';
+                messageJp = '位置を調整';
+            } else {
+                status = 'poor';
+                color = '#EF4444'; // Red
+                message = 'Realign Body';
+                messageJp = '体を合わせ直し';
+            }
+            
+            indicatorElement.style.backgroundColor = color;
+            textElement.textContent = message;
+            
+            // 日本語表示を更新
+            const jpElement = statusElement.querySelector('.text-xs.opacity-75');
+            if (jpElement) {
+                jpElement.textContent = messageJp;
+            }
+            
+            console.log(`📍 Alignment Status (${prefix}): ${status} (Score: ${alignmentScore.toFixed(2)})`, details);
+        }
+        
+        // 音声による位置ガイダンス関数
+        let lastGuidanceTime = 0;
+        function provideAlignmentGuidance(horizontalOffset, verticalAlignment, isStatic) {
+            const now = Date.now();
+            if (now - lastGuidanceTime < 3000) return; // 3秒間隔で制限
+            
+            let message = '';
+            
+            if (horizontalOffset > 0.1) {
+                message = horizontalOffset > 0 ? '画面の中央に移動してください' : '画面の中央に移動してください';
+            } else if (verticalAlignment > 0.1) {
+                message = '背筋を伸ばして真っ直ぐ立ってください';
+            } else if (isStatic) {
+                message = '腕を体の横に自然に下ろしてください';
+            }
+            
+            if (message && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.9;
+                utterance.volume = 0.7;
+                speechSynthesis.speak(utterance);
+                
+                lastGuidanceTime = now;
+                console.log('🔊 Position guidance:', message);
+            }
+        }
+        
+        // 人型ガイドの表示/非表示を切り替える関数
+        let humanGuideVisible = {
+            static: true,
+            dynamic: true
+        };
+        
+        function toggleHumanGuide(screenType) {
+            const guideElement = document.getElementById(`${screenType}PersonGuide`);
+            const toggleButton = document.getElementById(`${screenType}GuideToggle`);
+            
+            if (!guideElement || !toggleButton) {
+                console.error(`❌ Guide elements not found for ${screenType} screen`);
+                return;
+            }
+            
+            humanGuideVisible[screenType] = !humanGuideVisible[screenType];
+            
+            if (humanGuideVisible[screenType]) {
+                guideElement.style.display = 'block';
+                toggleButton.style.backgroundColor = 'rgba(34, 197, 94, 0.6)'; // Green when visible
+                console.log(`✅ Human guide enabled for ${screenType} screen`);
+                
+                // 音声フィードバック
+                if ('speechSynthesis' in window) {
+                    const message = screenType === 'static' ? '姿勢ガイドを表示しました' : 'スクワットガイドを表示しました';
+                    const utterance = new SpeechSynthesisUtterance(message);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = 1.0;
+                    utterance.volume = 0.5;
+                    speechSynthesis.speak(utterance);
+                }
+            } else {
+                guideElement.style.display = 'none';
+                toggleButton.style.backgroundColor = 'rgba(0, 0, 0, 0.6)'; // Dark when hidden
+                console.log(`❌ Human guide disabled for ${screenType} screen`);
+                
+                // 音声フィードバック
+                if ('speechSynthesis' in window) {
+                    const message = 'ガイドを非表示にしました';
+                    const utterance = new SpeechSynthesisUtterance(message);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = 1.0;
+                    utterance.volume = 0.5;
+                    speechSynthesis.speak(utterance);
+                }
+            }
+            
+            // ハプティクスフィードバック
+            if (navigator.vibrate) {
+                navigator.vibrate(humanGuideVisible[screenType] ? [50, 50, 50] : [100]);
+            }
+        }
+        
+        // 画面表示時にガイドの初期状態を設定
+        function initializeHumanGuide(screenType) {
+            const guideElement = document.getElementById(`${screenType}PersonGuide`);
+            const toggleButton = document.getElementById(`${screenType}GuideToggle`);
+            
+            if (guideElement && toggleButton) {
+                if (humanGuideVisible[screenType]) {
+                    guideElement.style.display = 'block';
+                    toggleButton.style.backgroundColor = 'rgba(34, 197, 94, 0.6)';
+                } else {
+                    guideElement.style.display = 'none';
+                    toggleButton.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+                }
+                console.log(`🎯 Human guide initialized for ${screenType}: ${humanGuideVisible[screenType] ? 'visible' : 'hidden'}`);
+            }
+        }
+
         function onPoseResults(results) {
             currentPoseResults = results;
             
@@ -5744,6 +6135,11 @@
             
             // Update pose status indicators with enhanced logging
             updatePoseStatus(results.poseLandmarks);
+            
+            // Update human guide alignment
+            if (results.poseLandmarks) {
+                updateHumanGuideAlignment(results.poseLandmarks);
+            }
             
             // Draw pose landmarks on canvas - ALWAYS SHOW
             if (results.poseLandmarks) {
@@ -7777,6 +8173,12 @@
                 console.log('✅ Back buttons setup completed');
             }, 100);
             
+            // 人型ガイドの初期化
+            setTimeout(() => {
+                initializeHumanGuide('static');
+                console.log('✅ Human guide initialized for static analysis');
+            }, 200);
+            
             // Mobile debug - screen displayed
             if (window.updateMobileDebug) {
                 window.updateMobileDebug('STATIC_SCREEN_SHOWN', { 
@@ -7910,6 +8312,12 @@
                 console.log('✅ Back buttons setup completed');
             }, 100);
             
+            // 人型ガイドの初期化
+            setTimeout(() => {
+                initializeHumanGuide('dynamic');
+                console.log('✅ Human guide initialized for dynamic analysis');
+            }, 200);
+            
             // Reset squat counter
             currentSquatCount = 0;
             lastSquatPhase = 'standing';
@@ -7971,8 +8379,94 @@
         }
         
         function showResults() {
+            console.log('📱 showResults() called - Starting results display process');
+            
+            // Mobile debug - function called
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('SHOW_RESULTS_CALLED', { 
+                    timestamp: new Date().toLocaleTimeString(),
+                    currentScreen: currentScreen
+                });
+            }
+            
+            // First show the screen normally
             showScreen('results');
-            document.getElementById('results').classList.add('fade-in');
+            
+            // Check if results element exists
+            const resultsElement = document.getElementById('results');
+            if (!resultsElement) {
+                console.error('❌ Results element not found!');
+                return;
+            }
+            
+            console.log('📱 Results element found, applying mobile-specific display fixes...');
+            
+            // Apply fade-in class
+            resultsElement.classList.add('fade-in');
+            
+            // MOBILE SPECIFIC: Force display with aggressive CSS overrides
+            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                console.log('📱 Mobile device detected - applying aggressive display fixes');
+                
+                // Apply mobile-specific forced display after a short delay
+                setTimeout(() => {
+                    const resultsScreen = document.getElementById('results');
+                    if (resultsScreen) {
+                        // Force visibility with !important styles
+                        resultsScreen.style.setProperty('display', 'flex', 'important');
+                        resultsScreen.style.setProperty('position', 'fixed', 'important');
+                        resultsScreen.style.setProperty('top', '0', 'important');
+                        resultsScreen.style.setProperty('left', '0', 'important');
+                        resultsScreen.style.setProperty('width', '100vw', 'important');
+                        resultsScreen.style.setProperty('height', '100vh', 'important');
+                        resultsScreen.style.setProperty('z-index', '9999', 'important');
+                        resultsScreen.style.setProperty('visibility', 'visible', 'important');
+                        resultsScreen.style.setProperty('opacity', '1', 'important');
+                        resultsScreen.classList.add('active');
+                        
+                        console.log('📱 MOBILE FORCE DISPLAY APPLIED to results screen');
+                        
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('MOBILE_FORCE_DISPLAY', { 
+                                screen: 'results',
+                                display: resultsScreen.style.display,
+                                visibility: resultsScreen.style.visibility,
+                                zIndex: resultsScreen.style.zIndex,
+                                width: resultsScreen.style.width,
+                                height: resultsScreen.style.height
+                            });
+                        }
+                    } else {
+                        console.error('❌ Results element not found for mobile fix');
+                        
+                        if (window.updateMobileDebug) {
+                            window.updateMobileDebug('ERROR', { 
+                                message: 'Results element not found for mobile fix',
+                                timestamp: new Date().toLocaleTimeString()
+                            });
+                        }
+                    }
+                }, 100);
+            }
+            
+            // Setup results screen back button with mobile support
+            setTimeout(() => {
+                setupAnalysisBackButtons();
+                console.log('✅ Results back button setup completed');
+            }, 200);
+            
+            console.log('✅ showResults() process completed');
+            
+            // Mobile debug - function completed
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('SHOW_RESULTS_COMPLETED', { 
+                    screen: currentScreen,
+                    isMobile: isMobile,
+                    element: resultsElement ? 'found' : 'missing'
+                });
+            }
         }
         
         function selectSport(sport) {
@@ -9049,83 +9543,241 @@
         }
         
         function updateResultsDisplay(analysisData) {
-            // Update the results screen with actual data
-            document.querySelector('#results .text-4xl').textContent = `${analysisData.overall_score}/100`;
+            console.log('📊 updateResultsDisplay() called with data:', analysisData);
             
-            // Update individual scores
-            document.getElementById('hip-score').textContent = `${analysisData.hip_flexibility}%`;
-            document.getElementById('posture-score').textContent = `${analysisData.postural_stability}%`;
-            document.getElementById('balance-score').textContent = `${analysisData.dynamic_balance}%`;
+            // Mobile debug - function called
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('UPDATE_RESULTS_DISPLAY', { 
+                    timestamp: new Date().toLocaleTimeString(),
+                    hasData: !!analysisData,
+                    dataKeys: analysisData ? Object.keys(analysisData) : []
+                });
+            }
             
-            // Create chart
-            createAnalysisChart(analysisData);
+            // Validate analysis data
+            if (!analysisData) {
+                console.error('❌ No analysis data provided to updateResultsDisplay');
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('ERROR', { 
+                        message: 'No analysis data provided',
+                        function: 'updateResultsDisplay'
+                    });
+                }
+                return;
+            }
+            
+            try {
+                // Update the overall score
+                const overallScoreElement = document.querySelector('#results .text-4xl');
+                if (overallScoreElement) {
+                    overallScoreElement.textContent = `${analysisData.overall_score}/100`;
+                    console.log('✅ Overall score updated:', analysisData.overall_score);
+                } else {
+                    console.error('❌ Overall score element not found');
+                }
+                
+                // Update individual scores
+                const hipScoreElement = document.getElementById('hip-score');
+                const postureScoreElement = document.getElementById('posture-score');
+                const balanceScoreElement = document.getElementById('balance-score');
+                
+                if (hipScoreElement) {
+                    hipScoreElement.textContent = `${analysisData.hip_flexibility}%`;
+                    console.log('✅ Hip score updated:', analysisData.hip_flexibility);
+                } else {
+                    console.error('❌ Hip score element not found');
+                }
+                
+                if (postureScoreElement) {
+                    postureScoreElement.textContent = `${analysisData.postural_stability}%`;
+                    console.log('✅ Posture score updated:', analysisData.postural_stability);
+                } else {
+                    console.error('❌ Posture score element not found');
+                }
+                
+                if (balanceScoreElement) {
+                    balanceScoreElement.textContent = `${analysisData.dynamic_balance}%`;
+                    console.log('✅ Balance score updated:', analysisData.dynamic_balance);
+                } else {
+                    console.error('❌ Balance score element not found');
+                }
+                
+                console.log('📊 Starting chart creation...');
+                
+                // Create chart with delay to ensure DOM is ready
+                setTimeout(() => {
+                    createAnalysisChart(analysisData);
+                }, 100);
+                
+                // Mobile debug - success
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('RESULTS_DISPLAY_SUCCESS', { 
+                        overallScore: analysisData.overall_score,
+                        elementsFound: {
+                            overall: !!overallScoreElement,
+                            hip: !!hipScoreElement,
+                            posture: !!postureScoreElement,
+                            balance: !!balanceScoreElement
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('❌ Error in updateResultsDisplay:', error);
+                
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('ERROR', { 
+                        message: error.message,
+                        function: 'updateResultsDisplay',
+                        stack: error.stack
+                    });
+                }
+            }
         }
         
         function createAnalysisChart(data) {
-            const ctx = document.getElementById('analysisChart').getContext('2d');
+            console.log('📈 createAnalysisChart() called with data:', data);
             
-            // Destroy existing chart if it exists
-            if (window.analysisChart instanceof Chart) {
-                window.analysisChart.destroy();
+            // Mobile debug - function called
+            if (window.updateMobileDebug) {
+                window.updateMobileDebug('CREATE_CHART_START', { 
+                    timestamp: new Date().toLocaleTimeString(),
+                    hasData: !!data,
+                    chartData: data ? {
+                        hip: data.hip_flexibility,
+                        posture: data.postural_stability,
+                        balance: data.dynamic_balance,
+                        overall: data.overall_score
+                    } : null
+                });
             }
             
-            window.analysisChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: [
-                        'Hip Flexibility\n股関節柔軟性',
-                        'Postural Stability\n姿勢安定性',
-                        'Dynamic Balance\n動的バランス',
-                        'Overall Performance\n総合パフォーマンス'
-                    ],
-                    datasets: [{
-                        label: 'Current Score',
-                        data: [
-                            data.hip_flexibility,
-                            data.postural_stability,
-                            data.dynamic_balance,
-                            data.overall_score
+            try {
+                const chartElement = document.getElementById('analysisChart');
+                if (!chartElement) {
+                    console.error('❌ Chart canvas element not found');
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('ERROR', { 
+                            message: 'Chart canvas element not found',
+                            function: 'createAnalysisChart'
+                        });
+                    }
+                    return;
+                }
+                
+                console.log('✅ Chart canvas element found');
+                const ctx = chartElement.getContext('2d');
+                
+                if (!ctx) {
+                    console.error('❌ Could not get 2D context from canvas');
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('ERROR', { 
+                            message: 'Could not get 2D context from canvas',
+                            function: 'createAnalysisChart'
+                        });
+                    }
+                    return;
+                }
+                
+                // Destroy existing chart if it exists
+                if (window.analysisChart instanceof Chart) {
+                    console.log('🗑️ Destroying existing chart');
+                    window.analysisChart.destroy();
+                }
+                
+                // Validate Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('❌ Chart.js is not loaded');
+                    if (window.updateMobileDebug) {
+                        window.updateMobileDebug('ERROR', { 
+                            message: 'Chart.js is not loaded',
+                            function: 'createAnalysisChart'
+                        });
+                    }
+                    return;
+                }
+                
+                console.log('📊 Creating new Chart.js radar chart...');
+                
+                window.analysisChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'Hip Flexibility\n股関節柔軟性',
+                            'Postural Stability\n姿勢安定性',
+                            'Dynamic Balance\n動的バランス',
+                            'Overall Performance\n総合パフォーマンス'
                         ],
-                        backgroundColor: 'rgba(30, 58, 138, 0.2)',
-                        borderColor: 'rgba(30, 58, 138, 0.8)',
-                        borderWidth: 2,
-                        pointBackgroundColor: 'rgba(30, 58, 138, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(30, 58, 138, 1)'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+                        datasets: [{
+                            label: 'Current Score',
+                            data: [
+                                data.hip_flexibility,
+                                data.postural_stability,
+                                data.dynamic_balance,
+                                data.overall_score
+                            ],
+                            backgroundColor: 'rgba(30, 58, 138, 0.2)',
+                            borderColor: 'rgba(30, 58, 138, 0.8)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(30, 58, 138, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(30, 58, 138, 1)'
+                        }]
                     },
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            },
-                            angleLines: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            },
-                            pointLabels: {
-                                font: {
-                                    size: 10
-                                },
-                                color: '#374151'
-                            },
-                            ticks: {
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
                                 display: false
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                angleLines: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                pointLabels: {
+                                    font: {
+                                        size: 10
+                                    },
+                                    color: '#374151'
+                                },
+                                ticks: {
+                                    display: false
+                                }
                             }
                         }
                     }
+                });
+                
+                console.log('✅ Chart created successfully');
+                
+                // Mobile debug - success
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('CHART_CREATED_SUCCESS', { 
+                        timestamp: new Date().toLocaleTimeString(),
+                        chartInstance: !!window.analysisChart
+                    });
                 }
-            });
+                
+            } catch (error) {
+                console.error('❌ Error creating analysis chart:', error);
+                
+                if (window.updateMobileDebug) {
+                    window.updateMobileDebug('ERROR', { 
+                        message: error.message,
+                        function: 'createAnalysisChart',
+                        stack: error.stack
+                    });
+                }
+            }
         }
         
         function shareResults() {
